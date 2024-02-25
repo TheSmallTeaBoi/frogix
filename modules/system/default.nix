@@ -1,0 +1,5 @@
+{
+  imports = [
+    ./GUI-nvidia.nix
+  ];
+}
