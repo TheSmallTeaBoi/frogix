@@ -1,18 +1,24 @@
 {
-  description = "My system config flake";
+  description = "Me when the linux";
 
   inputs = {
-    # NixOS official package source, using the nixos-23.11 branch here
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
+    # NixOS official package source, using the unstable branch here
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     nixvim = {
-      url = "github:nix-community/nixvim/nixos-23.11";
+      url = "github:nix-community/nixvim/";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # home-manager = {
+    #   url = "github:nix-community/home-manager";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
+
   };
 
   outputs = inputs @ {
-    nixpkgs,
+    nixpkgs, /* home-manager, */
     ...
   }: {
     nixosConfigurations.ratholomew = nixpkgs.lib.nixosSystem {
@@ -21,6 +27,7 @@
       modules = [
         ./configuration.nix
         ./modules
+        # home-manager.nixosModules.home-manager
       ];
     };
   };
