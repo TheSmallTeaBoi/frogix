@@ -10,15 +10,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # home-manager = {
-    #   url = "github:nix-community/home-manager";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
   };
 
   outputs = inputs @ {
-    nixpkgs, /* home-manager, */
+    nixpkgs, home-manager,
     ...
   }: {
     nixosConfigurations.ratholomew = nixpkgs.lib.nixosSystem {
@@ -27,7 +27,7 @@
       modules = [
         ./configuration.nix
         ./modules
-        # home-manager.nixosModules.home-manager
+        home-manager.nixosModules.home-manager
       ];
     };
   };

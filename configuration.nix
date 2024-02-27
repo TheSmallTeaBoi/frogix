@@ -55,6 +55,9 @@
     droidcam = {
       enable = true;
     };
+    dconf = {
+      enable = true;
+    };
   };
 
   # I love zram.
@@ -115,9 +118,8 @@
 
     # Ricing stuff
     picom
-    catppuccin-cursors.mochaDark
     fira-code-nerdfont lxappearance catppuccin-papirus-folders
-    catppuccin-gtk qt5ct
+    qt5ct
 
     vim neofetch polybar rofi feh
     wget sxhkd micro

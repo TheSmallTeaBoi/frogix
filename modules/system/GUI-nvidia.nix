@@ -13,6 +13,7 @@
 
   services.xserver.videoDrivers = ["nvidia"];
 
+  # nvidia configuration
   hardware.nvidia = {
     modesetting.enable = true;
     powerManagement.enable = false;
@@ -23,18 +24,19 @@
   };
 
 
-  # Enable the X11 windowing system.
+  # Enable the X11 windowing system, sddm and set the default session as awesome
   services.xserver = {
     enable = true;
     displayManager = {
       sddm.enable = true;
+      sddm.theme = "catppuccin";
       defaultSession = "none+awesome";
     };
 
     libinput = {
       enable = true;
 
-      # disabling mouse acceleration
+      # all my homies hate mouse acceleration
       mouse = {
         accelProfile = "flat";
       };
@@ -42,6 +44,7 @@
     xkb.layout = "us";
     
 
+  # enable awesomewm
   windowManager.awesome = {
     enable = true;
     luaModules = with pkgs.luaPackages; [
