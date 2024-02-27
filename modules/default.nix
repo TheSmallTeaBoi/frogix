@@ -3,7 +3,6 @@
   imports = [
     ./system
     ./nixvim.nix
-    ./shell.nix
     ./steam.nix
     ./wine.nix
     inputs.home-manager.nixosModules.home-manager

@@ -31,6 +31,10 @@
       sddm.enable = true;
       sddm.theme = "catppuccin";
       defaultSession = "none+awesome";
+      autoLogin = {
+        enable = true;
+        user = "theo";
+      };
     };
 
     libinput = {

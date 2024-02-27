@@ -46,6 +46,9 @@
       lspkind.enable = true;
       cursorline.enable = true;
       surround.enable = true;
+      nvim-cmp = {
+        enable = true;
+      };
     };
     globals = {
         mapleader = " ";

@@ -11,11 +11,11 @@
     ];
 
   # Make some extra kernel modules available to NixOS
-  boot.extraModulePackages = [
-      config.boot.kernelPackages.v4l2loopback
-  ];
+  #boot.extraModulePackages = [
+  #    config.boot.kernelPackages.v4l2loopback
+  #];
   # Set swappiness
-  boot.kernel.sysctl = { "vm.swappiness" = 200;};
+  #boot.kernel.sysctl = { "vm.swappiness" = 200;};
     
   nixpkgs.config.allowUnfree = true;
 
@@ -87,7 +87,6 @@
   KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput
   '';
 
-
   qt.platformTheme = "qt5ct";
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
@@ -117,13 +116,12 @@
     tauon
 
     # Ricing stuff
-    picom
     fira-code-nerdfont lxappearance catppuccin-papirus-folders
     qt5ct
 
     vim neofetch polybar rofi feh
-    wget sxhkd micro
-    git kitty fira-code-nerdfont fzf
+    wget micro
+    git fira-code-nerdfont fzf
     firefox flameshot xfce.thunar xfce.tumbler
     armcord
     pulsemixer bottom
