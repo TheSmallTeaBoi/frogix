@@ -10,5 +10,8 @@
     kernelParams = [
       "quiet"
     ];
+    loader.timeout = 0;
   };
+
+  powerManagement.cpuFreqGovernor = "performance";
 }

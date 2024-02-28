@@ -17,12 +17,6 @@
       package = pkgs.catppuccin-papirus-folders;
     };
 
-    # Where we define the cursor
-
-    cursorTheme = {
-      name = "Catppuccin-Mocha-Dark";
-      package = pkgs.catppuccin-cursors.mochaDark;
-    };
     gtk3.extraConfig = {
       Settings = ''
         gtk-application-prefer-dark-theme=1
@@ -34,4 +28,11 @@
       '';
     };
   }; 
+  home.pointerCursor = {
+    name = "Catppuccin-Mocha-Dark-Cursors";
+    gtk.enable = true;
+    x11.enable = true;
+    size = 16;
+    package = pkgs.catppuccin-cursors.mochaDark;
+  };
 }

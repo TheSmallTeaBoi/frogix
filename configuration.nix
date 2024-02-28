@@ -64,6 +64,7 @@
   zramSwap = {
     enable = true;
     memoryPercent = 75; # Give me all of it
+    algorithm = "lz4";
   };
 
   # Configure keymap in X11
@@ -128,6 +129,10 @@
     eza maim xdotool
     yt-dlp
     marktext
+    appimage-run
+
+    unar
+    pcsx2
 
     # Music stuff
     nicotine-plus picard
