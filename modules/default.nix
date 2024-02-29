@@ -2,9 +2,6 @@
 {
   imports = [
     ./system
-    ./nixvim.nix
-    ./steam.nix
-    ./wine.nix
     inputs.home-manager.nixosModules.home-manager
   ];
 

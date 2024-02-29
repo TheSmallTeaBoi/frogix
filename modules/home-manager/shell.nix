@@ -15,6 +15,7 @@
       la = "eza -a --icons";
       ll = "eza -i --icons";
       tree = "eza --tree --icons";
+      nixb = "sudo nixos-rebuild switch --flake ~/frogix/";
     };
   };
 }

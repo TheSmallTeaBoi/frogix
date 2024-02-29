@@ -101,43 +101,6 @@
      ];
    };
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  environment.systemPackages = with pkgs; [
-
-    haskellPackages.kmonad
-    xorg.xev
-    # Python stuff
-    python3 python311Packages.pydbus
-    python311Packages.pypresence
-
-    xclip
-
-    # The best music player to ever exist
-    tauon
-
-    # Ricing stuff
-    fira-code-nerdfont lxappearance catppuccin-papirus-folders
-    qt5ct
-
-    vim neofetch polybar rofi feh
-    wget micro
-    git fira-code-nerdfont fzf
-    firefox flameshot xfce.thunar xfce.tumbler
-    armcord
-    pulsemixer bottom
-    eza maim xdotool
-    yt-dlp
-    marktext
-    appimage-run
-
-    unar
-    pcsx2
-
-    # Music stuff
-    nicotine-plus picard
-  ];
-
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
