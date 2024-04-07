@@ -5,9 +5,11 @@
 }: {
   nixpkgs.config.allowUnfree = true;
 
+  # Enable cuda, cuda my beloved
+  #nixpkgs.config.cudaSupport = true;
+
   environment.systemPackages = with pkgs; [
     cudatoolkit
-
   ];
 
   hardware.opengl = {
