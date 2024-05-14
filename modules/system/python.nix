@@ -1,11 +1,12 @@
 {pkgs, ...}: {
   environment.systemPackages = with pkgs; [
     conda
-    (python311.withPackages (ps:
+    (python312.withPackages (ps:
       with ps; [
         virtualenv
         pypresence
         pydbus
+        tkinter
       ]
     ))
   ];

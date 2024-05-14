@@ -36,20 +36,6 @@
   # Set your time zone.
   time.timeZone = "America/Buenos_Aires";
 
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  #services.logmein-hamachi.enable = true;
-
-  # Select internationalisation properties.
-  # i18n.defaultLocale = "en_US.UTF-8";
-  # console = {
-  #   font = "Lat2-Terminus16";
-  #   keyMap = "us";
-  #   useXkbConfig = true; # use xkb.options in tty.
-  # };
-
 
   fonts.packages = [ pkgs.fira-code-nerdfont ];
 
@@ -70,14 +56,6 @@
     algorithm = "lz4";
   };
 
-  # Configure keymap in X11
-  # services.xserver.xkb.layout = "us";
-  #services.xserver.xkb.options = "eurosign:e,caps:escape";
-
-  # Enable CUPS to print documents.
-  # services.printing.enable = true;
-
-
   # Enable sound.
   # rtkit is optional but recommended
   security.rtkit.enable = true;
@@ -86,11 +64,8 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
+    jack.enable = true;
   };
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
 
   # This is needed for kmonad
   services.udev.extraRules = ''
@@ -106,11 +81,6 @@
   users.users.theo = {
      isNormalUser = true;
      extraGroups = [ "wheel" "input" "uinput"]; # Enable ‘sudo’ for the user.
-     packages = with pkgs; [
-  #     xorg.xinit
-  #     firefox
-  #     tree
-     ];
    };
 
   # Some programs need SUID wrappers, can be configured further or are

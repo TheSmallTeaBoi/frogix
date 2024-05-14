@@ -7,11 +7,12 @@
 
     xclip
 
+    # let's give this one last try...
+    puredata zexy carla audacity
+    bespokesynth
+
     btrfs-progs # btrfs my beloved
     gparted
-
-    # Diablo 2 stuff :3
-    xdelta jq gnome.zenity wmctrl libnotify
 
     # Ricing stuff
     fira-code-nerdfont lxappearance catppuccin-papirus-folders
@@ -19,13 +20,14 @@
 
 
     vim neofetch polybar rofi feh
+    ripgrep
+    jetbrains.pycharm-community-bin
     wget micro
     git fira-code-nerdfont fzf
     xfce.thunar xfce.tumbler gnome.gvfs
     pulsemixer bottom
     eza maim xdotool file
     yt-dlp ffmpeg
-    marktext
     appimage-run
 
     # compressed stuff
@@ -33,13 +35,16 @@
 
     cinnamon.warpinator
 
-    firefox w3m armcord gomuks cinny-desktop /* krita */
+    firefox w3m armcord krita
     discord-screenaudio # I was forced, mkey?
-    obs-studio simplescreenrecorder vokoscreen
+    obs-studio simplescreenrecorder
+    darktable
+
 
     # Game stuff
     retroarchFull                  # Emulation stuff
     pcsx2 flycast dolphinEmu rpcs3 # ^^^^^^^^^^^^^^^
+    ppsspp                         # ^^^^^^^^^^^^^^^
     logmein-hamachi # my beloved
     protontricks
 
