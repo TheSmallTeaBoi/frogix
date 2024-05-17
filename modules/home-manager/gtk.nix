@@ -1,6 +1,9 @@
-{inputs, pkgs, ...}:
 {
-   gtk = {
+  inputs,
+  pkgs,
+  ...
+}: {
+  gtk = {
     enable = true;
     theme = {
       name = "Catppuccin-Mocha-Compact-Blue-Dark";
@@ -27,7 +30,7 @@
         gtk-application-prefer-dark-theme=1
       '';
     };
-  }; 
+  };
   home.pointerCursor = {
     name = "Catppuccin-Mocha-Dark-Cursors";
     gtk.enable = true;

@@ -1,4 +1,4 @@
-{ 
+{
   config,
   pkgs,
   ...
@@ -30,18 +30,17 @@
     package = config.boot.kernelPackages.nvidiaPackages.production;
   };
 
-
   # Enable the X11 windowing system, sddm and set the default session as awesome
   services.xserver = {
     enable = true;
     xkb.layout = "us";
-    
-  # enable awesomewm
-  windowManager.awesome = {
-    enable = true;
-    luaModules = with pkgs.luaPackages; [
-      luarocks
-      luadbi-mysql
+
+    # enable awesomewm
+    windowManager.awesome = {
+      enable = true;
+      luaModules = with pkgs.luaPackages; [
+        luarocks
+        luadbi-mysql
       ];
     };
   };
@@ -64,5 +63,4 @@
       user = "theo";
     };
   };
-
 }

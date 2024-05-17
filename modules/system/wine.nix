@@ -1,5 +1,8 @@
-{ inputs, pkgs, ... }:
 {
+  inputs,
+  pkgs,
+  ...
+}: {
   environment.systemPackages = with pkgs; [
     # ...
 
@@ -10,7 +13,7 @@
     wine
 
     # support 64-bit only
-    (wine.override { wineBuild = "wine64"; })
+    (wine.override {wineBuild = "wine64";})
 
     # support 64-bit only
     wine64

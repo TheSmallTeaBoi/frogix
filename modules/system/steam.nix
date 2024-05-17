@@ -1,5 +1,8 @@
-{ inputs, pkgs, ... }:
 {
+  inputs,
+  pkgs,
+  ...
+}: {
   programs = {
     steam = {
       enable = true;
@@ -29,8 +32,8 @@
               libkrb5
               keyutils
             ];
-          };
         };
+      };
     };
   };
 }

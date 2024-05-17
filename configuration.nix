@@ -1,14 +1,16 @@
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
-
-{ config, lib, pkgs, ... }:
-
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   # Make some extra kernel modules available to NixOS
   #boot.extraModulePackages = [
@@ -16,12 +18,11 @@
   #];
   # Set swappiness
   #boot.kernel.sysctl = { "vm.swappiness" = 200;};
-    
+
   nixpkgs.config.allowUnfree = true;
 
   # Enable "experimental" features
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
+  nix.settings.experimental-features = ["nix-command" "flakes"];
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -36,10 +37,8 @@
   # Set your time zone.
   time.timeZone = "America/Buenos_Aires";
 
+  fonts.packages = [pkgs.fira-code-nerdfont];
 
-  fonts.packages = [ pkgs.fira-code-nerdfont ];
-
-  
   programs = {
     droidcam = {
       enable = true;
@@ -69,7 +68,7 @@
 
   # This is needed for kmonad
   services.udev.extraRules = ''
-  KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput
+    KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput
   '';
   hardware = {
     uinput.enable = true;
@@ -79,9 +78,9 @@
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.theo = {
-     isNormalUser = true;
-     extraGroups = [ "wheel" "input" "uinput"]; # Enable ‘sudo’ for the user.
-   };
+    isNormalUser = true;
+    extraGroups = ["wheel" "input" "uinput"]; # Enable ‘sudo’ for the user.
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -124,6 +123,4 @@
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "23.11"; # Did you read the comment?
-
 }
-

@@ -14,11 +14,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
   };
 
   outputs = inputs @ {
-    nixpkgs, home-manager,
+    nixpkgs,
+    home-manager,
     ...
   }: {
     nixosConfigurations.ratholomew = nixpkgs.lib.nixosSystem {

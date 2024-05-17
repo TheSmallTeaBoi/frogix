@@ -1,5 +1,10 @@
-{config, intputs, outputs, pkgs, ...}:
 {
+  config,
+  intputs,
+  outputs,
+  pkgs,
+  ...
+}: {
   services.picom = {
     enable = true;
     backend = "glx";

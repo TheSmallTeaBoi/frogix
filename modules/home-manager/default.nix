@@ -1,5 +1,10 @@
-{inputs, outputs, pkgs, config, ...}:
 {
+  inputs,
+  outputs,
+  pkgs,
+  config,
+  ...
+}: {
   imports = [
     ./gtk.nix
     ./shell.nix
@@ -14,5 +19,4 @@
     ./polybar.nix
   ];
   programs.home-manager.enable = true;
-
 }

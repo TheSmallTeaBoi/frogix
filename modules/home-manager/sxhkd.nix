@@ -1,5 +1,10 @@
-{inputs, outputs, pkgs, config, ...}:
 {
+  inputs,
+  outputs,
+  pkgs,
+  config,
+  ...
+}: {
   services.sxhkd = {
     enable = true;
     keybindings = {
