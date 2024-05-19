@@ -14,7 +14,7 @@
     extraConfig = ''
       set -s escape-time 0
       set -g prefix M-a
-      set-option -g status-position bottom
+      set -g status-position bottom
 
       # 0-Index makes sense for offsets, not this.
       set -g base-index 1
@@ -23,10 +23,12 @@
       # Make catppuccin respect the window names.
       set -g @catppuccin_window_default_text "#W"
       set -g @catppuccin_window_current_text "#W"
-      set -g @catppuccin_window_tabs_enabled on
 
       # Reorder windows when one gets deleted.
-      set-option -g renumber-windows on
+      set -g renumber-windows on
+
+      # This is needed for catppuccin to work, for whatever reason...
+      set-hook -g after-new-session "source-file ~/.config/tmux/tmux.conf"
 
       bind h split-window -h
       bind v split-window -v
