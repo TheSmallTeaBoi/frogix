@@ -16,12 +16,12 @@
     rofi
 
     # Terminal tools
-    tmux
     fzf
     ripgrep
     neofetch
     wget
     git
+    lazygit # I'm sorry...
     pulsemixer
     bottom
     eza
