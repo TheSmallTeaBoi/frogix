@@ -13,7 +13,7 @@
     settings = {
       confirm_os_window_close = 0;
       window_padding_width = 18;
-      tab_bar_min_tabs = 1;
+      tab_bar_min_tabs = 2;
       tab_bar_edge = "top";
       tab_bar_style = "powerline";
       tab_powerline_style = "angled";

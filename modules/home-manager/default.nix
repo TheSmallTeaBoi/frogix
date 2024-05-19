@@ -17,6 +17,7 @@
     ./rofi.nix
     ./picom.nix
     ./polybar.nix
+    ./tmux.nix
   ];
   programs.home-manager.enable = true;
 }

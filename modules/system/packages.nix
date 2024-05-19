@@ -1,50 +1,59 @@
 {pkgs, ...}: {
   environment.systemPackages = with pkgs; [
-    haskellPackages.kmonad
-    xorg.xev
-
-    xclip
-
-    # let's give this one last try...
+    # let's give this one last try... (Music)
     puredata
     zexy
     carla
     audacity
     bespokesynth
 
-    btrfs-progs # btrfs my beloved
-    gparted
-
     # Ricing stuff
     fira-code-nerdfont
     lxappearance
     catppuccin-papirus-folders
     qt5ct
-
-    vim
-    neofetch
     polybar
     rofi
-    feh
-    ripgrep
-    jetbrains.pycharm-community-bin
-    wget
-    micro
-    git
-    fira-code-nerdfont
+
+    # Terminal tools
+    tmux
     fzf
-    xfce.thunar
-    xfce.tumbler
-    gnome.gvfs
+    ripgrep
+    neofetch
+    wget
+    git
     pulsemixer
     bottom
     eza
-    maim
-    xdotool
     file
     yt-dlp
     ffmpeg
+
+    # Coding, I guess
+    jetbrains.pycharm-community-bin
+
+    # Random GUI stuff
+    firefox
+    feh
+    xfce.thunar
+    xfce.tumbler
+    gnome.gvfs
+    cinnamon.warpinator
+    maim
+    xdotool
     appimage-run
+    xorg.xev
+    xclip
+    gparted
+
+    armcord
+    discord-screenaudio # I was forced, mkey?
+
+    # Art?
+    krita
+    obs-studio
+    simplescreenrecorder
+    darktable
 
     # compressed stuff
     unar
@@ -52,35 +61,31 @@
     zip
     p7zip
 
-    cinnamon.warpinator
-
-    firefox
-    w3m
-    armcord
-    krita
-    discord-screenaudio # I was forced, mkey?
-    obs-studio
-    simplescreenrecorder
-    darktable
-
     # Game stuff
+    # Emulation {
     retroarchFull # Emulation stuff
     pcsx2
     flycast
     dolphinEmu
-    rpcs3 # ^^^^^^^^^^^^^^^
-    ppsspp # ^^^^^^^^^^^^^^^
+    rpcs3
+    ppsspp
+    # }
+
     logmein-hamachi # my beloved
     protontricks
 
     # Piracy stuff :)
     aria2
     transmission_4-gtk
+
     # Music stuff
     nicotine-plus
     picard
     mpv
-    # The best music player to ever exist
-    tauon
+    tauon # The best music player to ever exist
+
+    # Misc
+    haskellPackages.kmonad
+    btrfs-progs # btrfs my beloved
   ];
 }
