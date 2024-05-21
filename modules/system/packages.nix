@@ -28,6 +28,7 @@
     file
     yt-dlp
     ffmpeg
+    iamb
 
     # Coding, I guess
     jetbrains.pycharm-community-bin
