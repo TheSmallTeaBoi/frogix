@@ -6,19 +6,20 @@
   ...
 }: {
   imports = [
-    ./gtk.nix
-    ./shell.nix
-    ./home.nix
     ./awesome.nix
-    ./sxhkd.nix
-    ./kitty.nix
     ./git.nix
+    ./gtk.nix
+    ./home.nix
+    ./iamb.nix
+    ./kitty.nix
     ./lazygit.nix
-    ./xinit.nix
-    ./rofi.nix
     ./picom.nix
     ./polybar.nix
+    ./rofi.nix
+    ./shell.nix
+    ./sxhkd.nix
     ./tmux.nix
+    ./xinit.nix
   ];
   programs.home-manager.enable = true;
 }
