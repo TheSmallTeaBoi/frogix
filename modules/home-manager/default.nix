@@ -13,6 +13,7 @@
     ./sxhkd.nix
     ./kitty.nix
     ./git.nix
+    ./lazygit.nix
     ./xinit.nix
     ./rofi.nix
     ./picom.nix

@@ -24,6 +24,8 @@
       set -g @catppuccin_window_default_text "#W"
       set -g @catppuccin_window_current_text "#W"
 
+      set -g @catppuccin_status_modules_right "application session"
+
       # Reorder windows when one gets deleted.
       set -g renumber-windows on
 
@@ -43,17 +45,18 @@
           "Kill Other Session(s)"              X "kill-session -a" \
           "" \
           "New Window"                          new-window \
+          "With directory"                      "new-window -c '#{pane_current_path}'" \
           "Kill Window"                        󰗨 "killw"  \
           "Choose Window"                      󰒅 choose-window \
           "Previous Window"                     previous-window \
           "Next Window"                         next-window \
           "Swap Window Right"                   "swap-window -t -1" \
           "Swap Window Left"                    "swap-window -t +1" \
-          "Horizontal Split"                    "split-window -h" \
-          "Vertical Split"                      "split-window -v"  \
+          "Horizontal Split"                    "split-window -h" \
+          "Vertical Split"                      "split-window -v"  \
           "" \
-          "Layout Horizontal"                   "select-layout even-horizontal"  \
-          "Layout Vertical"                     "select-layout even-horizontal"  \
+          "Layout Horizontal"                   "select-layout even-horizontal"  \
+          "Layout Vertical"                     "select-layout even-horizontal"  \
           "" \
           "Swap Pane Up"                       < "swap-pane -U" \
           "Swap Pane Down"                     > "swap-pane -D" \
@@ -62,7 +65,7 @@
           "#{?window_zoomed_flag,Unzoom,Zoom}" z "resize-pane -Z" \
           "" \
           "Nvim"                                "new-window -n "Nvim" -c '#{pane_current_path}' 'nvim'" \
-          "With directory"                      "new-window -c '#{pane_current_path}'" \
+          "With directory"                      "new-window -n "Nvim" -c '#{pane_current_path}' 'nvim .'" \
           "Notes"                              󰏪 "new-window -n "Notes" -c '/home/theo/Data/Personal/diary/' 'nvim notes.txt'" \
           "Nix"                                󱄅 "new-window -n "Nix" -c '/home/theo/frogix/' 'nvim .'" \
           ""\

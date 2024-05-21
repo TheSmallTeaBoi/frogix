@@ -51,6 +51,7 @@
     # all my homies hate mouse acceleration
     mouse = {
       accelProfile = "flat";
+      middleEmulation = false;
     };
   };
 

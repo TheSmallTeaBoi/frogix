@@ -12,22 +12,8 @@
     ./hardware-configuration.nix
   ];
 
-  # Make some extra kernel modules available to NixOS
-  #boot.extraModulePackages = [
-  #    config.boot.kernelPackages.v4l2loopback
-  #];
-  # Set swappiness
-  #boot.kernel.sysctl = { "vm.swappiness" = 200;};
-
-  nixpkgs.config.allowUnfree = true;
-
   # Enable "experimental" features
   nix.settings.experimental-features = ["nix-command" "flakes"];
-
-  # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.initrd.checkJournalingFS = false; # fsck seems to always fail, for whatever reason.
 
   networking.hostName = "ratholomew"; # Define your hostname.
   # Pick only one of the below networking options.
@@ -39,15 +25,6 @@
 
   fonts.packages = [pkgs.fira-code-nerdfont];
 
-  programs = {
-    droidcam = {
-      enable = true;
-    };
-    dconf = {
-      enable = true;
-    };
-  };
-
   # I love zram.
   zramSwap = {
     enable = true;
@@ -55,21 +32,9 @@
     algorithm = "lz4";
   };
 
-  # Enable sound.
   # rtkit is optional but recommended
   security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    jack.enable = true;
-  };
 
-  # This is needed for kmonad
-  services.udev.extraRules = ''
-    KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput
-  '';
   hardware = {
     uinput.enable = true;
   };
@@ -82,23 +47,7 @@
     extraGroups = ["wheel" "input" "uinput"]; # Enable ‘sudo’ for the user.
   };
 
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
+  # Disable the firewall altogether.
   networking.firewall.enable = false;
 
   # Copy the NixOS configuration file and link it from the resulting system

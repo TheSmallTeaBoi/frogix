@@ -241,6 +241,11 @@
         command = "lua require(\"conform\").format()";
       }
       {
+        event = ["BufRead" "BufNewFile"];
+        pattern = ["*/diary/*.txt"];
+        command = "source notes.vim";
+      }
+      {
         event = ["BufWritePre"];
         pattern = ["*/diary/*.txt"];
         command = "helptags ./";

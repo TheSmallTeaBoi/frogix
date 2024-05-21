@@ -1,4 +1,5 @@
 {pkgs, ...}: {
+  nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
     # let's give this one last try... (Music)
     puredata
@@ -21,7 +22,6 @@
     neofetch
     wget
     git
-    lazygit # I'm sorry...
     pulsemixer
     bottom
     eza
