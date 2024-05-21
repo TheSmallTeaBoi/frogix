@@ -72,13 +72,21 @@
       lsp = {
         enable = true;
         servers = {
+          #nix
           nixd.enable = true;
-          pylsp.enable = true;
+
+          #python
+          pylyzer.enable = true;
           ruff.enable = true;
+
+          #bash
           bashls.enable = true;
+
+          #lua
           lua-ls.enable = true;
+
+          #filesystem
           fsautocomplete.enable = true;
-          tsserver.enable = true;
         };
         keymaps.lspBuf = {
           "gd" = "definition";
@@ -109,14 +117,20 @@
       cursorline.enable = true;
 
       # Make it usable
-      lsp-format.enable = true;
       gitsigns = {
         enable = true;
         settings = {
           current_line_blame = true;
         };
       };
-      hop.enable = true;
+
+      hop = {
+        enable = true;
+        settings = {
+          keys = "srtnyeiafg";
+        };
+      };
+
       conform-nvim = {
         enable = true;
         extraOptions = {
@@ -133,6 +147,7 @@
           "_" = ["trim_whitespace"];
         };
       };
+
       luasnip = {
         enable = true;
         extraConfig = {
@@ -145,6 +160,7 @@
           }
         ];
       };
+
       which-key = {
         enable = true;
         registrations = {
@@ -152,10 +168,14 @@
           "gD" = "Go to uses";
           "gi" = "Go to implementation";
           "K" = "Hover info";
+          "<Leader>l" = "+lsp";
+          "<Leader>t" = "+telescope";
         };
       };
+
       surround.enable = true;
       nvim-autopairs.enable = true;
+
       oil = {
         enable = true;
         settings.defaultFileExplorer = true;
@@ -195,29 +215,39 @@
 
     keymaps = [
       {
-        action = "<cmd>Telescope find_files<CR>";
+        action = "<cmd>Oil .<CR>";
         key = "<Leader>f";
+        options.desc = "Open file explorer";
+      }
+      {
+        action = "<cmd>Telescope find_files<CR>";
+        key = "<Leader>tf";
         options.desc = "Find files";
       }
       {
         action = "<cmd>Telescope buffers<CR>";
-        key = "<Leader>o";
+        key = "<Leader>to";
         options.desc = "Pick open buffers";
       }
       {
         action = "<cmd>Telescope live_grep<CR>";
-        key = "<Leader>t";
+        key = "<Leader>tt";
         options.desc = "Find text in project";
       }
       {
         action = "<cmd>lua vim.lsp.buf.code_action()<CR>";
-        key = "<Leader>c";
+        key = "<Leader>lc";
         options.desc = "Code actions";
       }
       {
         action = "<cmd>lua vim.lsp.buf.rename()<CR>";
-        key = "<Leader>r";
+        key = "<Leader>lr";
         options.desc = "Rename";
+      }
+      {
+        action = "<cmd>lua vim.diagnostic.open_float()<CR>";
+        key = "<Leader>lf";
+        options.desc = "Open diagnostic";
       }
       {
         mode = "n";
@@ -235,6 +265,7 @@
         key = "<Leader>b";
       }
     ];
+
     autoCmd = [
       {
         event = ["BufWritePre"];
