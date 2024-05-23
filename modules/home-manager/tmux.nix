@@ -20,11 +20,12 @@
       set -g base-index 1
       setw -g pane-base-index 1
 
-      # Activate mouse mode
-      set -g mode-mouse on \;\
-      set -g mouse-resize-pane on \;\
-      set -g mouse-select-pane on \;\
-      set -g mouse-select-window on \;\
+
+      # Catppuccin theme
+      set -g @catppuccin_window_left_separator ""
+      set -g @catppuccin_window_middle_separator "█  "
+      set -g @catppuccin_window_right_separator "█ "
+      set -g @catppuccin_window_status_icon_enable "yes"
 
       # Make catppuccin respect the window names.
       set -g @catppuccin_window_default_text "#W"
@@ -40,7 +41,6 @@
 
       # It's 2024, ffs
       set-option -g history-limit 250000
-
 
       # M-Space brings out the menu
       bind-key -n M-Space display-menu\
@@ -73,7 +73,7 @@
           "Notes"                              󰏪 "new-window -n "Notes" -c '/home/theo/Data/Personal/diary/' 'nvim notes.txt'" \
           "Nix"                                󱄅 "new-window -n "Nix" -c '/home/theo/frogix/' 'nvim .'" \
           ""\
-          "Lazygit"                             "new-window -n "Lazygit" -c '#{pane_current_path}' 'lazygit'"
+          "Lazygit"                             "new-window -n "Lazygit" -c '#{pane_current_path}' 'lazygit'" \
           "Bottom"                              "new-window -n "Bottom" 'btm'"
 
 
@@ -81,6 +81,8 @@
       bind                                     h split-window -h
       bind                                     v split-window -v
       bind -n                              M-Tab last-window
+      bind -n                                M-n select-pane -t :.+
+      bind -n                                M-p select-pane -t :.-
 
       # Go to window with Alt+1-9
       bind -n                                M-1 selectw -t 1
@@ -99,6 +101,4 @@
       unbind                                %
     '';
   };
-  home.file.".tmux.conf".text = config.xdg.configFile."tmux/tmux.conf".text; # This is the funniest piece of code in my config.
-  # ^tmux.fish expects a config here. While home-manager writes it here ^
 }

@@ -15,20 +15,32 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-
-  outputs = inputs @ {
+  outputs = {
+    self,
     nixpkgs,
+    nixvim,
     home-manager,
     ...
-  }: {
-    nixosConfigurations.ratholomew = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = {inherit inputs;};
-      modules = [
-        ./configuration.nix
-        ./modules
-        home-manager.nixosModules.home-manager
-      ];
+  } @ inputs: let
+    system = "x86_64-linux";
+
+    neovim = nixvim.legacyPackages.${system}.makeNixvimWithModule {
+      module = import ./modules/system/nixvim;
+    };
+  in {
+    nixosConfigurations = {
+      ratholomew = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {inherit inputs;};
+        modules = [
+          ./configuration.nix
+          ./modules
+          home-manager.nixosModules.home-manager
+        ];
+      };
+    };
+    packages = {
+      ${system}.neovim = neovim;
     };
   };
 }

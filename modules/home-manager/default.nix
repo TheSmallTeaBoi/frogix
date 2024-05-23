@@ -19,6 +19,7 @@
     ./shell.nix
     ./sxhkd.nix
     ./tmux.nix
+    ./zellij.nix
     ./xinit.nix
   ];
   programs.home-manager.enable = true;
