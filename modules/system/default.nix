@@ -7,7 +7,7 @@
     ./services.nix
     ./droidcam.nix
     ./packages.nix
-    ./nixvim.nix
+    # ./nixvim.nix
     ./steam.nix
     ./wine.nix
   ];

@@ -1,4 +1,9 @@
-{pkgs, ...}: {
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}: {
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
     # let's give this one last try... (Music)
@@ -31,6 +36,7 @@
     iamb
 
     # Coding, I guess
+    inputs.self.packages.x86_64-linux.neovim
     jetbrains.pycharm-community-bin
 
     # Random GUI stuff

@@ -24,8 +24,9 @@
   } @ inputs: let
     system = "x86_64-linux";
 
-    neovim = nixvim.legacyPackages.${system}.makeNixvimWithModule {
-      module = import ./modules/system/nixvim;
+    unfreePkgs = import nixpkgs {
+      system = "x86_64-linux";
+      config.allowUnfree = true;
     };
   in {
     nixosConfigurations = {
@@ -40,7 +41,10 @@
       };
     };
     packages = {
-      ${system}.neovim = neovim;
+      ${system}.neovim = nixvim.legacyPackages.${system}.makeNixvimWithModule {
+        pkgs = unfreePkgs;
+        module = import ./modules/system/nixvim.nix;
+      };
     };
   };
 }

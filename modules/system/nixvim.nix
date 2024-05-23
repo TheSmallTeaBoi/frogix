@@ -3,10 +3,9 @@
   pkgs,
   ...
 }: {
-  imports = [inputs.nixvim.nixosModules.nixvim];
-  programs.nixvim = {
+  config = {
     extraPackages = with pkgs; [black alejandra codespell];
-    enable = true;
+    # enable = true;
     opts = {
       updatetime = 100;
       number = true;
@@ -47,7 +46,7 @@
             border = _border
           }
     '';
-    defaultEditor = true;
+    # defaultEditor = true;
     viAlias = true;
     vimAlias = true;
     package = pkgs.neovim-unwrapped;
@@ -76,7 +75,7 @@
           nixd.enable = true;
 
           #python
-          pylyzer.enable = true;
+          pylsp.enable = true;
           ruff.enable = true;
 
           #bash
