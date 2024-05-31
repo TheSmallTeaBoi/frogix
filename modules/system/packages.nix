@@ -40,7 +40,6 @@
     jetbrains.pycharm-community-bin
 
     # Random GUI stuff
-    firefox
     feh
     xfce.thunar
     xfce.tumbler
@@ -94,5 +93,7 @@
     # Misc
     haskellPackages.kmonad
     btrfs-progs # btrfs my beloved
+    rofi-power-menu
+    rofi-pulse-select
   ];
 }

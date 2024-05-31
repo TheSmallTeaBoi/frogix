@@ -113,6 +113,8 @@
         symbolMap = {Codeium = "󰚩";};
       };
 
+      neocord.enable = true;
+
       cursorline.enable = true;
 
       # Make it usable
@@ -181,9 +183,9 @@
       };
 
       # Autocomplete
-      codeium-nvim = {
-        enable = true;
-      };
+      # codeium-nvim = {
+      #   enable = true;
+      # };
       cmp = {
         enable = true;
         autoEnableSources = true;
@@ -192,7 +194,7 @@
           snippet = {expand = "luasnip";};
           sources = [
             {name = "nvim_lsp";}
-            {name = "codeium";}
+            # {name = "codeium";}
             {name = "luasnip";}
             {name = "path";}
           ];

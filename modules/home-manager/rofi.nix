@@ -2,16 +2,18 @@
   config,
   inputs,
   outputs,
+  pkgs,
   ...
 }: {
   programs.rofi = {
     enable = true;
     theme = "catppuccin-mocha";
+    plugins = [pkgs.rofi-emoji pkgs.rofi-calc];
     extraConfig = {
       modi = "run,drun,window";
       icon-theme = "Oranchelo";
       show-icons = true;
-      terminal = "alacritty";
+      terminal = "kitty";
       drun-display-format = "{icon} {name}";
       location = 0;
       disable-history = false;
@@ -24,6 +26,7 @@
     };
   };
 
+  # Catppuccin theme
   xdg.configFile."/home/theo/.config/rofi/catppuccin-mocha.rasi".text = ''
     * {
       bg-col:  #1e1e2e;

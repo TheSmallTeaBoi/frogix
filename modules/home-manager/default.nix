@@ -7,6 +7,7 @@
 }: {
   imports = [
     ./awesome.nix
+    ./firefox.nix
     ./git.nix
     ./gtk.nix
     ./home.nix
@@ -19,8 +20,8 @@
     ./shell.nix
     ./sxhkd.nix
     ./tmux.nix
-    ./zellij.nix
     ./xinit.nix
+    ./zellij.nix
   ];
   programs.home-manager.enable = true;
 }

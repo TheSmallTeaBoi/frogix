@@ -1,12 +1,7 @@
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -39,6 +34,7 @@
     uinput.enable = true;
   };
 
+  home-manager.backupFileExtension = "bk";
   qt.platformTheme = "qt5ct";
 
   # Define a user account. Don't forget to set a password with ‘passwd’.

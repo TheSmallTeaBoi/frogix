@@ -1,10 +1,4 @@
-{
-  inputs,
-  outputs,
-  pkgs,
-  config,
-  ...
-}: {
+{pkgs, ...}: {
   programs.tmux = {
     enable = true;
     plugins = with pkgs; [

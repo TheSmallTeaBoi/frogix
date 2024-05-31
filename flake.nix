@@ -16,7 +16,6 @@
     };
   };
   outputs = {
-    self,
     nixpkgs,
     nixvim,
     home-manager,
