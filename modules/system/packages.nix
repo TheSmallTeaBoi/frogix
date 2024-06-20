@@ -6,18 +6,9 @@
 }: {
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
-    # let's give this one last try... (Music)
-    puredata
-    zexy
-    carla
-    audacity
-    bespokesynth
-
     # Ricing stuff
     fira-code-nerdfont
-    lxappearance
     catppuccin-papirus-folders
-    qt5ct
     polybar
     rofi
 
@@ -37,7 +28,9 @@
 
     # Coding, I guess
     inputs.self.packages.x86_64-linux.neovim
-    jetbrains.pycharm-community-bin
+    vim
+    vimgolf
+    devenv
 
     # Random GUI stuff
     feh
@@ -48,18 +41,13 @@
     maim
     xdotool
     appimage-run
-    xorg.xev
     xclip
-    gparted
 
     armcord
     discord-screenaudio # I was forced, mkey?
 
     # Art?
-    krita
     obs-studio
-    simplescreenrecorder
-    darktable
 
     # compressed stuff
     unar
@@ -72,8 +60,6 @@
     retroarchFull # Emulation stuff
     pcsx2
     flycast
-    dolphinEmu
-    rpcs3
     ppsspp
     # }
 
@@ -82,7 +68,6 @@
 
     # Piracy stuff :)
     aria2
-    transmission_4-gtk
 
     # Music stuff
     nicotine-plus

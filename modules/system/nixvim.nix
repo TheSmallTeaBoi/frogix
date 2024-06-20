@@ -1,11 +1,6 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   config = {
-    extraPackages = with pkgs; [black alejandra codespell];
-    # enable = true;
+    extraPackages = with pkgs; [black alejandra codespell ormolu ghc gcc fd];
     opts = {
       updatetime = 100;
       number = true;
@@ -16,39 +11,46 @@
       foldexpr = "nvim_treesitter#foldexpr()";
       foldenable = false;
       signcolumn = "yes";
-      # show spaces
+
+      textwidth = 80;
+      # This means it'll show the colorcolumn at the textwidth
+      colorcolumn = "+0";
+
+      # show spaces and stuff
       listchars = "tab:▸ ,trail:·,nbsp:␣";
     };
     globals = {
       mapleader = " ";
     };
-    extraConfigLua = ''
-      -- Make lsp popups pretty
-      local _border = "rounded"
+    extraConfigLua =
+      # lua
+      ''
+        -- Make lsp popups pretty
+        local _border = "rounded"
 
-      vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
-        vim.lsp.handlers.hover, {
-          border = _border
-        }
-        )
-
-        vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
-          vim.lsp.handlers.signature_help, {
+        vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+          vim.lsp.handlers.hover, {
             border = _border
           }
           )
 
-          vim.diagnostic.config{
-            float={border=_border}
-          };
+          vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+            vim.lsp.handlers.signature_help, {
+              border = _border
+            }
+            )
 
-          require('lspconfig.ui.windows').default_options = {
-            border = _border
-          }
-    '';
-    # defaultEditor = true;
-    viAlias = true;
-    vimAlias = true;
+            vim.diagnostic.config{
+              float={border=_border}
+            };
+
+            require('lspconfig.ui.windows').default_options = {
+              border = _border
+            }
+
+        -- This fixes luasnip.
+        package.preload["jsregexp"] = package.loadlib("${pkgs.lua51Packages.jsregexp}/lib/lua/5.1/jsregexp/core.so", "luaopen_jsregexp_core");
+      '';
     package = pkgs.neovim-unwrapped;
     enableMan = true;
     clipboard.register = "unnamedplus";
@@ -74,8 +76,11 @@
           #nix
           nixd.enable = true;
 
+          # Haskell
+          hls.enable = true;
+
           #python
-          pylsp.enable = true;
+          pyright.enable = true;
           ruff.enable = true;
 
           #bash
@@ -102,6 +107,7 @@
       comment.enable = true;
       telescope.enable = true;
       intellitab.enable = true;
+      indent-o-matic.enable = true;
 
       # Make it pretty
       dressing.enable = true;
@@ -140,7 +146,9 @@
         formattersByFt = {
           # Conform will run multiple formatters sequentially
           python = ["black"];
+
           nix = ["alejandra"];
+
           # Use the "*" filetype to run formatters on all filetypes.
           "*" = ["codespell"];
           # Use the "_" filetype to run formatters on filetypes that don't
@@ -176,16 +184,13 @@
 
       surround.enable = true;
       nvim-autopairs.enable = true;
+      rainbow-delimiters.enable = true;
 
       oil = {
         enable = true;
         settings.defaultFileExplorer = true;
       };
 
-      # Autocomplete
-      # codeium-nvim = {
-      #   enable = true;
-      # };
       cmp = {
         enable = true;
         autoEnableSources = true;
@@ -194,7 +199,6 @@
           snippet = {expand = "luasnip";};
           sources = [
             {name = "nvim_lsp";}
-            # {name = "codeium";}
             {name = "luasnip";}
             {name = "path";}
           ];
@@ -215,11 +219,13 @@
     };
 
     keymaps = [
+      # Oil
       {
         action = "<cmd>Oil .<CR>";
         key = "<Leader>f";
         options.desc = "Open file explorer";
       }
+      # Telescope
       {
         action = "<cmd>Telescope find_files<CR>";
         key = "<Leader>tf";
@@ -235,6 +241,7 @@
         key = "<Leader>tt";
         options.desc = "Find text in project";
       }
+      # LSP
       {
         action = "<cmd>lua vim.lsp.buf.code_action()<CR>";
         key = "<Leader>lc";
@@ -250,6 +257,7 @@
         key = "<Leader>lf";
         options.desc = "Open diagnostic";
       }
+      # Other
       {
         mode = "n";
         action = "<cmd>nohlsearch<CR>";
@@ -262,8 +270,29 @@
       }
       {
         mode = "n";
+        action = "<cmd>HopPattern<CR>";
+        key = "<Leader>/";
+      }
+      {
+        mode = "n";
+        action = "<cmd>HopYankChar1<CR>";
+        key = "<Leader>y";
+      }
+      {
+        mode = "n";
         action = "<cmd>b#<CR>";
         key = "<Leader>b";
+      }
+      # LuaSnip
+      {
+        mode = ["n" "i" "s"];
+        action = "<cmd>lua require('luasnip').jump(-1)<CR>";
+        key = "<C-H>";
+      }
+      {
+        mode = ["n" "i" "s"];
+        action = "<cmd>lua require('luasnip').jump(1)<CR>";
+        key = "<C-L>";
       }
     ];
 

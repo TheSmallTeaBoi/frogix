@@ -46,7 +46,6 @@
       if not set -q TMUX
         set -g TMUX tmux new-session -d -s base
         eval $TMUX
-        tmux new-window -t base:2 -n "Chat" "iamb"
         tmux attach-session -t base
       end
     '';

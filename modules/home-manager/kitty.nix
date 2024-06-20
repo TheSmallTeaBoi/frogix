@@ -1,10 +1,4 @@
-{
-  pkgs,
-  inputs,
-  config,
-  outputs,
-  ...
-}: {
+{...}: {
   programs.kitty = {
     enable = true;
     shellIntegration.enableFishIntegration = true;

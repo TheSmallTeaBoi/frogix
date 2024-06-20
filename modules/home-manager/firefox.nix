@@ -33,7 +33,24 @@
 
   # Tridactyl config
   xdg.configFile."/home/theo/.tridactylrc".text = ''
+
+    " Make sure we start from a clean state
+    sanitise tridactyllocal
+
+    " Set newtab to my dashboard
+    set newtab home.iturriflix.local
+
     " Binds
+
+    bind g1 tab 1
+    bind g3 tab 3
+    bind g5 tab 5
+    bind g7 tab 7
+    bind g2 tab 2
+    bind g4 tab 4
+    bind g6 tab 6
+    bind g8 tab 8
+    bind g9 tab 9
 
     " Comment toggler for Reddit, Hacker News and Lobste.rs
     bind ;c hint -Jc [class*="expand"],[class*="togg"],[class="comment_folder"]

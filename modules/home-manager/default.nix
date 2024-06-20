@@ -22,6 +22,7 @@
     ./tmux.nix
     ./xinit.nix
     ./zellij.nix
+    ./zoxide.nix
   ];
   programs.home-manager.enable = true;
 }
