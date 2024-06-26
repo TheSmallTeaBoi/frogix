@@ -34,9 +34,6 @@
 
     # Random GUI stuff
     feh
-    xfce.thunar
-    xfce.tumbler
-    gnome.gvfs
     cinnamon.warpinator
     maim
     xdotool

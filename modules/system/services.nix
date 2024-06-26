@@ -9,7 +9,15 @@
       KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput
     '';
 
+    # Hide mouse if you don't move it for a while
     unclutter.enable = true;
+
+    # Drive mounting
+    gvfs = {
+      enable = true;
+      package = pkgs.gvfs;
+    };
+    udisks2.enable = true;
 
     # Enable sound.
     pipewire = {

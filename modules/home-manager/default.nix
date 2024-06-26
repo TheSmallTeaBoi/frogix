@@ -1,10 +1,4 @@
-{
-  inputs,
-  outputs,
-  pkgs,
-  config,
-  ...
-}: {
+{...}: {
   imports = [
     ./awesome.nix
     ./firefox.nix

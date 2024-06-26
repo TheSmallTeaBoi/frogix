@@ -8,6 +8,7 @@
     ./droidcam.nix
     ./packages.nix
     # ./nixvim.nix
+    ./thunar.nix
     ./steam.nix
     ./wine.nix
   ];
