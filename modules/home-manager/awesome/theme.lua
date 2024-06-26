@@ -1,6 +1,6 @@
-------------------------------
--- Catppuccin awesome theme --
-------------------------------
+--------------------------------------
+--- Catppuccin Latte awesome theme ---
+--------------------------------------
 
 local theme_assets = require("beautiful.theme_assets")
 local xresources = require("beautiful.xresources")
@@ -13,20 +13,20 @@ local theme = {}
 
 theme.font          = "roboto 11"
 
-backgroundColor = '#1e1e2e'
-foregroundColor = '#89b4fa'
-highlightColor = '#f38ba8'
+backgroundColor = '#eff1f5'
+foregroundColor = '#4c4f69'
+highlightColor = '#ea76cb'
 
 theme.bg_normal     = backgroundColor
 theme.bg_focus      = foregroundColor
-theme.bg_urgent     = "#ff5555"
-theme.bg_minimize   = "#444444"
+theme.bg_urgent     = "#444444"
+theme.bg_minimize   = "#ff5555"
 theme.bg_systray    = theme.bg_normal
 
 theme.fg_normal     = foregroundColor
 theme.fg_focus      = backgroundColor
-theme.fg_urgent     = "#282a36"
-theme.fg_minimize   = "#ffffff"
+theme.fg_urgent     = "#ffffff"
+theme.fg_minimize   = "#282a36"
 
 theme.useless_gap   = dpi(4)
 theme.border_width  = dpi(3)

@@ -1,14 +1,10 @@
-{
-  inputs,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   gtk = {
     enable = true;
     theme = {
-      name = "Catppuccin-Mocha-Compact-Blue-Dark";
+      name = "Catppuccin-Latte-Compact-Blue-Dark";
       package = pkgs.catppuccin-gtk.override {
-        variant = "mocha";
+        variant = "latte";
         accents = ["blue"];
         tweaks = ["normal"];
         size = "compact";
@@ -32,10 +28,10 @@
     };
   };
   home.pointerCursor = {
-    name = "Catppuccin-Mocha-Dark-Cursors";
+    name = "Catppuccin-Latte-Light-Cursors";
     gtk.enable = true;
     x11.enable = true;
     size = 16;
-    package = pkgs.catppuccin-cursors.mochaDark;
+    package = pkgs.catppuccin-cursors.latteLight;
   };
 }

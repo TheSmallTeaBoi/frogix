@@ -48,6 +48,13 @@
     };
   };
 
+  # qt use gtk theme
+  qt = {
+    enable = true;
+    platformTheme = "gnome";
+    style = "adwaita";
+  };
+
   services.displayManager = {
     sddm.enable = true;
     sddm.theme = "catppuccin";

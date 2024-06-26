@@ -58,7 +58,7 @@
     colorschemes.catppuccin = {
       enable = true;
       settings = {
-        flavour = "mocha";
+        flavour = "latte";
         transparent_background = true;
       };
     };

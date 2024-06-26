@@ -1,7 +1,5 @@
 {
-  config,
   pkgs,
-  home-manager,
   lib,
   ...
 }: {
@@ -37,18 +35,21 @@
     # add transient prompt for fish via transient.fish plugin in fish.nix
     # the starship transience module doesn't handle empty commands properly
     # https://github.com/starship/starship/issues/4929
-    interactiveShellInit = lib.mkAfter ''
-      function transient_prompt_func
-        starship module character
-      end
+    interactiveShellInit =
+      lib.mkAfter
+      # fish
+      ''
+        function transient_prompt_func
+          starship module character
+        end
 
-      # Enter tmux if not started
-      if not set -q TMUX
-        set -g TMUX tmux new-session -d -s base
-        eval $TMUX
-        tmux attach-session -t base
-      end
-    '';
+        # Enter tmux if not started
+        if not set -q TMUX
+          set -g TMUX tmux new-session -d -s base
+          eval $TMUX
+          tmux attach-session -t base
+        end
+      '';
   };
 
   # fish plugins, home-manager's programs.fish.plugins has a weird format
@@ -62,9 +63,9 @@
     enableBashIntegration = true;
     enableFishIntegration = true;
     settings = let
-      dir_bg = "blue";
-      accent_style = "bg:${dir_bg} fg:black";
-      important_style = "bg:white fg:black";
+      dir_bg = "#ea76cb";
+      accent_style = "bg:${dir_bg} fg:#4c4f69";
+      important_style = "bg:#4c4f69 fg:#eff1f5";
     in {
       add_newline = false;
       format = lib.concatStrings [
