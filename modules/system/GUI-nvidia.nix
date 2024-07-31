@@ -5,10 +5,11 @@
 }: {
   nixpkgs.config.allowUnfree = true;
 
-  hardware.opengl = {
-    enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
+  hardware = {
+    graphics = {
+      enable = true;
+      enable32Bit = true;
+    };
   };
 
   services.xserver.videoDrivers = ["nvidia"];
@@ -20,7 +21,7 @@
     powerManagement.finegrained = false;
     open = false;
     nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.production;
+    package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
 
   # Enable the X11 windowing system, sddm and set the default session as awesome

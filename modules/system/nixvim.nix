@@ -1,6 +1,14 @@
 {pkgs, ...}: {
   config = {
-    extraPackages = with pkgs; [black alejandra codespell ormolu ghc gcc fd];
+    extraPackages = with pkgs; [
+      black
+      alejandra
+      codespell
+      ormolu
+      ghc
+      gcc
+      fd
+    ];
     opts = {
       updatetime = 100;
       number = true;
@@ -9,8 +17,11 @@
       list = true;
       foldmethod = "expr";
       foldexpr = "nvim_treesitter#foldexpr()";
-      foldenable = false;
+      foldenable = true;
+      foldlevel = 99;
+      scrolloff = 15;
       signcolumn = "yes";
+      fo = "cqj";
 
       textwidth = 80;
       # This means it'll show the colorcolumn at the textwidth
@@ -99,10 +110,6 @@
           "K" = "hover";
         };
       };
-      lsp-lines = {
-        enable = true;
-        currentLine = true;
-      };
       nix.enable = true;
       comment.enable = true;
       telescope.enable = true;
@@ -150,7 +157,7 @@
           nix = ["alejandra"];
 
           # Use the "*" filetype to run formatters on all filetypes.
-          "*" = ["codespell"];
+          #"*" = ["codespell"];
           # Use the "_" filetype to run formatters on filetypes that don't
           # have other formatters configured.
           "_" = ["trim_whitespace"];
@@ -216,6 +223,17 @@
           };
         };
       };
+
+      # cmp-ai.settings = {
+      #   enable = true;
+      #   provider = "Ollama";
+      #   provider_options = {
+      #     model = "codellama:7b";
+      #   };
+      #   max_lines = 50;
+      #   notify = true;
+      #   run_on_every_keystroke = true;
+      # };
     };
 
     keymaps = [

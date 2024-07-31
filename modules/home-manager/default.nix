@@ -9,13 +9,14 @@
     ./kitty.nix
     ./lazygit.nix
     ./picom.nix
-    ./polybar.nix
+    ./aichat.nix
+    #./polybar.nix
     ./rofi.nix
     ./shell.nix
     ./sxhkd.nix
     ./tmux.nix
     ./xinit.nix
-    ./zellij.nix
+    #./zellij.nix
     ./zoxide.nix
   ];
   programs.home-manager.enable = true;

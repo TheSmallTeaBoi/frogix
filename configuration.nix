@@ -16,12 +16,15 @@
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
 
-  services.tailscale.enable = true;
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = ["theo"];
+
+  # services.tailscale.enable = true;
 
   # Set your time zone.
   time.timeZone = "America/Buenos_Aires";
 
-  fonts.packages = with pkgs; [fira-code-nerdfont noto-fonts noto-fonts-lgc-plus];
+  fonts.packages = with pkgs; [fira-code-nerdfont noto-fonts noto-fonts-lgc-plus google-fonts];
 
   # I love zram.
   zramSwap = {
@@ -38,7 +41,6 @@
   };
 
   home-manager.backupFileExtension = "bk";
-  qt.platformTheme = "qt5ct";
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.theo = {

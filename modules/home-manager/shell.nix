@@ -16,6 +16,7 @@
     ];
 
     shellAliases = {
+      l = "eza -lh --icons";
       ls = "eza --icons";
       la = "eza -a --icons";
       ll = "eza -i --icons";

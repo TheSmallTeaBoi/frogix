@@ -2,7 +2,7 @@
   gtk = {
     enable = true;
     theme = {
-      name = "Catppuccin-Latte-Compact-Blue-Dark";
+      name = "Catppuccin-Latte-Compact-Blue-Light";
       package = pkgs.catppuccin-gtk.override {
         variant = "latte";
         accents = ["blue"];
@@ -18,20 +18,20 @@
 
     gtk3.extraConfig = {
       Settings = ''
-        gtk-application-prefer-dark-theme=1
+        gtk-application-prefer-dark-theme=0
       '';
     };
     gtk4.extraConfig = {
       Settings = ''
-        gtk-application-prefer-dark-theme=1
+        gtk-application-prefer-dark-theme=0
       '';
     };
   };
   home.pointerCursor = {
-    name = "Catppuccin-Latte-Light-Cursors";
+    name = "catppuccin-latte-dark-cursors";
     gtk.enable = true;
     x11.enable = true;
     size = 16;
-    package = pkgs.catppuccin-cursors.latteLight;
+    package = pkgs.catppuccin-cursors.latteDark;
   };
 }

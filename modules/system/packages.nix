@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   inputs,
   ...
@@ -17,6 +16,7 @@
     ripgrep
     neofetch
     wget
+    rclone
     git
     pulsemixer
     bottom
@@ -34,8 +34,12 @@
 
     # Random GUI stuff
     feh
+    obsidian # /shrug
+    pandoc
     cinnamon.warpinator
+    scrot
     maim
+    autorandr # Multiple screens suck, man
     xdotool
     appimage-run
     xclip
@@ -43,18 +47,22 @@
     armcord
     discord-screenaudio # I was forced, mkey?
 
+    revolt-desktop
+
     # Art?
     obs-studio
 
     # compressed stuff
+    xarchiver
     unar
     unzip
     zip
     p7zip
 
     # Game stuff
+    superTuxKart
     # Emulation {
-    retroarchFull # Emulation stuff
+    retroarchFull
     pcsx2
     flycast
     ppsspp
