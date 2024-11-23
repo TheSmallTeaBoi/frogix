@@ -27,7 +27,12 @@
   # Enable the X11 windowing system, sddm and set the default session as awesome
   services.xserver = {
     enable = true;
-    xkb.layout = "us";
+    xkb = {
+      layout = "us";
+      options = "compose:menu";
+    };
+    autoRepeatDelay = 250;
+    autoRepeatInterval = 30;
 
     # enable awesomewm
     windowManager.awesome = {

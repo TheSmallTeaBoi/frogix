@@ -4,9 +4,11 @@
   ...
 }: {
   services = {
-    # This is needed for kmonad
+    # This is needed for kmonad and Vial
     udev.extraRules = ''
       KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput
+      KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*vial:f64c2b3c*", MODE="0660", GROUP="users", TAG+="uaccess", TAG+="udev-acl"
+
     '';
 
     # Drive mounting
@@ -16,6 +18,11 @@
     };
 
     udisks2.enable = true;
+
+    dbus = {
+      enable = true;
+      implementation = "broker";
+    };
 
     # Enable sound.
     pipewire = {

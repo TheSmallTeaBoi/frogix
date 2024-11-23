@@ -2,7 +2,7 @@
   gtk = {
     enable = true;
     theme = {
-      name = "Catppuccin-Latte-Compact-Blue-Light";
+      name = "catppuccin-latte-blue-compact+normal";
       package = pkgs.catppuccin-gtk.override {
         variant = "latte";
         accents = ["blue"];
@@ -12,7 +12,7 @@
     };
 
     iconTheme = {
-      name = "Papirus-Dark";
+      name = "Papirus-Light";
       package = pkgs.catppuccin-papirus-folders;
     };
 

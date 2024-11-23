@@ -1,5 +1,6 @@
 {
   imports = [
+    # ./kernel.nix
     # ./nixvim.nix
     ./GUI-nvidia.nix
     ./boot.nix
@@ -11,5 +12,6 @@
     ./steam.nix
     ./thunar.nix
     ./wine.nix
+    ./musnix.nix
   ];
 }

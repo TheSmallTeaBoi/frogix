@@ -4,13 +4,13 @@
   ...
 }: {
   boot = {
-    kernelPackages = pkgs.linuxPackages_latest; # I live in the edge
+    kernelPackages = pkgs.linuxPackages_xanmod_latest; # I live in the edge
     extraModulePackages = [
       config.boot.kernelPackages.v4l2loopback
     ];
-    kernel.sysctl = {
-      "vm.swappiness" = 200;
-    };
+    extraModprobeConfig = ''
+      options v4l2loopback exclusive_caps=1
+    '';
     kernelParams = [
       "quiet"
     ];

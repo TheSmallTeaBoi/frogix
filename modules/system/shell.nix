@@ -1,10 +1,4 @@
-{
-  config,
-  inputs,
-  outputs,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   programs.fish = {
     enable = true;
     promptInit = ''
@@ -23,6 +17,7 @@
       XDG_CONFIG_HOME = "$HOME/.config";
       XDG_STATE_HOME = "$HOME/.local/state";
       XDG_CACHE_HOME = "$HOME/.cache";
+      SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS = "0";
     };
   };
 }

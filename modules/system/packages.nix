@@ -25,9 +25,16 @@
     yt-dlp
     ffmpeg
     iamb
+    qmk
+    qmk-udev-rules
+    playerctl
+    picotts
+
+    vial
 
     # Coding, I guess
     inputs.self.packages.x86_64-linux.neovim
+    inputs.nix-alien.packages.x86_64-linux.nix-alien
     vim
     vimgolf
     devenv
@@ -44,8 +51,7 @@
     appimage-run
     xclip
 
-    armcord
-    discord-screenaudio # I was forced, mkey?
+    vesktop
 
     revolt-desktop
 
@@ -60,7 +66,7 @@
     p7zip
 
     # Game stuff
-    superTuxKart
+    openjdk22
     # Emulation {
     retroarchFull
     pcsx2
@@ -69,6 +75,7 @@
     # }
 
     logmein-hamachi # my beloved
+    parsec-bin # actual black magic.
     protontricks
 
     # Piracy stuff :)
@@ -80,8 +87,50 @@
     mpv
     tauon # The best music player to ever exist
 
+    # Music making
+
+    AMB-plugins
+    aether-lv2
+    autotalent
+    bchoppr
+    calf
+    caps
+    carla
+    chow-centaur
+    chow-kick
+    chow-phaser
+    chow-tape-model
+    cmt
+    dexed
+    distrho
+    dragonfly-reverb
+    drumkv1
+    eq10q
+    geonkick
+    guitarix
+    helm
+    infamousPlugins
+    lsp-plugins
+    mod-distortion
+    ninjas2
+    noise-repellent
+    oxefmsynth
+    plugdata
+    quadrafuzz
+    samplv1
+    sfizz
+    sorcer
+    surge-XT
+    synthv1
+    tap-plugins
+    vital
+    x42-plugins
+    zam-plugins
+    zita-at1
+    zynaddsubfx
+
     # Misc
-    haskellPackages.kmonad
+    # haskellPackages.kmonad
     btrfs-progs # btrfs my beloved
     rofi-power-menu
     rofi-pulse-select

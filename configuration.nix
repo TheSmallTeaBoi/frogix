@@ -45,7 +45,7 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.theo = {
     isNormalUser = true;
-    extraGroups = ["wheel" "input" "uinput"]; # Enable ‘sudo’ for the user.
+    extraGroups = ["wheel" "input" "uinput" "audio"];
   };
 
   # Disable the firewall altogether.

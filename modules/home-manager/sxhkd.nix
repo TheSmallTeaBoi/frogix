@@ -33,6 +33,9 @@ in {
   services.sxhkd = {
     enable = true;
     keybindings = {
+      "XF86AudioRaiseVolume" = "pulsemixer --change-volume +5 --max-volume 100";
+      "XF86AudioLowerVolume" = "pulsemixer --change-volume -5 --max-volume 100";
+      "XF86AudioPlay" = "playerctl play-pause";
       "super + d" = "rofi -show drun";
       "Print" = "scrot -s -f -e 'xclip -selection clipboard -t image/png -i $f' /tmp/scrot.png";
       "shift + Print" = maimScreen;
