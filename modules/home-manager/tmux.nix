@@ -21,7 +21,7 @@
 
 
         # Catppuccin theme
-        set -g @catppuccin_flavour 'latte'
+        set -g @catppuccin_flavour 'mocha'
         set -g @catppuccin_window_left_separator ""
         set -g @catppuccin_window_middle_separator "█  "
         set -g @catppuccin_window_right_separator "█ "

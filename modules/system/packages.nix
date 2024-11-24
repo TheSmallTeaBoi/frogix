@@ -43,7 +43,7 @@
     feh
     obsidian # /shrug
     pandoc
-    cinnamon.warpinator
+    warpinator
     scrot
     maim
     autorandr # Multiple screens suck, man
@@ -66,7 +66,6 @@
     p7zip
 
     # Game stuff
-    openjdk22
     # Emulation {
     retroarchFull
     pcsx2
@@ -102,7 +101,7 @@
     chow-tape-model
     cmt
     dexed
-    distrho
+    distrho-ports
     dragonfly-reverb
     drumkv1
     eq10q

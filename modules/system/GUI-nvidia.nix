@@ -27,6 +27,8 @@
   # Enable the X11 windowing system, sddm and set the default session as awesome
   services.xserver = {
     enable = true;
+    dpi = 96;
+    upscaleDefaultCursor = true;
     xkb = {
       layout = "us";
       options = "compose:menu";

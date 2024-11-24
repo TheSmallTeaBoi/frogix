@@ -3,13 +3,13 @@
     enable = true;
     settings = {
       gui.theme = {
-        # Use the catppuccin latte theme
+        # Use the catppuccin mocha theme
         activeBorderColor = [
           "#89b4fa"
           "bold"
         ];
-        inactiveBorderColor = ["#6c6f85"];
-        optionsTextColor = ["#1e66f5"];
+        inactiveBorderColor = ["#a6adc8"];
+        optionsTextColor = ["#89b4fa"];
         selectedLineBgColor = ["#313244"];
         selectedRangeBgColor = ["#313244"];
         cherryPickedCommitBgColor = ["#bcc0cc"];

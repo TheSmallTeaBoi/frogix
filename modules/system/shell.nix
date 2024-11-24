@@ -18,6 +18,7 @@
       XDG_STATE_HOME = "$HOME/.local/state";
       XDG_CACHE_HOME = "$HOME/.cache";
       SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS = "0";
+      XCURSOR_SIZE = "8";
     };
   };
 }

@@ -3,8 +3,9 @@
     enable = true;
     shellIntegration.enableFishIntegration = true;
     font.name = "FiraCode Nerd Font Mono";
-    theme = "Catppuccin-Latte";
+    themeFile = "Catppuccin-Mocha";
     settings = {
+      font_size = 10;
       confirm_os_window_close = 0;
       window_padding_width = 18;
       tab_bar_min_tabs = 2;

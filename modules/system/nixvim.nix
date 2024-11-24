@@ -69,26 +69,26 @@
     colorschemes.catppuccin = {
       enable = true;
       settings = {
-        flavour = "latte";
+        flavour = "mocha";
         transparent_background = true;
       };
     };
     plugins = {
       treesitter = {
         enable = true;
-        ensureInstalled = [
-          "all"
-        ];
+        settings = {
+          ensure_installed = [
+            "all"
+          ];
+        };
         nixvimInjections = true;
       };
+      web-devicons.enable = true;
       lsp = {
         enable = true;
         servers = {
           #nix
           nixd.enable = true;
-
-          # Haskell
-          hls.enable = true;
 
           #python
           pyright.enable = true;
@@ -98,7 +98,7 @@
           bashls.enable = true;
 
           #lua
-          lua-ls.enable = true;
+          lua_ls.enable = true;
 
           #filesystem
           fsautocomplete.enable = true;
@@ -147,26 +147,26 @@
 
       conform-nvim = {
         enable = true;
-        extraOptions = {
+        settings = {
           lsp_fallback = true;
-        };
-        formattersByFt = {
-          # Conform will run multiple formatters sequentially
-          python = ["black"];
+          formatters_by_ft = {
+            # Conform will run multiple formatters sequentially
+            python = ["black"];
 
-          nix = ["alejandra"];
+            nix = ["alejandra"];
 
-          # Use the "*" filetype to run formatters on all filetypes.
-          #"*" = ["codespell"];
-          # Use the "_" filetype to run formatters on filetypes that don't
-          # have other formatters configured.
-          "_" = ["trim_whitespace"];
+            # Use the "*" filetype to run formatters on all filetypes.
+            #"*" = ["codespell"];
+            # Use the "_" filetype to run formatters on filetypes that don't
+            # have other formatters configured.
+            "_" = ["trim_whitespace"];
+          };
         };
       };
 
       luasnip = {
         enable = true;
-        extraConfig = {
+        settings = {
           enable_autosnippets = true;
         };
         fromVscode = [
@@ -179,17 +179,9 @@
 
       which-key = {
         enable = true;
-        registrations = {
-          "gd" = "Go to definition";
-          "gD" = "Go to uses";
-          "gi" = "Go to implementation";
-          "K" = "Hover info";
-          "<Leader>l" = "+lsp";
-          "<Leader>t" = "+telescope";
-        };
       };
 
-      surround.enable = true;
+      vim-surround.enable = true;
       nvim-autopairs.enable = true;
       rainbow-delimiters.enable = true;
 

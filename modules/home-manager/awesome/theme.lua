@@ -1,5 +1,5 @@
 --------------------------------------
---- Catppuccin Latte awesome theme ---
+--- Catppuccin Mocha awesome theme ---
 --------------------------------------
 
 local theme_assets = require("beautiful.theme_assets")
@@ -13,26 +13,26 @@ local theme = {}
 
 theme.font          = "roboto 11"
 
-backgroundColor = '#eff1f5'
-foregroundColor = '#4c4f69'
-highlightColor = '#ea76cb'
+backgroundColor = '#1e1e2e'
+foregroundColor = '#cdd6f4'
+highlightColor = '#89b4fa'
 
 theme.bg_normal     = backgroundColor
 theme.bg_focus      = foregroundColor
-theme.bg_urgent     = "#444444"
-theme.bg_minimize   = "#ff5555"
+theme.bg_urgent     = "#f38ba8"
+theme.bg_minimize   = "#f38ba8"
 theme.bg_systray    = theme.bg_normal
 
 theme.fg_normal     = foregroundColor
 theme.fg_focus      = backgroundColor
-theme.fg_urgent     = "#ffffff"
+theme.fg_urgent     = "#000000"
 theme.fg_minimize   = "#282a36"
 
 theme.useless_gap   = dpi(4)
 theme.border_width  = dpi(3)
 theme.border_normal = backgroundColor
 theme.border_focus  = highlightColor
-theme.border_marked = "#91231c"
+theme.border_marked = theme.bg_urgent
 
 -- There are other variable sets
 -- overriding the default one when

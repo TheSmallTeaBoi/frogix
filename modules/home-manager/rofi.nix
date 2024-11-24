@@ -1,7 +1,7 @@
 {pkgs, ...}: {
   programs.rofi = {
     enable = true;
-    theme = "catppuccin-latte";
+    theme = "catppuccin-mocha";
     plugins = [pkgs.rofi-emoji pkgs.rofi-calc];
     extraConfig = {
       modi = "run,drun,window";
@@ -21,21 +21,21 @@
   };
 
   # Catppuccin theme
-  xdg.configFile."/home/theo/.config/rofi/catppuccin-latte.rasi".text =
+  xdg.configFile."/home/theo/.config/rofi/catppuccin-mocha.rasi".text =
     #rasi
     ''
       * {
-        bg-col:  #eff1f5;
-        bg-col-light: #eff1f5;
-        border-col: #eff1f5;
-        selected-col: #eff1f5;
-        blue: #1e66f5;
-        fg-col: #4c4f69;
-        fg-col2: #d20f39;
-        grey: #9ca0b0;
+          bg-col:  #1e1e2e;
+          bg-col-light: #1e1e2e;
+          border-col: #1e1e2e;
+          selected-col: #1e1e2e;
+          blue: #89b4fa;
+          fg-col: #cdd6f4;
+          fg-col2: #f38ba8;
+          grey: #6c7086;
 
-        width: 600;
-        font: "JetBrainsMono Nerd Font 14";
+          width: 600;
+          font: "JetBrainsMono Nerd Font 14";
       }
 
       element-text, element-icon , mode-switcher {
@@ -135,6 +135,5 @@
           text-color: @blue;
           background-color: @bg-col-light;
       }
-
     '';
 }
