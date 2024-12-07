@@ -31,8 +31,8 @@ theme.fg_minimize   = "#282a36"
 theme.useless_gap   = dpi(4)
 theme.border_width  = dpi(3)
 theme.border_normal = backgroundColor
-theme.border_focus  = highlightColor
-theme.border_marked = theme.bg_urgent
+theme.border_focus  = theme.bg_urgent
+theme.border_marked = foregroundColor
 
 -- There are other variable sets
 -- overriding the default one when

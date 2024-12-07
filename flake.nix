@@ -14,6 +14,11 @@
 
     nix-alien = {url = "github:thiagokokada/nix-alien";};
 
+    yeetmouse = {
+      url = "github:AndyFilter/YeetMouse?dir=nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,6 +28,7 @@
     nixpkgs,
     nixvim,
     home-manager,
+    yeetmouse,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -41,6 +47,7 @@
           ./modules
           home-manager.nixosModules.home-manager
           inputs.musnix.nixosModules.musnix
+          yeetmouse.nixosModules.default
         ];
       };
     };

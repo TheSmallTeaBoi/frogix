@@ -38,6 +38,18 @@
 
   hardware = {
     uinput.enable = true;
+    yeetmouse = {
+      enable = true;
+      parameters = {
+        AccelerationMode = "jump";
+        Acceleration = 3.0;
+        PreScale = 0.50;
+        Sensitivity = 0.80;
+        Midpoint = 8.00;
+        UseSmoothing = false;
+        ScrollsPerTick = 1;
+      };
+    };
   };
 
   home-manager.backupFileExtension = "bk";

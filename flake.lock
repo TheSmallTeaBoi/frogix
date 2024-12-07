@@ -430,7 +430,8 @@
         "musnix": "musnix",
         "nix-alien": "nix-alien",
         "nixpkgs": "nixpkgs_3",
-        "nixvim": "nixvim"
+        "nixvim": "nixvim",
+        "yeetmouse": "yeetmouse"
       }
     },
     "systems": {
@@ -481,6 +482,28 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "yeetmouse": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "dir": "nix",
+        "lastModified": 1732383166,
+        "narHash": "sha256-07Eg0GDir4szztV0S5imLmwytalB2viEPqHAamRpVxM=",
+        "owner": "AndyFilter",
+        "repo": "YeetMouse",
+        "rev": "df1e44b18522c483d8858b85dd5887798a7d2867",
+        "type": "github"
+      },
+      "original": {
+        "dir": "nix",
+        "owner": "AndyFilter",
+        "repo": "YeetMouse",
         "type": "github"
       }
     }

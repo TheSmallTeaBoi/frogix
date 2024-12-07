@@ -56,7 +56,7 @@
     };
   };
 
-  # qt use gtk theme
+  # Make qt use gtk theme
   qt = {
     enable = true;
     platformTheme = "gnome";

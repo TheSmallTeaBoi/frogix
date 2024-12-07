@@ -28,10 +28,15 @@
     };
   };
   home.pointerCursor = {
-    name = "catppuccin-mocha-dark-cursors";
+    name = "catppuccin-mocha-light-cursors";
     gtk.enable = true;
     x11.enable = true;
     size = 8;
-    package = pkgs.catppuccin-cursors.mochaDark;
+    package = pkgs.catppuccin-cursors.mochaLight;
+  };
+  qt = {
+    enable = true;
+    platformTheme.name = "adwaita";
+    style.name = "adwaita";
   };
 }

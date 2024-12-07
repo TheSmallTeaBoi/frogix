@@ -5,7 +5,7 @@
     font.name = "FiraCode Nerd Font Mono";
     themeFile = "Catppuccin-Mocha";
     settings = {
-      font_size = 10;
+      font_size = 11;
       confirm_os_window_close = 0;
       window_padding_width = 18;
       tab_bar_min_tabs = 2;

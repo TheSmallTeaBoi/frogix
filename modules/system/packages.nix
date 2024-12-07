@@ -50,6 +50,7 @@
     xdotool
     appimage-run
     xclip
+    easyeffects
 
     vesktop
 
@@ -127,6 +128,8 @@
     zam-plugins
     zita-at1
     zynaddsubfx
+
+    rubberband
 
     # Misc
     # haskellPackages.kmonad
