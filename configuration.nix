@@ -38,18 +38,6 @@
 
   hardware = {
     uinput.enable = true;
-    yeetmouse = {
-      enable = true;
-      parameters = {
-        AccelerationMode = "jump";
-        Acceleration = 3.0;
-        PreScale = 0.50;
-        Sensitivity = 0.80;
-        Midpoint = 8.00;
-        UseSmoothing = false;
-        ScrollsPerTick = 1;
-      };
-    };
   };
 
   home-manager.backupFileExtension = "bk";
@@ -62,6 +50,52 @@
 
   # Disable the firewall altogether.
   networking.firewall.enable = false;
+
+  # Enable Theme
+  environment.variables.GTK_THEME = "catppuccin-mocha-teal-standard";
+  environment.variables.HYPRCURSOR_SIZE = "8";
+  qt.enable = true;
+  qt.platformTheme = "gtk2";
+  qt.style = "gtk2";
+
+  console = {
+    earlySetup = true;
+    colors = [
+      "24273a"
+      "ed8796"
+      "a6da95"
+      "eed49f"
+      "8aadf4"
+      "f5bde6"
+      "8bd5ca"
+      "cad3f5"
+      "5b6078"
+      "ed8796"
+      "a6da95"
+      "eed49f"
+      "8aadf4"
+      "f5bde6"
+      "8bd5ca"
+      "a5adcb"
+    ];
+  };
+
+  # Override packages
+  nixpkgs.config.packageOverrides = pkgs: {
+    colloid-icon-theme = pkgs.colloid-icon-theme.override {colorVariants = ["teal"];};
+    catppuccin-gtk = pkgs.catppuccin-gtk.override {
+      accents = ["teal"];
+      size = "standard";
+      variant = "mocha";
+    };
+  };
+
+  environment.systemPackages = with pkgs; [
+    numix-icon-theme-circle
+    colloid-icon-theme
+    catppuccin-gtk
+    catppuccin-kvantum
+  ];
 
   # Copy the NixOS configuration file and link it from the resulting system
   # (/run/current-system/configuration.nix). This is useful in case you

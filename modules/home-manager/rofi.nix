@@ -21,7 +21,7 @@
   };
 
   # Catppuccin theme
-  xdg.configFile."/home/theo/.config/rofi/catppuccin-mocha.rasi".text =
+  xdg.configFile."rofi/catppuccin-mocha.rasi".text =
     #rasi
     ''
       * {

@@ -8,10 +8,14 @@
     # Ricing stuff
     fira-code-nerdfont
     catppuccin-papirus-folders
-    polybar
+    waybar
+    waybar-mpris
+    mako
     rofi
 
     # Terminal tools
+    clipse
+    wl-clipboard
     fzf
     ripgrep
     neofetch
@@ -44,13 +48,10 @@
     obsidian # /shrug
     pandoc
     warpinator
-    scrot
-    maim
-    autorandr # Multiple screens suck, man
-    xdotool
+    grimblast
     appimage-run
-    xclip
     easyeffects
+    nautilus
 
     vesktop
 
@@ -132,7 +133,6 @@
     rubberband
 
     # Misc
-    # haskellPackages.kmonad
     btrfs-progs # btrfs my beloved
     rofi-power-menu
     rofi-pulse-select

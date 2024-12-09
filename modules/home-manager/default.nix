@@ -1,6 +1,6 @@
 {...}: {
   imports = [
-    ./awesome.nix
+    #./awesome.nix
     ./firefox.nix
     ./git.nix
     ./gtk.nix
@@ -10,12 +10,14 @@
     ./lazygit.nix
     ./picom.nix
     ./aichat.nix
+    ./mako.nix
     #./polybar.nix
     ./rofi.nix
     ./shell.nix
-    ./sxhkd.nix
+    #./sxhkd.nix
     ./tmux.nix
-    ./xinit.nix
+    ./hyprland.nix
+    #./xinit.nix
     #./zellij.nix
     ./zoxide.nix
   ];

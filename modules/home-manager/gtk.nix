@@ -1,15 +1,6 @@
 {pkgs, ...}: {
   gtk = {
     enable = true;
-    theme = {
-      name = "catppuccin-mocha-blue-compact+normal";
-      package = pkgs.catppuccin-gtk.override {
-        variant = "mocha";
-        accents = ["blue"];
-        tweaks = ["normal"];
-        size = "standard";
-      };
-    };
 
     iconTheme = {
       name = "Papirus-Dark";
@@ -19,11 +10,13 @@
     gtk3.extraConfig = {
       Settings = ''
         gtk-application-prefer-dark-theme=1
+        gtk-cursor-theme-size=8
       '';
     };
     gtk4.extraConfig = {
       Settings = ''
         gtk-application-prefer-dark-theme=1
+        gtk-cursor-theme-size=8
       '';
     };
   };
@@ -36,7 +29,7 @@
   };
   qt = {
     enable = true;
-    platformTheme.name = "adwaita";
-    style.name = "adwaita";
+    platformTheme.name = "adwaita-dark";
+    style.name = "adwaita-dark";
   };
 }

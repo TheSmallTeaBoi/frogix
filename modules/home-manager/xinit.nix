@@ -1,5 +1,5 @@
 {...}: {
-  xdg.configFile."/home/theo/.xprofile".text =
+  xdg.configFile.".xprofile".text =
     #bash
     ''
       exec xrandr --output DP-3 --primary &

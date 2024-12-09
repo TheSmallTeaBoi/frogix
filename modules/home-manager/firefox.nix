@@ -34,7 +34,7 @@
   };
 
   # Tridactyl config
-  xdg.configFile."/home/theo/.tridactylrc".text =
+  xdg.configFile.".tridactylrc".text =
     #vim
     ''
 

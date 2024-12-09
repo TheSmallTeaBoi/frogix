@@ -2,6 +2,7 @@
   imports = [
     # ./kernel.nix
     # ./nixvim.nix
+    ./yeetmouse.nix
     ./GUI-nvidia.nix
     ./boot.nix
     ./droidcam.nix

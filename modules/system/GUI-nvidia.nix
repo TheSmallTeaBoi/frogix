@@ -1,4 +1,5 @@
 {
+  inputs,
   config,
   pkgs,
   ...
@@ -24,49 +25,31 @@
     package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
 
-  # Enable the X11 windowing system, sddm and set the default session as awesome
-  services.xserver = {
+  programs.hyprland = {
     enable = true;
-    dpi = 96;
-    upscaleDefaultCursor = true;
-    xkb = {
-      layout = "us";
-      options = "compose:menu";
-    };
-    autoRepeatDelay = 250;
-    autoRepeatInterval = 30;
-
-    # enable awesomewm
-    windowManager.awesome = {
-      enable = true;
-      luaModules = with pkgs.luaPackages; [
-        luarocks
-        luadbi-mysql
-      ];
-    };
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
+    portalPackage = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
   };
 
   services.libinput = {
     enable = true;
 
-    # all my homies hate mouse acceleration
+    # all my homies love mouse acceleration
+    # but the libinput one is useless, doesn't get recognized by
+    # games that use raw input, which makes sense but isn't what
+    # a gamer wants.
+    # for the actual config, chech `./yeetmouse.nix`
     mouse = {
       accelProfile = "flat";
       middleEmulation = false;
     };
   };
 
-  # Make qt use gtk theme
-  qt = {
-    enable = true;
-    platformTheme = "gnome";
-    style = "adwaita";
-  };
-
   services.displayManager = {
     sddm.enable = true;
     sddm.theme = "catppuccin";
-    defaultSession = "none+awesome";
+    sddm.wayland.enable = true;
+    defaultSession = "hyprland";
     autoLogin = {
       enable = true;
       user = "theo";

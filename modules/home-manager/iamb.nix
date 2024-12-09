@@ -1,11 +1,5 @@
-{
-  inputs,
-  outputs,
-  pkgs,
-  config,
-  ...
-}: {
-  xdg.configFile."/home/theo/.config/iamb/config.toml".text = ''
+{config, ...}: {
+  xdg.configFile."iamb/config.toml".text = ''
     [profiles.user]
     user_id = "@thesmallteaboi:matrix.org"
 
@@ -17,6 +11,6 @@
     username_display = "displayname"
 
     [dirs]
-    downloads = '/home/theo/Data/Unorganized/iamb/'
+    downloads = '${config.home.homeDirectory}/Unorganized/iamb/'
   '';
 }
