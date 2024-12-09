@@ -129,10 +129,6 @@ in {
           };
         };
 
-        # "hyprland/workspaces" = {
-        #   persistent-workspaces = ["1"];
-        # };
-
         "custom/waybar-mpris" = {
           "return-type" = "json";
           "exec" = "waybar-mpris --position --autofocus --pause '' --play '' --separator '  '";
@@ -229,6 +225,10 @@ in {
             border-radius: 5px;
             padding: 0 10px;
             margin: 0 5px;
+        }
+
+        window#waybar.empty #window {
+            background-color: transparent;
         }
 
         #clock {

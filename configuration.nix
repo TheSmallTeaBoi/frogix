@@ -12,16 +12,10 @@
   nix.settings.trusted-users = ["root" "@wheel"];
 
   networking.hostName = "ratholomew"; # Define your hostname.
-  # Pick only one of the below networking options.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  # networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
 
   virtualisation.virtualbox.host.enable = true;
   users.extraGroups.vboxusers.members = ["theo"];
 
-  # services.tailscale.enable = true;
-
-  # Set your time zone.
   time.timeZone = "America/Buenos_Aires";
 
   fonts.packages = with pkgs; [fira-code-nerdfont noto-fonts noto-fonts-lgc-plus google-fonts];
