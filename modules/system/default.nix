@@ -9,7 +9,6 @@
     ./services.nix
     ./shell.nix
     ./steam.nix
-    ./thunar.nix
     ./wine.nix
     ./musnix.nix
   ];

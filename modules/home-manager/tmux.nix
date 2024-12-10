@@ -12,6 +12,10 @@
         set -g prefix M-a
         set -g status-position bottom
 
+        # Set titles correctly
+        set -g set-titles on
+        set -g set-titles-string "#T"
+
         # 0-Index makes sense for offsets, not this.
         set -g base-index 1
         setw -g pane-base-index 1

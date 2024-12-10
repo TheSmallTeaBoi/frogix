@@ -11,6 +11,9 @@
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.settings.trusted-users = ["root" "@wheel"];
 
+  # This could a default at this point lol.
+  nix.optimise.automatic = true;
+
   networking.hostName = "ratholomew"; # Define your hostname.
 
   virtualisation.virtualbox.host.enable = true;
@@ -46,8 +49,11 @@
   networking.firewall.enable = false;
 
   # Enable Theme
-  environment.variables.GTK_THEME = "catppuccin-mocha-teal-standard";
-  environment.variables.HYPRCURSOR_SIZE = "8";
+  environment.variables = {
+    HYPRCURSOR_SIZE = "8";
+    GTK_THEME = "catppuccin-mocha-teal-standard";
+    NIXOS_OZONE_WL = 1;
+  };
   qt.enable = true;
   qt.platformTheme = "gtk2";
   qt.style = "gtk2";

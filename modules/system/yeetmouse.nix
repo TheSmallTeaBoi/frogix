@@ -1,12 +1,12 @@
 {pkgs, ...}: let
-  accel = 0.5;
+  accel = 0.2;
   accelMode = "linear";
   accelModeNum = 1;
   preScale = 0.5;
   sens = 0.5;
   midpoint = 6.0;
   useSmoothing = false;
-  offset = 6.0;
+  offset = 3.0;
   outputCap = 0.0;
   inputCap = 0.0;
   exponent = 1.0;

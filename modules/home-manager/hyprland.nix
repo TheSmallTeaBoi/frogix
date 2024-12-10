@@ -19,13 +19,16 @@ in {
 
       general = {
         border_size = 3;
-        gaps_out = 10;
+        gaps_out = [0 10 10 10];
         "col.active_border" = "0xf38ba8ff";
         animation = [
           "workspaces, 1, 2.5, easeOutQuart"
           "windows, 1, 2.5, easeOutQuart, slide"
           "fade, 1, 2, easeOutQuart"
         ];
+        snap = {
+          enabled = true;
+        };
       };
 
       curves = {
@@ -41,7 +44,8 @@ in {
       input = {
         repeat_delay = 180;
         repeat_rate = 60;
-        force_no_accel = true;
+        accel_profile = "flat";
+        kb_options = "compose:menu";
       };
 
       env = [
@@ -57,6 +61,7 @@ in {
       ];
 
       windowrulev2 = [
+        "workspace 3 silent, class:(steam)"
         "workspace 2 silent, class:(vesktop)"
         "workspace 1 silent, class:(firefox)"
         "float,class:(clipse)"
@@ -73,7 +78,12 @@ in {
         [
           "$mod, Return, exec, kitty"
           "$mod, R, exec, kitty --class clipse -e 'clipse'"
+
           "$mod, D, exec, rofi -show drun"
+          "$mod, C, exec, rofi -show calc -modi calc -no-show-match -no-sort"
+          "$mod, Period, exec, rofi -modi emoji -show emoji"
+
+          "$mod, E, exec, nautilus"
 
           "$mod, T, killactive"
           "$mod, TAB, workspace, previous"

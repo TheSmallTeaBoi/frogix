@@ -10,7 +10,6 @@ NixOS my beloved
    - You can run my nixvim config by itself too. `nix run github:thesmallteaboi/frogix#neovim`
 ![Neovim](/images/image3.png)
 - Tmux-based workflow with the Fish shell
-![Tmux](/images/image4.png)
 
 - Using flakes because that's the correct way of using nix.
 - Using [home-manager](https://github.com/nix-community/home-manager).

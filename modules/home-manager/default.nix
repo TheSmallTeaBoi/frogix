@@ -1,6 +1,7 @@
 {...}: {
   imports = [
     ./aichat.nix
+    ./desktop.nix
     ./firefox.nix
     ./git.nix
     ./gtk.nix
