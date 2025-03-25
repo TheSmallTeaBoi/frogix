@@ -4,7 +4,7 @@
   ...
 }: {
   boot = {
-    kernelPackages = pkgs.linuxPackages_xanmod_latest; # I live in the edge
+    kernelPackages = pkgs.linuxPackages_xanmod;
     extraModulePackages = [
       config.boot.kernelPackages.v4l2loopback
     ];

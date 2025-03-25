@@ -1,12 +1,12 @@
 {pkgs, ...}: let
-  accel = 0.2;
+  accel = 0.5;
   accelMode = "linear";
   accelModeNum = 1;
   preScale = 0.5;
   sens = 0.5;
   midpoint = 6.0;
   useSmoothing = false;
-  offset = 3.0;
+  offset = 5.0;
   outputCap = 0.0;
   inputCap = 0.0;
   exponent = 1.0;
@@ -44,6 +44,6 @@ in {
       ${echo} "1" > /sys/module/leetmouse/parameters/update
     '';
   in ''
-    ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="c53f", RUN+="/bin/sh -c 'echo -n 1-9:1.1 > /sys/bus/usb/drivers/usbhid/unbind; echo -n 1-9:1.1 > /sys/bus/usb/drivers/leetmouse/bind; ${yeetmouseConfig}/bin/yeetmouseConfig'"
+    ACTION=="add|bind|change", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="c53f", RUN+="/bin/sh -c 'echo -n 1-9:1.1 > /sys/bus/usb/drivers/usbhid/unbind; echo -n 1-9:1.1 > /sys/bus/usb/drivers/leetmouse/bind; ${yeetmouseConfig}/bin/yeetmouseConfig'"
   '';
 }

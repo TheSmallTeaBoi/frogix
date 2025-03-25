@@ -31,6 +31,12 @@ in {
         };
       };
 
+      cursor = {
+        enable_hyprcursor = false;
+        no_hardware_cursors = true;
+        # allow_dumb_copy = false;
+      };
+
       curves = {
         bezier = "easeOutQuart, 0.25, 1, 0.5, 1";
       };
@@ -49,15 +55,20 @@ in {
       };
 
       env = [
+        "LIBVA_DRIVER_NAME,nvidia"
+        "XDG_SESSION_TYPE,wayland"
+        "GBM_BACKEND,nvidia-drm"
+        " __GLX_VENDOR_LIBRARY_NAME,nvidia"
       ];
 
       exec-once = [
-        "sleep 1 && waybar"
+        "sleep 20 && ${pkgs.waybar}/bin/waybar"
         "nicotine -n"
-        "clipse -listen"
+        "${pkgs.clipse}/bin/clipse -listen"
         "firefox"
         "vesktop"
-        "mako"
+        "${pkgs.xorg.xsetroot}/bin/xsetroot -cursor_name left_ptr"
+        "${pkgs.mako}/bin/mako"
       ];
 
       windowrulev2 = [
@@ -66,6 +77,7 @@ in {
         "workspace 1 silent, class:(firefox)"
         "float,class:(clipse)"
         "size 622 652,class:(clipse)"
+        "noblur, class:^(plugdata)$"
       ];
 
       workspace = [
@@ -77,13 +89,13 @@ in {
       bind =
         [
           "$mod, Return, exec, kitty"
-          "$mod, R, exec, kitty --class clipse -e 'clipse'"
+          "$mod, R, exec, kitty --class ${pkgs.clipse}/bin/clipse -e 'clipse'"
 
           "$mod, D, exec, rofi -show drun"
           "$mod, C, exec, rofi -show calc -modi calc -no-show-match -no-sort"
           "$mod, Period, exec, rofi -modi emoji -show emoji"
 
-          "$mod, E, exec, nautilus"
+          "$mod, E, exec, nemo" # File manager
 
           "$mod, T, killactive"
           "$mod, TAB, workspace, previous"

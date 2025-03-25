@@ -13,6 +13,11 @@
 
     udisks2.enable = true;
 
+    # Does anyone know how to only apply this to SSDs?
+    fstrim.enable = true;
+
+    ratbagd.enable = true;
+
     dbus = {
       enable = true;
       implementation = "broker";
@@ -26,6 +31,8 @@
       pulse.enable = true;
       jack.enable = true;
     };
+
+    # tailscale.enable = true;
 
     # Enable the OpenSSH daemon.
     openssh.enable = true;

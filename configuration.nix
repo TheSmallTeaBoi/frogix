@@ -21,7 +21,7 @@
 
   time.timeZone = "America/Buenos_Aires";
 
-  fonts.packages = with pkgs; [fira-code-nerdfont noto-fonts noto-fonts-lgc-plus google-fonts];
+  fonts.packages = with pkgs; [nerd-fonts.fira-code noto-fonts noto-fonts-lgc-plus google-fonts];
 
   # I love zram.
   zramSwap = {
@@ -48,11 +48,16 @@
   # Disable the firewall altogether.
   networking.firewall.enable = false;
 
+  nixpkgs.config = {allowUnfree = true;};
+
+  programs.java = {
+    enable = true;
+  };
+
   # Enable Theme
   environment.variables = {
     HYPRCURSOR_SIZE = "8";
     GTK_THEME = "catppuccin-mocha-teal-standard";
-    NIXOS_OZONE_WL = 1;
   };
   qt.enable = true;
   qt.platformTheme = "gtk2";

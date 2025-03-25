@@ -8,6 +8,7 @@
       ghc
       gcc
       fd
+      prettierd
     ];
     opts = {
       updatetime = 100;
@@ -22,6 +23,9 @@
       scrolloff = 15;
       signcolumn = "yes";
       fo = "cqj";
+      tabstop = 2;
+      shiftwidth = 2;
+      expandtab = true;
 
       textwidth = 80;
       # This means it'll show the colorcolumn at the textwidth
@@ -100,6 +104,12 @@
           #lua
           lua_ls.enable = true;
 
+          #javascript
+          ts_ls.enable = true;
+
+          #html
+          html.enable = true;
+
           #filesystem
           fsautocomplete.enable = true;
         };
@@ -119,7 +129,7 @@
       # Make it pretty
       dressing.enable = true;
       indent-blankline.enable = true;
-      nvim-colorizer.enable = true;
+      colorizer.enable = true;
       lualine.enable = true;
       lspkind = {
         enable = true;
@@ -154,6 +164,10 @@
             python = ["black"];
 
             nix = ["alejandra"];
+
+            html = ["prettierd"];
+            css = ["prettierd"];
+            javascript = ["prettierd"];
 
             # Use the "*" filetype to run formatters on all filetypes.
             #"*" = ["codespell"];

@@ -6,9 +6,8 @@
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
     # Ricing stuff
-    fira-code-nerdfont
+    nerd-fonts.fira-code
     catppuccin-papirus-folders
-    waybar
     waybar-mpris
     mako
     rofi
@@ -51,7 +50,9 @@
     grimblast
     appimage-run
     easyeffects
-    nautilus
+    nemo
+
+    heroic-unwrapped
 
     vesktop
 

@@ -4,7 +4,6 @@
 {
   config,
   lib,
-  pkgs,
   modulesPath,
   ...
 }: {
@@ -20,7 +19,7 @@
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/4a1edd8b-4456-4893-809a-a269ffcf7690";
     fsType = "ext4";
-    options = ["noatime" "discard"];
+    options = ["noatime"];
   };
 
   fileSystems."/efi" = {
@@ -43,6 +42,13 @@
     device = "/dev/disk/by-uuid/CF77-14AE";
     fsType = "vfat";
   };
+
+  # This shit doesn't work anymore, seems lexar SSDs don't have the greatest QC
+  # fileSystems."/home/theo/SSD" = {
+  #   device = "/dev/disk/by-uuid/47686783-7cf2-40e3-98cc-72e17b420217";
+  #   fsType = "ext4";
+  #   options = ["discard" "nofail"];
+  # };
 
   swapDevices = [];
 
