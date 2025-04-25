@@ -104,6 +104,11 @@ in {
           "$mod, P, togglefloating"
           "$mod, F, fullscreen"
 
+          ",XF86AudioLowerVolume, exec, ${pkgs.pulsemixer}/bin/pulsemixer --change-volume -5"
+          ",XF86AudioRaiseVolume, exec, ${pkgs.pulsemixer}/bin/pulsemixer --change-volume +5 --max-volume 100"
+
+          ",XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
+
           ", Print, exec, ${pkgs.grimblast}/bin/grimblast copy area"
           "SHIFT, Print, exec, ${pkgs.grimblast}/bin/grimblast copy output"
         ]

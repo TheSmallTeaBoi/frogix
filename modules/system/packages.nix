@@ -38,9 +38,8 @@
     # Coding, I guess
     inputs.self.packages.x86_64-linux.neovim
     inputs.nix-alien.packages.x86_64-linux.nix-alien
-    vim
-    vimgolf
     devenv
+    mariadb
 
     # Random GUI stuff
     feh
@@ -74,6 +73,7 @@
     pcsx2
     flycast
     ppsspp
+    torzu
     # }
 
     logmein-hamachi # my beloved
