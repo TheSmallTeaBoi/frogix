@@ -24,6 +24,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    plover-flake.url = "github:openstenoproject/plover-flake";
+
     hyprland.url = "github:hyprwm/Hyprland";
   };
   outputs = {

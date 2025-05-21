@@ -8,7 +8,7 @@ in {
     settings = {
       "$mod" = "SUPER";
       monitor = [
-        "DP-2, 1920x1080@60, 0x0, 1"
+        "DP-1, 1920x1080@60, 0x0, 1"
         "HDMI-A-1, 1366x768@60, auto-left, 1, transform, 3"
         ", preferred, auto, 1"
       ];
@@ -81,7 +81,7 @@ in {
       ];
 
       workspace = [
-        "1, monitor:DP-2"
+        "1, monitor:DP-1"
         "2, monitor:HDMI-A-1"
         "3, monitor:HDMI-A-1"
       ];
@@ -140,7 +140,7 @@ in {
         layer = "top";
         position = "top";
         height = 15;
-        output = "DP-2";
+        output = "DP-1";
         modules-left = ["hyprland/workspaces"];
         modules-center = ["hyprland/window" "custom/waybar-mpris"];
         modules-right = ["pulseaudio" "clock"];
@@ -152,7 +152,7 @@ in {
         "hyprland/workspaces" = {
           persistent-workspaces = {
             "HDMI-A-1" = [2 3];
-            "DP-2" = [1];
+            "DP-1" = [1];
           };
         };
 
@@ -183,7 +183,7 @@ in {
         "hyprland/workspaces" = {
           persistent-workspaces = {
             "HDMI-A-1" = [2 3];
-            "DP-2" = [1];
+            "DP-1" = [1];
           };
         };
       };

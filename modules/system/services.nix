@@ -1,8 +1,9 @@
 {pkgs, ...}: {
   services = {
-    # This is needed for Vial and yeetmouse
+    # This is needed for Vial and plover
     udev.extraRules = ''
       KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*vial:f64c2b3c*", MODE="0660", GROUP="users", TAG+="uaccess", TAG+="udev-acl"
+      KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
     '';
 
     # Drive mounting
@@ -64,6 +65,10 @@
             path = "/home/theo/Rattus/musik/02 Projects/collab/";
             devices = ["JTB"];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
+          };
+          "music-lossy" = {
+            path = "/home/theo/Data/music-lossier/";
+            devices = ["Phone"];
           };
         };
       };

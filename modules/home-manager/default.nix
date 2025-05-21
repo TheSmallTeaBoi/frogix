@@ -1,6 +1,7 @@
 {...}: {
   imports = [
     ./aichat.nix
+    ./beets.nix
     ./desktop.nix
     ./firefox.nix
     ./git.nix
@@ -11,6 +12,7 @@
     ./kitty.nix
     ./lazygit.nix
     ./mako.nix
+    ./plover.nix
     ./rofi.nix
     ./shell.nix
     ./tmux.nix

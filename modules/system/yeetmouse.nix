@@ -1,5 +1,5 @@
 {pkgs, ...}: let
-  accel = 0.5;
+  accel = 0.7;
   accelMode = "linear";
   accelModeNum = 1;
   preScale = 0.5;
@@ -11,6 +11,8 @@
   inputCap = 0.0;
   exponent = 1.0;
   rotation = 0.0; # This takes radians.
+  snapAngle = 0.0;
+  snapThreshold = 0.0; # This takes radians.
 in {
   hardware = {
     yeetmouse = {
@@ -38,9 +40,12 @@ in {
       ${echo} "${toString midpoint}" > /sys/module/leetmouse/parameters/Midpoint
       ${echo} "${toString preScale}" > /sys/module/leetmouse/parameters/PreScale
       ${echo} "${toString sens}" > /sys/module/leetmouse/parameters/Sensitivity
+      ${echo} "${toString sens}" > /sys/module/leetmouse/parameters/SensitivityY
       ${echo} "${toString accelModeNum}" > /sys/module/leetmouse/parameters/AccelerationMode
       ${echo} "${toString offset}" > /sys/module/leetmouse/parameters/Offset
       ${echo} "${toString outputCap}" > /sys/module/leetmouse/parameters/OutputCap
+      ${echo} "${toString snapAngle}" > /sys/module/leetmouse/parameters/AngleSnap_Angle
+      ${echo} "${toString snapThreshold}" > /sys/module/leetmouse/parameters/AngleSnap_Threshold
       ${echo} "1" > /sys/module/leetmouse/parameters/update
     '';
   in ''

@@ -16,8 +16,10 @@
 
   networking.hostName = "ratholomew"; # Define your hostname.
 
-  virtualisation.virtualbox.host.enable = true;
-  users.extraGroups.vboxusers.members = ["theo"];
+  programs.virt-manager.enable = true;
+  users.extraGroups.libvirtd.members = ["theo"];
+  virtualisation.libvirtd.enable = true;
+  virtualisation.spiceUSBRedirection.enable = true;
 
   time.timeZone = "America/Buenos_Aires";
 

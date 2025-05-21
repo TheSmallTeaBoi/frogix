@@ -25,6 +25,7 @@
     bottom
     eza
     file
+    beets
     yt-dlp
     ffmpeg
     iamb
@@ -32,14 +33,17 @@
     qmk-udev-rules
     playerctl
     picotts
+    mp3val
+    flac
 
     vial
 
     # Coding, I guess
     inputs.self.packages.x86_64-linux.neovim
     inputs.nix-alien.packages.x86_64-linux.nix-alien
+
     devenv
-    mariadb
+    mysql-workbench
 
     # Random GUI stuff
     feh
@@ -48,7 +52,6 @@
     warpinator
     grimblast
     appimage-run
-    easyeffects
     nemo
 
     heroic-unwrapped
@@ -68,6 +71,9 @@
     p7zip
 
     # Game stuff
+
+    xonotic-sdl
+
     # Emulation {
     retroarchFull
     pcsx2
