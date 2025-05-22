@@ -17,7 +17,7 @@
   boot.extraModulePackages = [];
 
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/4a1edd8b-4456-4893-809a-a269ffcf7690";
+    device = "/dev/disk/by-label/nixos";
     fsType = "ext4";
     options = ["noatime"];
   };
@@ -30,16 +30,17 @@
   fileSystems."/home/theo/Rattus" = {
     device = "/dev/disk/by-uuid/e0fa5f82-c2b8-417d-a4dd-9ff45ee93fb4";
     fsType = "ext4";
+    options = ["nofail"];
   };
 
   fileSystems."/home/theo/Data" = {
     device = "/dev/disk/by-uuid/65e258da-2f64-4fa5-a170-afc2de0ff11c";
     fsType = "btrfs";
-    options = ["compress-force=zstd:10" "noatime"];
+    options = ["compress-force=zstd:10" "noatime" "nofail"];
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/CF77-14AE";
+    device = "/dev/disk/by-label/boot";
     fsType = "vfat";
   };
 
