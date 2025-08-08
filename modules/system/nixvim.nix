@@ -26,6 +26,7 @@
       tabstop = 2;
       shiftwidth = 2;
       expandtab = true;
+      guicursor = "i-ci:ver30-iCursor-blinkwait300-blinkon200-blinkoff150";
 
       textwidth = 80;
       # This means it'll show the colorcolumn at the textwidth
@@ -136,7 +137,8 @@
         symbolMap = {Codeium = "󰚩";};
       };
 
-      neocord.enable = true;
+      # Shh.
+      # neocord.enable = true;
 
       cursorline.enable = true;
 
@@ -151,7 +153,7 @@
       hop = {
         enable = true;
         settings = {
-          keys = "srtnyeiafg";
+          keys = "strdnaei";
         };
       };
 

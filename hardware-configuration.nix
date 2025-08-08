@@ -39,10 +39,19 @@
     options = ["compress-force=zstd:10" "noatime" "nofail"];
   };
 
+  fileSystems."/home/theo/Games" = {
+    device = "/dev/disk/by-uuid/4a1edd8b-4456-4893-809a-a269ffcf7690";
+    fsType = "ext4";
+    options = ["noatime" "nofail"];
+  };
+
   fileSystems."/boot" = {
-    device = "/dev/disk/by-label/boot";
+    device = "/dev/disk/by-uuid/0027-2F83";
     fsType = "vfat";
   };
+
+  # Use tmpfs for /tmp/
+  boot.tmp.useTmpfs = true;
 
   # This shit doesn't work anymore, seems lexar SSDs don't have the greatest QC
   # fileSystems."/home/theo/SSD" = {

@@ -18,6 +18,14 @@
     fstrim.enable = true;
 
     ratbagd.enable = true;
+    lsfg-vk.enable = true;
+
+    mysql = {
+      enable = true;
+      package = pkgs.mariadb;
+    };
+
+    gnome.gnome-keyring.enable = true;
 
     dbus = {
       enable = true;
@@ -42,6 +50,7 @@
     syncthing = {
       enable = true;
       user = "theo";
+      extraFlags = ["--no-default-folder"];
       dataDir = "/home/theo/Documents";
       configDir = "/home/theo/.config/syncthing";
       overrideDevices = true; # overrides any devices added or deleted through the WebUI
@@ -53,6 +62,9 @@
           };
           "JTB" = {
             id = "MHKUJWR-YK2YZ2X-2C6AJRB-HEG6YBJ-FTL6PEA-ZGDLMOF-NL43P2P-6RDXKAY";
+          };
+          "Jin's Phone" = {
+            id = "JHQQYZL-7WPU4G4-2XAPPAP-273XKST-DFG463C-4IWV6WH-BN6Y7VO-2XJ7VAW";
           };
         };
         folders = {
@@ -69,6 +81,11 @@
           "music-lossy" = {
             path = "/home/theo/Data/music-lossier/";
             devices = ["Phone"];
+          };
+          "wargame-lore" = {
+            path = "/home/theo/Data/Personal/wargame/";
+            devices = ["Jin's Phone"];
+            ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
           };
         };
       };

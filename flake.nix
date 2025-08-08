@@ -24,6 +24,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    lsfg-vk = {
+      url = "github:pabloaul/lsfg-vk-flake/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     plover-flake.url = "github:openstenoproject/plover-flake";
 
     hyprland.url = "github:hyprwm/Hyprland";
@@ -33,6 +38,7 @@
     nixvim,
     home-manager,
     yeetmouse,
+    lsfg-vk,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -52,6 +58,7 @@
           home-manager.nixosModules.home-manager
           inputs.musnix.nixosModules.musnix
           yeetmouse.nixosModules.default
+          lsfg-vk.nixosModules.default
         ];
       };
     };

@@ -2,6 +2,7 @@
   imports = [
     ./aichat.nix
     ./beets.nix
+    ./bottom.nix
     ./desktop.nix
     ./firefox.nix
     ./git.nix
@@ -12,7 +13,7 @@
     ./kitty.nix
     ./lazygit.nix
     ./mako.nix
-    ./plover.nix
+    # ./plover.nix
     ./rofi.nix
     ./shell.nix
     ./tmux.nix

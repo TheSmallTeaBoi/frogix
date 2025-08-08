@@ -25,7 +25,7 @@
     bottom
     eza
     file
-    beets
+    # beets # FIXME currently broken.
     yt-dlp
     ffmpeg
     iamb
@@ -44,6 +44,7 @@
 
     devenv
     mysql-workbench
+    gnome-keyring
 
     # Random GUI stuff
     feh
@@ -73,18 +74,21 @@
     # Game stuff
 
     xonotic-sdl
+    alvr
 
     # Emulation {
     retroarchFull
     pcsx2
     flycast
     ppsspp
-    torzu
+    # torzu # I will not forget you.
     # }
 
     logmein-hamachi # my beloved
     parsec-bin # actual black magic.
     protontricks
+    gamemode
+    mangohud
 
     # Piracy stuff :)
     aria2
@@ -93,7 +97,7 @@
     nicotine-plus
     picard
     mpv
-    tauon # The best music player to ever exist
+    # tauon # The best music player to ever exist, and it's broken rn FIXME
 
     # Music making
 

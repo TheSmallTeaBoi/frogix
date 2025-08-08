@@ -69,6 +69,7 @@ in {
         "vesktop"
         "${pkgs.xorg.xsetroot}/bin/xsetroot -cursor_name left_ptr"
         "${pkgs.mako}/bin/mako"
+        "${pkgs.glances}/bin/glances -w --disable-plugin diskio,connections"
       ];
 
       windowrulev2 = [
@@ -92,7 +93,7 @@ in {
           "$mod, R, exec, kitty --class ${pkgs.clipse}/bin/clipse -e 'clipse'"
 
           "$mod, D, exec, rofi -show drun"
-          "$mod, C, exec, rofi -show calc -modi calc -no-show-match -no-sort"
+          "$mod, C, exec, rofi -show calc -modi calc -no-show-match -no-sort | wl-copy"
           "$mod, Period, exec, rofi -modi emoji -show emoji"
 
           "$mod, E, exec, nemo" # File manager
