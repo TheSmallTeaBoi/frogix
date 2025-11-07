@@ -1,9 +1,6 @@
 {pkgs, ...}: {
   programs.tmux = {
     enable = true;
-    plugins = with pkgs; [
-      tmuxPlugins.catppuccin
-    ];
 
     extraConfig =
       #tmux
@@ -21,17 +18,7 @@
         setw -g pane-base-index 1
 
         # Me when this piece of software is still stuck in 1996
-        set-option -g default-terminal "screen-256color"
-
-        # Catppuccin theme
-        set -g @catppuccin_flavor "mocha"
-        set -g @catppuccin_status_background "default"
-        set -g @catppuccin_window_status_style "rounded"
-        set -g status-style fg=default,bg=default
-
-        # Make catppuccin respect the window names.
-        set -g @catppuccin_window_current_text " #W"
-        set -g @catppuccin_window_text " #W"
+        set-option -g default-terminal "tmux-256color"
 
         # Set the modules
         set -g status-left ""
@@ -44,9 +31,6 @@
         if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"
         set-hook -g window-linked 'if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"'
         set-hook -g window-unlinked 'if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"'
-
-        # This is needed for catppuccin to work, for whatever reason...
-        set-hook -g after-new-session "source-file ~/.config/tmux/tmux.conf"
 
         # It's 2025, ffs
         set-option -g history-limit 250000

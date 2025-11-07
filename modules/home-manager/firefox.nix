@@ -1,95 +1,146 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   programs.firefox = {
     enable = true;
     nativeMessagingHosts = [pkgs.tridactyl-native];
     profiles.theo = {
       isDefault = true;
-      userChrome =
-        #css
-        ''
-          @import "${
-            builtins.fetchGit {
-              url = "https://github.com/rockofox/firefox-minima";
-              ref = "main";
-              rev = "dc40a861b24b378982c265a7769e3228ffccd45a";
-            }
-          }/userChrome.css";
-
-          .tabbrowser-tab:first-child{ counter-reset: nth-tab 0 } /* Change to -1 for 0-indexing */
-          .tab-text::before{ content: counter(nth-tab) " | "; counter-increment: nth-tab }
-
-          .tabbrowser-tab .tab-label
-          {
-          font-family: FiraCode Nerd Font Mono !important;
-          font-size: 14px !important;
-          }
-        '';
+      extensions.force = true;
       settings = {
         # Enable userChrome customizations
         "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
         # Disable translation popup
         "browser.translations.automaticallyPopup" = false;
-        "browser.cache.disk.enable" = false;
+        "browser.cache.disk.enable" = true;
+        "sidebar.verticalTabs" = true;
+        "sidebar.visibility" = "always-show";
+        "sidebar.revamp" = true;
+        "sidebar.animation.expand-on-hover.duration-ms" = 50;
       };
     };
   };
 
   # Tridactyl config
-  xdg.configFile.".tridactylrc".text =
-    #vim
-    ''
+  home.file.".config/tridactyl/tridactylrc" = {
+    enable = true;
+    text =
+      #vim
+      ''
+        " Make sure we start from a clean state
+        sanitise tridactyllocal
 
-      " Make sure we start from a clean state
-      sanitise tridactyllocal
+        " Binds
+        bind g1 tab 1
+        bind g3 tab 3
+        bind g5 tab 5
+        bind g7 tab 7
+        bind g2 tab 2
+        bind g4 tab 4
+        bind g6 tab 6
+        bind g8 tab 8
+        bind g9 tab 9
+        bind gt fillcmdline tab
 
-      " Set newtab to my dashboard
-      set newtab home.iturriflix.local
 
-      " Binds
+        " Allow Ctrl-c to copy in the commandline
+        unbind --mode=ex <C-c>
 
-      bind g1 tab 1
-      bind g3 tab 3
-      bind g5 tab 5
-      bind g7 tab 7
-      bind g2 tab 2
-      bind g4 tab 4
-      bind g6 tab 6
-      bind g8 tab 8
-      bind g9 tab 9
+        " Open right click menu on links
+        bind ;C composite hint_focus; !s xdotool key Menu
 
-      " Comment toggler for Reddit, Hacker News and Lobste.rs
-      bind ;c hint -Jc [class*="expand"],[class*="togg"],[class="comment_folder"]
+        " Binds for new reader mode
+        bind gr reader
+        bind gR reader --tab
 
-      " make t open the selection with tabopen
-      bind --mode=visual t composite js document.getSelection().toString() | fillcmdline tabopen
+        " Misc settings
 
-      " Make gu take you back to subreddit from comments
-      bindurl reddit.com gu urlparent 4
+        " Set colorscheme
+        colors shydactyl
 
-      " Make `gi` on GitHub take you to the search box
-      bindurl ^https://github.com gi hint -Vc .AppHeader-searchButton
+        " Sane hinting mode
+        set hintfiltermode vimperator-reflow
+        set hintnames short
 
-      " Allow Ctrl-c to copy in the commandline
-      unbind --mode=ex <C-c>
+        set editorcmd kitty --class floating -e $EDITOR
 
-      " Open right click menu on links
-      bind ;C composite hint_focus; !s xdotool key Menu
+        " Defaults to 300ms but I'm a 'move fast and close the wrong tabs' kinda dude
+        set hintdelay 200
+        set hintchars srtnfgyeia
+      '';
+  };
 
-      " Binds for new reader mode
-      bind gr reader
-      bind gR reader --tab
+  # Dark reader color config.
+  xdg = {
+    configFile = {
+      # Creates a config for DarkReader
+      # TODO, need to make this auto update?
+      darkreader = {
+        enable = true;
+        #onChange = manually tell darkreader to refresh somehow?
+        target = "darkreader/config.json";
+        text = ''
+          {
+              "schemeVersion": 2,
+              "enabled": true,
+              "fetchNews": true,
+              "theme": {
+          	"mode": 1,
+          	"brightness": 100,
+          	"contrast": 100,
+          	"grayscale": 0,
+          	"sepia": 0,
+          	"useFont": false,
+          	"fontFamily": "Open Sans",
+          	"textStroke": 0,
+          	"engine": "dynamicTheme",
+          	"stylesheet": "",
+          	"darkSchemeBackgroundColor": "${config.lib.stylix.colors.withHashtag.base00}",
+          	"darkSchemeTextColor": "${config.lib.stylix.colors.withHashtag.base05}",
+          	"lightSchemeBackgroundColor": "${config.lib.stylix.colors.withHashtag.base05}",
+          	"lightSchemeTextColor": "${config.lib.stylix.colors.withHashtag.base00}",
+          	"scrollbarColor": "auto",
+          	"selectionColor": "auto",
+          	"styleSystemControls": false,
+          	"lightColorScheme": "Default",
+          	"darkColorScheme": "Default",
+          	"immediateModify": false
+              },
+              "presets": [],
+              "customThemes": [],
+              "enabledByDefault": true,
+              "enabledFor": [],
+              "disabledFor": [],
+              "changeBrowserTheme": false,
+              "syncSettings": false,
+              "syncSitesFixes": true,
+              "automation": {
+          	"enabled": false,
+          	"mode": "",
+          	"behavior": "OnOff"
+              },
+              "time": {
+          	"activation": "18:00",
+          	"deactivation": "9:00"
+              },
+              "location": {
+          	"latitude": null,
+          	"longitude": null
+              },
+              "previewNewDesign": true,
+              "enableForPDF": true,
+              "enableForProtectedPages": true,
+              "enableContextMenus": false,
+              "detectDarkTheme": false,
+              "displayedNews": [
+          	"thanks-2023"
+              ]
+          }
 
-      " Misc settings
-
-      " Set colorscheme
-      colors shydactyl
-
-      " Sane hinting mode
-      set hintfiltermode vimperator-reflow
-      set hintnames short
-
-      " Defaults to 300ms but I'm a 'move fast and close the wrong tabs' kinda chap
-      set hintdelay 200
-      set hintchars srtnfgyeia
-    '';
+        '';
+      };
+    };
+  };
 }

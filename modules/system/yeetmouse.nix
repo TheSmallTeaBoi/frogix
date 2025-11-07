@@ -1,32 +1,29 @@
 {pkgs, ...}: let
-  accel = 0.7;
-  accelMode = "linear";
+  accel = 0.4;
   accelModeNum = 1;
   preScale = 0.5;
   sens = 0.5;
   midpoint = 6.0;
-  useSmoothing = false;
   offset = 5.0;
   outputCap = 0.0;
   inputCap = 0.0;
-  exponent = 1.0;
-  rotation = 0.0; # This takes radians.
   snapAngle = 0.0;
   snapThreshold = 0.0; # This takes radians.
-  # echo = "${pkgs.coreutils}/bin/echo";
-  # yeetmouseConfig = pkgs.writeShellScriptBin "yeetmouseConfig" ''
-  #   ${echo} "${toString accel}" > /sys/module/leetmouse/parameters/Acceleration
-  #   ${echo} "${toString midpoint}" > /sys/module/leetmouse/parameters/Midpoint
-  #   ${echo} "${toString preScale}" > /sys/module/leetmouse/parameters/PreScale
-  #   ${echo} "${toString sens}" > /sys/module/leetmouse/parameters/Sensitivity
-  #   ${echo} "${toString sens}" > /sys/module/leetmouse/parameters/SensitivityY
-  #   ${echo} "${toString accelModeNum}" > /sys/module/leetmouse/parameters/AccelerationMode
-  #   ${echo} "${toString offset}" > /sys/module/leetmouse/parameters/Offset
-  #   ${echo} "${toString outputCap}" > /sys/module/leetmouse/parameters/OutputCap
-  #   ${echo} "${toString snapAngle}" > /sys/module/leetmouse/parameters/AngleSnap_Angle
-  #   ${echo} "${toString snapThreshold}" > /sys/module/leetmouse/parameters/AngleSnap_Threshold
-  #   ${echo} "1" > /sys/module/leetmouse/parameters/update
-  # '';
+
+  echo = "${pkgs.coreutils}/bin/echo";
+  yeetmouseConfig = pkgs.writeShellScriptBin "yeetmouseConfig" ''
+    ${echo} "${toString accel}" > /sys/module/yeetmouse/parameters/Acceleration
+    ${echo} "${toString midpoint}" > /sys/module/yeetmouse/parameters/Midpoint
+    ${echo} "${toString preScale}" > /sys/module/yeetmouse/parameters/PreScale
+    ${echo} "${toString sens}" > /sys/module/yeetmouse/parameters/Sensitivity
+    ${echo} "1.0" > /sys/module/yeetmouse/parameters/SensitivityY
+    ${echo} "${toString accelModeNum}" > /sys/module/yeetmouse/parameters/AccelerationMode
+    ${echo} "${toString offset}" > /sys/module/yeetmouse/parameters/Offset
+    ${echo} "${toString outputCap}" > /sys/module/yeetmouse/parameters/OutputCap
+    ${echo} "${toString snapAngle}" > /sys/module/yeetmouse/parameters/AngleSnap_Angle
+    ${echo} "${toString snapThreshold}" > /sys/module/yeetmouse/parameters/AngleSnap_Threshold
+    ${echo} "1" > /sys/module/yeetmouse/parameters/update
+  '';
 in {
   hardware = {
     yeetmouse = {
@@ -43,22 +40,19 @@ in {
   };
 
   # services.udev.extraRules = ''
-  #   ACTION=="add|bind|change", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="c53f", RUN+="/bin/sh -c 'echo -n 1-9:1.1 > /sys/bus/usb/drivers/usbhid/unbind; echo -n 1-9:1.1 > /sys/bus/usb/drivers/leetmouse/bind; ${yeetmouseConfig}/bin/yeetmouseConfig'"
+  #   ACTION=="add|bind|change", SUBSYSTEM=="usb", ATTRS{bInterfaceClass}=="03", ATTRS{bInterfaceSubClass}=="01", ATTRS{bInterfaceProtocol}=="02", RUN+="${yeetmouseConfig}/bin/yeetmouseConfig"
   # '';
-  #
-  # systemd.services.yeetmouse-setup = {
-  #   description = "Rebind USB HID device to leetmouse and configure it";
-  #   wantedBy = ["multi-user.target"];
-  #   after = ["local-fs.target"];
-  #
-  #   serviceConfig = {
-  #     Type = "oneshot";
-  #     RemainAfterExit = true;
-  #     ExecStart = ''
-  #       /bin/sh -c 'echo -n 1-9:1.1 > /sys/bus/usb/drivers/usbhid/unbind; \
-  #                   echo -n 1-9:1.1 > /sys/bus/usb/drivers/leetmouse/bind; \
-  #                   ${yeetmouseConfig}/bin/yeetmouseConfig'
-  #     '';
-  #   };
-  # };
+  systemd.services.yeetmouse-setup = {
+    description = "Rebind USB HID device to leetmouse and configure it";
+    wantedBy = ["multi-user.target"];
+    after = ["local-fs.target"];
+
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = ''
+        ${yeetmouseConfig}/bin/yeetmouseConfig
+      '';
+    };
+  };
 }

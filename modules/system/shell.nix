@@ -6,6 +6,8 @@
     '';
   };
 
+  programs.direnv.enable = true;
+
   programs.ssh.askPassword = ""; # I have absolutely no idea why this isn't default.
   users.users.theo.shell = pkgs.fish;
   environment = {

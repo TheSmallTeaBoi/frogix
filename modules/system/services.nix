@@ -1,4 +1,19 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}: {
+  systemd.services.navidrome = {
+    # Otherwise it starts before the music library gets mounted
+    after = ["home-theo-Data.mount"];
+    requires = ["home-theo-Data.mount"];
+    serviceConfig = {
+      ProtectHome = lib.mkForce "read-only";
+      EnvironmentFile = config.sops.secrets.navidrome_env.path;
+    };
+  };
+
   services = {
     # This is needed for Vial and plover
     udev.extraRules = ''
@@ -18,11 +33,20 @@
     fstrim.enable = true;
 
     ratbagd.enable = true;
-    lsfg-vk.enable = true;
 
     mysql = {
       enable = true;
       package = pkgs.mariadb;
+    };
+
+    tailscale.enable = true;
+
+    navidrome = {
+      enable = true;
+      settings = {
+        MusicFolder = "/home/theo/Data/Music/";
+        Address = "0.0.0.0";
+      };
     };
 
     gnome.gnome-keyring.enable = true;
@@ -41,8 +65,6 @@
       jack.enable = true;
     };
 
-    # tailscale.enable = true;
-
     # Enable the OpenSSH daemon.
     openssh.enable = true;
 
@@ -50,7 +72,6 @@
     syncthing = {
       enable = true;
       user = "theo";
-      extraFlags = ["--no-default-folder"];
       dataDir = "/home/theo/Documents";
       configDir = "/home/theo/.config/syncthing";
       overrideDevices = true; # overrides any devices added or deleted through the WebUI
@@ -77,10 +98,6 @@
             path = "/home/theo/Rattus/musik/02 Projects/collab/";
             devices = ["JTB"];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
-          };
-          "music-lossy" = {
-            path = "/home/theo/Data/music-lossier/";
-            devices = ["Phone"];
           };
           "wargame-lore" = {
             path = "/home/theo/Data/Personal/wargame/";

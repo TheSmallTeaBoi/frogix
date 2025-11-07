@@ -36,7 +36,7 @@
 
     # all my homies love mouse acceleration
     # but the libinput one is useless, doesn't get recognized by
-    # games that use raw input, which makes sense but isn't what
+    # games that use raw input, which KINDA makes sense but isn't what
     # a gamer wants.
     # for the actual config, chech `./yeetmouse.nix`
     mouse = {
@@ -47,7 +47,6 @@
 
   services.displayManager = {
     sddm.enable = true;
-    sddm.theme = "catppuccin";
     sddm.wayland.enable = true;
     defaultSession = "hyprland";
     autoLogin = {

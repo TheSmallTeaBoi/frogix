@@ -1,0 +1,8 @@
+keys:
+  - &theo age1a4mjchny2qhzd8sf2svhefwxfd4qkfj7yercu28u6yekytp97gtqxg0jr2
+creation_rules:
+  - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+    - pgp:
+      age:
+      - *theo

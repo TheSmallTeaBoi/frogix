@@ -1,5 +1,6 @@
 {...}: {
   imports = [
+    # ./plover.nix
     ./aichat.nix
     ./beets.nix
     ./bottom.nix
@@ -13,10 +14,12 @@
     ./kitty.nix
     ./lazygit.nix
     ./mako.nix
-    # ./plover.nix
     ./rofi.nix
     ./shell.nix
+    ./theme.nix
     ./tmux.nix
+    ./vesktop.nix
+    ./xdg.nix
     ./zoxide.nix
   ];
   programs.home-manager.enable = true;

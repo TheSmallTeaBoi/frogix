@@ -1,9 +1,11 @@
 {...}: {
   programs.git = {
     enable = true;
-    userEmail = "theoiturri@tutanota.com";
-    userName = "TheSmallTeaBoi";
-    extraConfig = {
+    settings = {
+      user = {
+        email = "theoiturri@tutanota.com";
+        name = "TheSmallTeaBoi";
+      };
       credential.helper = "cache --timeout=3600"; # Cache credentials for one hour
     };
   };

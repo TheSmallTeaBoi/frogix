@@ -6,11 +6,11 @@
   home.sessionVariables = {
     fish_tmux_config = "~/.config/tmux/tmux.config";
   };
+
   programs.fish = {
     enable = true;
     functions = {
       fish_greeting = "";
-      # fish_prompt = "set_color red; echo $IN_NIX_SHELL '> '";
     };
     plugins = [
     ];
@@ -28,17 +28,19 @@
     };
     # fix starship prompt to only have newlines after the first command
     # https://github.com/starship/starship/issues/560#issuecomment-1465630645
-    shellInit = ''
-      function postexec_newline --on-event fish_postexec
-        echo ""
-      end
-    '';
+    shellInit =
+      # Fish
+      ''
+        function postexec_newline --on-event fish_postexec
+          echo ""
+        end
+      '';
     # add transient prompt for fish via transient.fish plugin in fish.nix
     # the starship transience module doesn't handle empty commands properly
     # https://github.com/starship/starship/issues/4929
     interactiveShellInit =
       lib.mkAfter
-      # fish
+      # Fish
       ''
         function transient_prompt_func
           starship module character
@@ -48,7 +50,7 @@
         if not set -q TMUX
           set -g TMUX tmux new-session -d -s base
           eval $TMUX
-          tmux attach-session -t base
+          tmux new-session -t base
         end
       '';
   };

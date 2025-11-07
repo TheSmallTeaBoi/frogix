@@ -23,7 +23,7 @@
 
   time.timeZone = "America/Buenos_Aires";
 
-  fonts.packages = with pkgs; [nerd-fonts.fira-code noto-fonts noto-fonts-lgc-plus google-fonts];
+  fonts.packages = with pkgs; [maple-mono.NF noto-fonts noto-fonts-lgc-plus google-fonts];
 
   # I love zram.
   zramSwap = {
@@ -52,56 +52,25 @@
 
   nixpkgs.config = {allowUnfree = true;};
 
+  # It's like nix-alien. In fact, I don't know what the difference is.
+  programs.nix-ld.enable = true;
+
+  programs.nix-index-database.comma.enable = true;
+
   programs.java = {
     enable = true;
   };
 
   # Enable Theme
   environment.variables = {
-    HYPRCURSOR_SIZE = "8";
-    GTK_THEME = "catppuccin-mocha-teal-standard";
+    NIXOS_OZONE_WL = "1";
   };
+
   qt.enable = true;
-  qt.platformTheme = "gtk2";
-  qt.style = "gtk2";
-
-  console = {
-    earlySetup = true;
-    colors = [
-      "24273a"
-      "ed8796"
-      "a6da95"
-      "eed49f"
-      "8aadf4"
-      "f5bde6"
-      "8bd5ca"
-      "cad3f5"
-      "5b6078"
-      "ed8796"
-      "a6da95"
-      "eed49f"
-      "8aadf4"
-      "f5bde6"
-      "8bd5ca"
-      "a5adcb"
-    ];
-  };
-
-  # Override packages
-  nixpkgs.config.packageOverrides = pkgs: {
-    colloid-icon-theme = pkgs.colloid-icon-theme.override {colorVariants = ["teal"];};
-    catppuccin-gtk = pkgs.catppuccin-gtk.override {
-      accents = ["teal"];
-      size = "standard";
-      variant = "mocha";
-    };
-  };
 
   environment.systemPackages = with pkgs; [
     numix-icon-theme-circle
     colloid-icon-theme
-    catppuccin-gtk
-    catppuccin-kvantum
   ];
 
   # Copy the NixOS configuration file and link it from the resulting system

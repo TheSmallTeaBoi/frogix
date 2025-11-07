@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: {
   config = {
     extraPackages = with pkgs; [
       black
@@ -9,11 +13,13 @@
       gcc
       fd
       prettierd
+      live-server
     ];
     opts = {
       updatetime = 100;
       number = true;
       relativenumber = true;
+      ignorecase = true;
       smartcase = true;
       list = true;
       foldmethod = "expr";
@@ -48,79 +54,104 @@
           vim.lsp.handlers.hover, {
             border = _border
           }
-          )
+        )
 
-          vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
-            vim.lsp.handlers.signature_help, {
-              border = _border
-            }
-            )
+        vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+          vim.lsp.handlers.signature_help, {
+            border = _border
+          }
+        )
 
-            vim.diagnostic.config{
-              float={border=_border}
-            };
+        vim.diagnostic.config{
+          float={border=_border}
+        };
 
-            require('lspconfig.ui.windows').default_options = {
-              border = _border
-            }
+        -- This is ass, probably.
+        -- Disable highlight for TODO, FIX, FIXME, ERROR, INFO, WARNING, etc.
+        local function apply_styles()
+          -- force-link so colorschemes don't win
+          vim.cmd('highlight! link @comment.todo    Comment')
+          vim.cmd('highlight! link @comment.note    Comment')
+          vim.cmd('highlight! link @comment.warning Comment')
+          vim.cmd('highlight! link @comment.error   Comment')
 
-        -- This fixes luasnip.
-        package.preload["jsregexp"] = package.loadlib("${pkgs.lua51Packages.jsregexp}/lib/lua/5.1/jsregexp/core.so", "luaopen_jsregexp_core");
+          vim.cmd('highlight! Comment gui=italic')
+          vim.cmd('highlight! String gui=italic')
+          vim.cmd('highlight! Type gui=italic')
+          vim.cmd('highlight! Function gui=italic')
+
+          vim.cmd('highlight! Keyword gui=bolditalic')
+          vim.cmd('highlight! Function gui=bolditalic')
+        end
+
+
+        apply_styles()
+        vim.api.nvim_create_autocmd("ColorScheme", {
+          pattern = "*",
+          callback = apply_styles,
+        })
       '';
     package = pkgs.neovim-unwrapped;
     enableMan = true;
     clipboard.register = "unnamedplus";
-    colorscheme = "catppuccin";
-    colorschemes.catppuccin = {
-      enable = true;
-      settings = {
-        flavour = "mocha";
-        transparent_background = true;
+    lsp = {
+      servers = {
+        #nix
+        nixd.enable = true;
+
+        #python
+        pyright.enable = true;
+        ruff.enable = true;
+
+        #bash
+        bashls.enable = true;
+
+        #lua
+        lua_ls.enable = true;
+
+        #javascript et al
+        ts_ls.enable = true;
+        tailwindcss.enable = true;
+        emmet_ls.enable = true;
+
+        #html
+        html.enable = true;
+
+        #filesystem
+        fsautocomplete.enable = true;
       };
+      keymaps = [
+        {
+          action = lib.nixvim.mkRaw "require('telescope.builtin').lsp_definitions";
+          key = "gd";
+        }
+        {
+          key = "gD";
+          lspBufAction = "references";
+        }
+        {
+          key = "K";
+          lspBufAction = "hover";
+        }
+        {
+          key = "gi";
+          lspBufAction = "implementation";
+        }
+      ];
     };
     plugins = {
+      lspconfig.enable = true;
       treesitter = {
         enable = true;
-        # settings = {
-        #   ensure_installed = [
-        #     "all"
-        #   ];
-        # };
+        folding = true;
+        settings = {
+          highlight.enable = true;
+          ensure_installed = [
+          ];
+        };
         nixvimInjections = true;
       };
       web-devicons.enable = true;
-      lsp = {
-        enable = true;
-        servers = {
-          #nix
-          nixd.enable = true;
-
-          #python
-          pyright.enable = true;
-          ruff.enable = true;
-
-          #bash
-          bashls.enable = true;
-
-          #lua
-          lua_ls.enable = true;
-
-          #javascript
-          ts_ls.enable = true;
-
-          #html
-          html.enable = true;
-
-          #filesystem
-          fsautocomplete.enable = true;
-        };
-        keymaps.lspBuf = {
-          "gd" = "definition";
-          "gD" = "references";
-          "gi" = "implementation";
-          "K" = "hover";
-        };
-      };
       nix.enable = true;
       comment.enable = true;
       telescope.enable = true;
@@ -134,7 +165,6 @@
       lualine.enable = true;
       lspkind = {
         enable = true;
-        symbolMap = {Codeium = "󰚩";};
       };
 
       # Shh.
@@ -170,6 +200,8 @@
             html = ["prettierd"];
             css = ["prettierd"];
             javascript = ["prettierd"];
+            javascriptreact = ["prettierd"];
+            typescript = ["prettierd"];
 
             # Use the "*" filetype to run formatters on all filetypes.
             #"*" = ["codespell"];

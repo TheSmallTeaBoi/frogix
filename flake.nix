@@ -24,49 +24,73 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    lsfg-vk = {
-      url = "github:pabloaul/lsfg-vk-flake/main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     plover-flake.url = "github:openstenoproject/plover-flake";
 
     hyprland.url = "github:hyprwm/Hyprland";
+    hyprland-plugins = {
+      url = "github:hyprwm/hyprland-plugins";
+      inputs.hyprland.follows = "hyprland";
+    };
+
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    stylix = {
+      url = "github:nix-community/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = {
     nixpkgs,
     nixvim,
     home-manager,
     yeetmouse,
-    lsfg-vk,
+    nix-index-database,
+    stylix,
+    sops-nix,
     ...
   } @ inputs: let
     system = "x86_64-linux";
+
+    ratholomewConfig = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = {inherit inputs;};
+      modules = [
+        ./configuration.nix
+        ./modules
+        home-manager.nixosModules.home-manager
+        inputs.musnix.nixosModules.musnix
+        yeetmouse.nixosModules.default
+        nix-index-database.nixosModules.nix-index
+        stylix.nixosModules.stylix
+        sops-nix.nixosModules.sops
+      ];
+    };
 
     unfreePkgs = import nixpkgs {
       system = "x86_64-linux";
       config.allowUnfree = true;
     };
   in {
-    nixosConfigurations = {
-      ratholomew = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {inherit inputs;};
-        modules = [
-          ./configuration.nix
-          ./modules
-          home-manager.nixosModules.home-manager
-          inputs.musnix.nixosModules.musnix
-          yeetmouse.nixosModules.default
-          lsfg-vk.nixosModules.default
-        ];
-      };
-    };
+    nixosConfigurations.ratholomew = ratholomewConfig;
+
     packages = {
-      ${system}.neovim = nixvim.legacyPackages.${system}.makeNixvimWithModule {
-        pkgs = unfreePkgs;
-        module = import ./modules/system/nixvim.nix;
-      };
+      ${system}.neovim = let
+        nixvim-package = nixvim.legacyPackages.${system}.makeNixvimWithModule {
+          pkgs = unfreePkgs;
+          module = import ./modules/system/nixvim.nix;
+        };
+
+        stylix-module = ratholomewConfig.config.stylix.targets.nixvim.exportedModule;
+      in
+        nixvim-package.extend stylix-module;
     };
   };
 }

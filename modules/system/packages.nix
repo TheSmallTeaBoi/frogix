@@ -6,7 +6,6 @@
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
     # Ricing stuff
-    nerd-fonts.fira-code
     catppuccin-papirus-folders
     waybar-mpris
     mako
@@ -25,7 +24,7 @@
     bottom
     eza
     file
-    # beets # FIXME currently broken.
+    beets
     yt-dlp
     ffmpeg
     iamb
@@ -57,10 +56,6 @@
 
     heroic-unwrapped
 
-    vesktop
-
-    revolt-desktop
-
     # Art?
     obs-studio
 
@@ -73,17 +68,19 @@
 
     # Game stuff
 
-    xonotic-sdl
-    alvr
+    lsfg-vk
+    lsfg-vk-ui
+    steamtinkerlaunch
 
     # Emulation {
-    retroarchFull
+    retroarch-full
     pcsx2
     flycast
     ppsspp
     # torzu # I will not forget you.
     # }
 
+    lutris
     logmein-hamachi # my beloved
     parsec-bin # actual black magic.
     protontricks
@@ -97,12 +94,14 @@
     nicotine-plus
     picard
     mpv
-    # tauon # The best music player to ever exist, and it's broken rn FIXME
+    feishin
 
     # Music making
+    ardour
 
     AMB-plugins
     aether-lv2
+    airwindows
     autotalent
     bchoppr
     calf
@@ -132,10 +131,11 @@
     samplv1
     sfizz
     sorcer
-    surge-XT
+    # surge-XT [FIXME]
     synthv1
     tap-plugins
     vital
+    wolf-shaper
     x42-plugins
     zam-plugins
     zita-at1
@@ -146,6 +146,5 @@
     # Misc
     btrfs-progs # btrfs my beloved
     rofi-power-menu
-    rofi-pulse-select
   ];
 }
