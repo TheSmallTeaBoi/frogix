@@ -47,8 +47,8 @@ in
           bar_color = "rgb(${config.lib.stylix.colors.base00})";
           col.text = "rgb(${config.lib.stylix.colors.base05})";
           inactive_button_color = "rgb(${config.lib.stylix.colors.base00})";
-          bar_text_size = 10;
-          bar_text_font = config.stylix.fonts.monospace.name;
+          bar_text_size = 8;
+          bar_text_font = config.stylix.fonts.sansSerif.name;
           bar_button_padding = 12;
           bar_padding = 12;
           bar_precedence_over_border = true;
@@ -76,6 +76,9 @@ in
 
       decoration = {
         rounding = 5;
+        blur = {
+          enabled = false;
+        };
       };
 
       general = {
@@ -135,7 +138,7 @@ in
         "${pkgs.xorg.xrandr}/bin/xrandr --output DP-3 --primary"
 
         "kill (${pkgs.lsof}/bin/lsof -t -i:10420)"
-        "sleep 15 && nicotine -n"
+        "sleep 15 && nicotine -s"
         "${pkgs.clipse}/bin/clipse -listen"
         "firefox"
         "vesktop"
@@ -150,9 +153,10 @@ in
         "workspace 2 silent, class:(vesktop)"
         "workspace 1 silent, class:(firefox)"
 
+        # Feishin
         "float, class:(feishin)"
         "center 1, floating:1, class:(feishin)"
-        "size 800 800, class:(feishin)"
+        "size 900 900, class:(feishin)"
 
         "float, class:(clipse)"
         "float, class:(floating)"
@@ -167,7 +171,7 @@ in
 
         # Only show title bars on floating windows.
         "plugin:hyprbars:nobar, ^floating:0"
-        "size 800 600, class:.*"
+        "size <800 <600, class:.*"
       ];
 
       workspace = [
@@ -313,9 +317,8 @@ in
               color: ${config.lib.stylix.colors.withHashtag.base05};
               border: none;
               border-radius: 0;
-              font-family: Roboto, Helvetica, Arial, sans-serif;
-              font-size: 13px;
-              min-height: 16px;
+              font-size: 10px;
+              min-height: 12px;
               padding: 0 2px;
               margin: 1px 0;
           }
@@ -323,9 +326,6 @@ in
 
           tooltip {
               border: 1px solid ;
-          }
-
-          #workspaces {
           }
 
           #workspaces button {
@@ -346,7 +346,7 @@ in
 
           #workspaces button.visible {
                border-bottom: 3px solid;
-               color: rgb(205, 214, 244);
+               color: ${config.lib.stylix.colors.withHashtag.base05};
           }
 
           label.module{
