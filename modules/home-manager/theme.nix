@@ -1,8 +1,9 @@
-{...}: {
+{ ... }:
+{
   stylix = {
     targets = {
       firefox = {
-        profileNames = ["theo"];
+        profileNames = [ "theo" ];
         colorTheme.enable = true;
       };
       vencord.enable = true;

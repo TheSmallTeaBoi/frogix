@@ -10,9 +10,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    musnix = {url = "github:musnix/musnix";};
+    musnix = {
+      url = "github:musnix/musnix";
+    };
 
-    nix-alien = {url = "github:thiagokokada/nix-alien";};
+    nix-alien = {
+      url = "github:thiagokokada/nix-alien";
+    };
 
     yeetmouse = {
       url = "github:AndyFilter/YeetMouse?dir=nix";
@@ -47,50 +51,54 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = {
-    nixpkgs,
-    nixvim,
-    home-manager,
-    yeetmouse,
-    nix-index-database,
-    stylix,
-    sops-nix,
-    ...
-  } @ inputs: let
-    system = "x86_64-linux";
-
-    ratholomewConfig = nixpkgs.lib.nixosSystem {
+  outputs =
+    {
+      nixpkgs,
+      nixvim,
+      home-manager,
+      yeetmouse,
+      nix-index-database,
+      stylix,
+      sops-nix,
+      ...
+    }@inputs:
+    let
       system = "x86_64-linux";
-      specialArgs = {inherit inputs;};
-      modules = [
-        ./configuration.nix
-        ./modules
-        home-manager.nixosModules.home-manager
-        inputs.musnix.nixosModules.musnix
-        yeetmouse.nixosModules.default
-        nix-index-database.nixosModules.nix-index
-        stylix.nixosModules.stylix
-        sops-nix.nixosModules.sops
-      ];
-    };
 
-    unfreePkgs = import nixpkgs {
-      system = "x86_64-linux";
-      config.allowUnfree = true;
-    };
-  in {
-    nixosConfigurations.ratholomew = ratholomewConfig;
+      ratholomewConfig = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./configuration.nix
+          ./modules
+          home-manager.nixosModules.home-manager
+          inputs.musnix.nixosModules.musnix
+          yeetmouse.nixosModules.default
+          nix-index-database.nixosModules.nix-index
+          stylix.nixosModules.stylix
+          sops-nix.nixosModules.sops
+        ];
+      };
 
-    packages = {
-      ${system}.neovim = let
-        nixvim-package = nixvim.legacyPackages.${system}.makeNixvimWithModule {
-          pkgs = unfreePkgs;
-          module = import ./modules/system/nixvim.nix;
-        };
+      unfreePkgs = import nixpkgs {
+        system = "x86_64-linux";
+        config.allowUnfree = true;
+      };
+    in
+    {
+      nixosConfigurations.ratholomew = ratholomewConfig;
+      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
+      packages = {
+        ${system}.neovim =
+          let
+            nixvim-package = nixvim.legacyPackages.${system}.makeNixvimWithModule {
+              pkgs = unfreePkgs;
+              module = import ./modules/system/nixvim.nix;
+            };
 
-        stylix-module = ratholomewConfig.config.stylix.targets.nixvim.exportedModule;
-      in
-        nixvim-package.extend stylix-module;
+            stylix-module = ratholomewConfig.config.stylix.targets.nixvim.exportedModule;
+          in
+          nixvim-package.extend stylix-module;
+      };
     };
-  };
 }

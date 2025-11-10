@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   xdg.configFile."iamb/config.toml".text =
     # toml
     ''

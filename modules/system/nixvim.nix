@@ -2,18 +2,18 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   config = {
     extraPackages = with pkgs; [
       black
-      alejandra
       codespell
-      ormolu
-      ghc
-      gcc
       fd
+      gcc
+      ghc
+      nixfmt
+      ormolu
       prettierd
-      live-server
     ];
     opts = {
       updatetime = 100;
@@ -97,6 +97,7 @@
     lsp = {
       servers = {
         #nix
+        nil_ls.enable = true;
         nixd.enable = true;
 
         #python
@@ -193,21 +194,21 @@
           lsp_fallback = true;
           formatters_by_ft = {
             # Conform will run multiple formatters sequentially
-            python = ["black"];
+            python = [ "black" ];
 
-            nix = ["alejandra"];
+            nix = [ "nixfmt" ];
 
-            html = ["prettierd"];
-            css = ["prettierd"];
-            javascript = ["prettierd"];
-            javascriptreact = ["prettierd"];
-            typescript = ["prettierd"];
+            html = [ "prettierd" ];
+            css = [ "prettierd" ];
+            javascript = [ "prettierd" ];
+            javascriptreact = [ "prettierd" ];
+            typescript = [ "prettierd" ];
 
             # Use the "*" filetype to run formatters on all filetypes.
             #"*" = ["codespell"];
             # Use the "_" filetype to run formatters on filetypes that don't
             # have other formatters configured.
-            "_" = ["trim_whitespace"];
+            "_" = [ "trim_whitespace" ];
           };
         };
       };
@@ -242,12 +243,16 @@
         enable = true;
         autoEnableSources = true;
         settings = {
-          experimental = {ghost_text = true;};
-          snippet = {expand = "luasnip";};
+          experimental = {
+            ghost_text = true;
+          };
+          snippet = {
+            expand = "luasnip";
+          };
           sources = [
-            {name = "nvim_lsp";}
-            {name = "luasnip";}
-            {name = "path";}
+            { name = "nvim_lsp"; }
+            { name = "luasnip"; }
+            { name = "path"; }
           ];
           mapping = {
             "<Tab>" = "cmp.mapping(cmp.mapping.select_next_item(), {'i', 's'})";
@@ -263,17 +268,6 @@
           };
         };
       };
-
-      # cmp-ai.settings = {
-      #   enable = true;
-      #   provider = "Ollama";
-      #   provider_options = {
-      #     model = "codellama:7b";
-      #   };
-      #   max_lines = 50;
-      #   notify = true;
-      #   run_on_every_keystroke = true;
-      # };
     };
 
     keymaps = [
@@ -343,12 +337,20 @@
       }
       # LuaSnip
       {
-        mode = ["n" "i" "s"];
+        mode = [
+          "n"
+          "i"
+          "s"
+        ];
         action = "<cmd>lua require('luasnip').jump(-1)<CR>";
         key = "<C-H>";
       }
       {
-        mode = ["n" "i" "s"];
+        mode = [
+          "n"
+          "i"
+          "s"
+        ];
         action = "<cmd>lua require('luasnip').jump(1)<CR>";
         key = "<C-L>";
       }
@@ -356,22 +358,25 @@
 
     autoCmd = [
       {
-        event = ["BufWritePre"];
+        event = [ "BufWritePre" ];
         command = "lua require(\"conform\").format()";
       }
       {
-        event = ["BufRead" "BufNewFile"];
-        pattern = ["*/diary/*.txt"];
+        event = [
+          "BufRead"
+          "BufNewFile"
+        ];
+        pattern = [ "*/diary/*.txt" ];
         command = "source notes.vim";
       }
       {
-        event = ["BufWritePre"];
-        pattern = ["*/diary/*.txt"];
+        event = [ "BufWritePre" ];
+        pattern = [ "*/diary/*.txt" ];
         command = "helptags ./";
       }
       {
-        event = ["BufReadPost"];
-        pattern = ["*/diary/*.txt"];
+        event = [ "BufReadPost" ];
+        pattern = [ "*/diary/*.txt" ];
         command = "normal!'\"";
       }
     ];

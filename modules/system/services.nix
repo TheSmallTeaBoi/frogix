@@ -3,11 +3,12 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   systemd.services.navidrome = {
     # Otherwise it starts before the music library gets mounted
-    after = ["home-theo-Data.mount"];
-    requires = ["home-theo-Data.mount"];
+    after = [ "home-theo-Data.mount" ];
+    requires = [ "home-theo-Data.mount" ];
     serviceConfig = {
       ProtectHome = lib.mkForce "read-only";
       EnvironmentFile = config.sops.secrets.navidrome_env.path;
@@ -40,6 +41,11 @@
     };
 
     tailscale.enable = true;
+
+    ollama = {
+      enable = true;
+      acceleration = "cuda";
+    };
 
     navidrome = {
       enable = true;
@@ -91,17 +97,17 @@
         folders = {
           "Obsidian" = {
             path = "/home/theo/Data/Personal/obsidian";
-            devices = ["Phone"];
+            devices = [ "Phone" ];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
           };
           "z7ezp-ya3ym" = {
             path = "/home/theo/Rattus/musik/02 Projects/collab/";
-            devices = ["JTB"];
+            devices = [ "JTB" ];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
           };
           "wargame-lore" = {
             path = "/home/theo/Data/Personal/wargame/";
-            devices = ["Jin's Phone"];
+            devices = [ "Jin's Phone" ];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
           };
         };

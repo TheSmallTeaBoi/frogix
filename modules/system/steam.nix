@@ -2,7 +2,8 @@
   inputs,
   pkgs,
   ...
-}: {
+}:
+{
   programs = {
     steam = {
       enable = true;
@@ -17,8 +18,8 @@
       allowUnfree = true;
       packageOverrides = pkgs: {
         steam = pkgs.steam.override {
-          extraPkgs = pkgs:
-            with pkgs; [
+          extraPkgs =
+            pkgs: with pkgs; [
               xorg.libXcursor
               xorg.libXi
               xorg.libXinerama

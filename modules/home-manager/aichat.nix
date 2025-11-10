@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   xdg.configFile."aichat/config.yaml".text =
     #yaml
     ''

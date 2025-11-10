@@ -1,10 +1,10 @@
 {
-  inputs,
   pkgs,
   config,
   lib,
   ...
-}: let
+}:
+let
   # Change these to whatever screens you want.
   # Get them with `hyprctl monitors`
   main_screen = "WDX DP";
@@ -17,7 +17,8 @@
 
     [ -n "$chosen" ] && hyprctl dispatch workspace "$chosen"
   '';
-in {
+in
+{
   wayland.windowManager.hyprland = {
     enable = true;
     xwayland.enable = true;
@@ -25,6 +26,7 @@ in {
     plugins = [
       pkgs.hyprlandPlugins.hypr-dynamic-cursors
       pkgs.hyprlandPlugins.hyprexpo
+      pkgs.hyprlandPlugins.hyprbars
     ];
 
     settings = {
@@ -39,6 +41,22 @@ in {
         dynamic-cursors = {
           enabled = true;
           mode = "stretch";
+        };
+        hyprbars = {
+          bar_height = 20;
+          bar_color = "rgb(${config.lib.stylix.colors.base00})";
+          col.text = "rgb(${config.lib.stylix.colors.base05})";
+          inactive_button_color = "rgb(${config.lib.stylix.colors.base00})";
+          bar_text_size = 10;
+          bar_text_font = config.stylix.fonts.monospace.name;
+          bar_button_padding = 12;
+          bar_padding = 12;
+          bar_precedence_over_border = true;
+          on_double_click = "hyprctl dispatch fullscreen 1";
+          hyprbars-button = [
+            "rgb(${config.lib.stylix.colors.base08}), 10, , hyprctl dispatch killactive"
+            "rgb(${config.lib.stylix.colors.base0A}), 10, , hyprctl dispatch fullscreen 1"
+          ];
         };
       };
 
@@ -61,12 +79,20 @@ in {
       };
 
       general = {
+        allow_tearing = true;
         border_size = 3;
-        gaps_out = [0 10 10 10];
+        gaps_out = [
+          0
+          10
+          10
+          10
+        ];
         # "col.active_border" = "0xf38ba8ff";
+        "col.inactive_border" = lib.mkForce "0x00000000";
         animation = [
           "workspaces, 1, 2.5, easeOutQuart"
-          "windows, 1, 2.5, easeOutQuart, slide"
+          "windows, 1, 2.5, easeOutQuart, popin"
+          "windowsMove, 1, 2.5, easeOutQuart, slide"
           "fade, 1, 2, easeOutQuart"
         ];
         snap = {
@@ -102,12 +128,14 @@ in {
       ];
 
       exec-once = [
+        "${pkgs.swaylock-fancy}/bin/swaylock-fancy"
         "${pkgs.waybar}/bin/waybar"
 
         # Change this to your "primary" screen.
         "${pkgs.xorg.xrandr}/bin/xrandr --output DP-3 --primary"
 
-        "nicotine -n"
+        "kill (${pkgs.lsof}/bin/lsof -t -i:10420)"
+        "sleep 15 && nicotine -n"
         "${pkgs.clipse}/bin/clipse -listen"
         "firefox"
         "vesktop"
@@ -124,10 +152,11 @@ in {
 
         "float, class:(feishin)"
         "center 1, floating:1, class:(feishin)"
+        "size 800 800, class:(feishin)"
 
-        "float,class:(clipse)"
-        "float,class:(floating)"
-        "size 622 652,class:(clipse)"
+        "float, class:(clipse)"
+        "float, class:(floating)"
+        "size 622 652, class:(clipse)"
         "noblur, class:^(plugdata)$"
 
         # Smart gaps
@@ -135,6 +164,10 @@ in {
         "rounding 0, floating:0, onworkspace:w[tv1]"
         "bordersize 0, floating:0, onworkspace:f[1]"
         "rounding 0, floating:0, onworkspace:f[1]"
+
+        # Only show title bars on floating windows.
+        "plugin:hyprbars:nobar, ^floating:0"
+        "size 800 600, class:.*"
       ];
 
       workspace = [
@@ -153,45 +186,50 @@ in {
         "$mod, mouse:273, resizewindow"
       ];
 
-      bind =
-        [
-          "$mod, Return, exec, kitty"
+      bind = [
+        "$mod, Return, exec, kitty"
 
-          "$mod, C, exec, rofi -show calc -modi calc -no-show-match -no-sort | wl-copy"
-          "$mod, D, exec, rofi -show drun"
-          "$mod, E, exec, nemo" # File manager
-          "$mod, F, fullscreen"
-          "$mod, J, cyclenext"
-          "$mod, K, cyclenext, prev"
-          "$mod, L, exec, feishin"
-          "$mod, M, exec, ${pkgs.rofi-pulse-select}/bin/rofi-pulse-select sink"
-          "$mod, P, togglefloating"
-          "$mod, R, exec, kitty --class clipse -e '${pkgs.clipse}/bin/clipse'"
-          "$mod, T, killactive"
+        "$mod, C, exec, rofi -show calc -modi calc -no-show-match -no-sort | wl-copy"
+        "$mod, D, exec, rofi -show drun"
+        "$mod, E, exec, nemo" # File manager
+        "$mod, F, fullscreen"
+        "$mod, J, cyclenext"
+        "$mod, K, cyclenext, prev"
+        "$mod, L, exec, feishin"
+        "$mod, M, exec, ${pkgs.rofi-pulse-select}/bin/rofi-pulse-select sink"
+        "$mod, P, togglefloating"
+        "$mod SHIFT, P, workspaceopt, allfloat"
+        "$mod, R, exec, kitty --class clipse -e '${pkgs.clipse}/bin/clipse'"
+        "$mod, T, killactive"
 
-          "$mod, Q, hyprexpo:expo, toggle"
+        "$mod, Q, hyprexpo:expo, toggle"
 
-          "$mod, TAB, workspace, previous"
-          "$mod, Period, exec, rofi -modi emoji -show emoji"
+        "$mod, TAB, workspace, previous"
+        "$mod, Period, exec, rofi -modi emoji -show emoji"
 
-          ",XF86AudioLowerVolume, exec, ${pkgs.pulsemixer}/bin/pulsemixer --change-volume -5"
-          ",XF86AudioRaiseVolume, exec, ${pkgs.pulsemixer}/bin/pulsemixer --change-volume +5 --max-volume 100"
+        ",XF86AudioLowerVolume, exec, ${pkgs.pulsemixer}/bin/pulsemixer --change-volume -5"
+        ",XF86AudioRaiseVolume, exec, ${pkgs.pulsemixer}/bin/pulsemixer --change-volume +5 --max-volume 100"
 
-          ",XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
+        ",XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
 
-          ", Print, exec, ${pkgs.grimblast}/bin/grimblast copy area"
-          "SHIFT, Print, exec, ${pkgs.grimblast}/bin/grimblast copy output"
-        ]
-        ++ (
-          # Workspaces
-          builtins.concatLists (builtins.genList (i: let
+        ", Print, exec, ${pkgs.grimblast}/bin/grimblast copy area"
+        "SHIFT, Print, exec, ${pkgs.grimblast}/bin/grimblast copy output"
+      ]
+      ++ (
+        # Workspaces
+        builtins.concatLists (
+          builtins.genList (
+            i:
+            let
               ws = i + 1;
-            in [
+            in
+            [
               "$mod, code:1${toString i}, workspace, ${toString ws}"
               "$mod CONTROL, code:1${toString i}, movetoworkspace, ${toString ws}"
-            ])
-            9)
-        );
+            ]
+          ) 9
+        )
+      );
     };
   };
 
@@ -224,9 +262,15 @@ in {
         position = "top";
         height = 15;
         output = "!${secondary_screen}";
-        modules-left = ["hyprland/workspaces"];
-        modules-center = ["hyprland/window" "custom/waybar-mpris"];
-        modules-right = ["pulseaudio" "clock"];
+        modules-left = [ "hyprland/workspaces" ];
+        modules-center = [
+          "hyprland/window"
+          "custom/waybar-mpris"
+        ];
+        modules-right = [
+          "pulseaudio"
+          "clock"
+        ];
 
         "hyprland/window" = {
           separate-outputs = true;
@@ -248,9 +292,12 @@ in {
         position = "top";
         height = 15;
         output = "${secondary_screen}";
-        modules-left = ["hyprland/workspaces"];
-        modules-center = ["hyprland/window"];
-        modules-right = ["cpu" "memory"];
+        modules-left = [ "hyprland/workspaces" ];
+        modules-center = [ "hyprland/window" ];
+        modules-right = [
+          "cpu"
+          "memory"
+        ];
 
         "hyprland/window" = {
           separate-outputs = true;
@@ -259,79 +306,79 @@ in {
     };
     style =
       lib.mkAfter
-      #css
-      ''
-        * {
-            background: ${config.lib.stylix.colors.withHashtag.base00};
-            color: ${config.lib.stylix.colors.withHashtag.base05};
-            border: none;
-            border-radius: 0;
-            font-family: Roboto, Helvetica, Arial, sans-serif;
-            font-size: 13px;
-            min-height: 16px;
-            padding: 0 2px;
-            margin: 1px 0;
-        }
+        #css
+        ''
+          * {
+              background: ${config.lib.stylix.colors.withHashtag.base00};
+              color: ${config.lib.stylix.colors.withHashtag.base05};
+              border: none;
+              border-radius: 0;
+              font-family: Roboto, Helvetica, Arial, sans-serif;
+              font-size: 13px;
+              min-height: 16px;
+              padding: 0 2px;
+              margin: 1px 0;
+          }
 
 
-        tooltip {
-            border: 1px solid ;
-        }
+          tooltip {
+              border: 1px solid ;
+          }
 
-        #workspaces {
-        }
+          #workspaces {
+          }
 
-        #workspaces button {
-             padding: 0 5px;
-             border-bottom: 3px solid transparent;
-             border-top: 3px solid transparent;
-        }
+          #workspaces button {
+               padding: 0 5px;
+               border-bottom: 3px solid transparent;
+               border-top: 3px solid transparent;
+          }
 
-        #workspaces button.active {
-             border-bottom: 3px solid ;
-             border-top: 3px solid;
-        }
+          #workspaces button.active {
+               border-bottom: 3px solid ;
+               border-top: 3px solid;
+          }
 
-        #workspaces button.urgent {
-             border-bottom: 3px solid;
-             border-top: 3px solid;
-        }
+          #workspaces button.urgent {
+               border-bottom: 3px solid;
+               border-top: 3px solid;
+          }
 
-        #workspaces button.visible {
-             border-bottom: 3px solid;
-             color: rgb(205, 214, 244);
-        }
+          #workspaces button.visible {
+               border-bottom: 3px solid;
+               color: rgb(205, 214, 244);
+          }
 
-        label.module{
-            padding: 0 10px;
-            border-radius: 5px;
-        }
+          label.module{
+              padding: 0 10px;
+              border-radius: 5px;
+          }
 
-        #window {
-            border-radius: 5px;
-            padding: 0 10px;
-            margin: 0 5px;
-        }
+          #window {
+              border-radius: 5px;
+              padding: 0 10px;
+              margin: 0 5px;
+          }
 
-        window#waybar.empty #window {
-            background-color: transparent;
-        }
+          window#waybar.empty #window {
+              background-color: transparent;
+          }
 
-        #clock {
-             margin: 0 2px;
-        }
+          #clock {
+               margin: 0 2px;
+          }
 
-        #pulseaudio {
-             margin: 0 2px;
-        }
+          #pulseaudio {
+               margin: 0 2px;
+          }
 
-        #cpu {
-             margin: 0 2px;
-        }
+          #cpu {
+               margin: 0 2px;
+          }
 
-        #memory {
-             margin: 0 2px;
-        }
-      '';
+          #memory {
+               margin: 0 2px;
+          }
+        '';
   };
 }

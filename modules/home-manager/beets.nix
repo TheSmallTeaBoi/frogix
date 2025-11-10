@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   xdg.configFile."beets/config.yaml".text =
     # yaml
     ''

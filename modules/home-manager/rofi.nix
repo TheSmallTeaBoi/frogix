@@ -1,7 +1,11 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   programs.rofi = {
     enable = true;
-    plugins = [pkgs.rofi-emoji pkgs.rofi-calc];
+    plugins = [
+      pkgs.rofi-emoji
+      pkgs.rofi-calc
+    ];
     extraConfig = {
       modi = "run,drun,window";
       icon-theme = "Oranchelo";

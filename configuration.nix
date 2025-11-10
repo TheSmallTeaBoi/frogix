@@ -1,15 +1,22 @@
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
   ];
 
   # Enable "experimental" features
-  nix.settings.experimental-features = ["nix-command" "flakes"];
-  nix.settings.trusted-users = ["root" "@wheel"];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+  nix.settings.trusted-users = [
+    "root"
+    "@wheel"
+  ];
 
   # This could a default at this point lol.
   nix.optimise.automatic = true;
@@ -17,13 +24,18 @@
   networking.hostName = "ratholomew"; # Define your hostname.
 
   programs.virt-manager.enable = true;
-  users.extraGroups.libvirtd.members = ["theo"];
+  users.extraGroups.libvirtd.members = [ "theo" ];
   virtualisation.libvirtd.enable = true;
   virtualisation.spiceUSBRedirection.enable = true;
 
   time.timeZone = "America/Buenos_Aires";
 
-  fonts.packages = with pkgs; [maple-mono.NF noto-fonts noto-fonts-lgc-plus google-fonts];
+  fonts.packages = with pkgs; [
+    maple-mono.NF
+    noto-fonts
+    noto-fonts-lgc-plus
+    google-fonts
+  ];
 
   # I love zram.
   zramSwap = {
@@ -44,13 +56,20 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.theo = {
     isNormalUser = true;
-    extraGroups = ["wheel" "input" "uinput" "audio"];
+    extraGroups = [
+      "wheel"
+      "input"
+      "uinput"
+      "audio"
+    ];
   };
 
   # Disable the firewall altogether.
   networking.firewall.enable = false;
 
-  nixpkgs.config = {allowUnfree = true;};
+  nixpkgs.config = {
+    allowUnfree = true;
+  };
 
   # It's like nix-alien. In fact, I don't know what the difference is.
   programs.nix-ld.enable = true;

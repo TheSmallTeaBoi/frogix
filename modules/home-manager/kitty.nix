@@ -1,6 +1,8 @@
-{config, ...}: let
+{ config, ... }:
+let
   fontName = config.stylix.fonts.monospace.name;
-in {
+in
+{
   programs.kitty = {
     enable = true;
     shellIntegration.enableFishIntegration = true;

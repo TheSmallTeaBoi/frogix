@@ -1,4 +1,5 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   accel = 0.4;
   accelModeNum = 1;
   preScale = 0.5;
@@ -24,7 +25,8 @@
     ${echo} "${toString snapThreshold}" > /sys/module/yeetmouse/parameters/AngleSnap_Threshold
     ${echo} "1" > /sys/module/yeetmouse/parameters/update
   '';
-in {
+in
+{
   hardware = {
     yeetmouse = {
       enable = true;
@@ -44,8 +46,8 @@ in {
   # '';
   systemd.services.yeetmouse-setup = {
     description = "Rebind USB HID device to leetmouse and configure it";
-    wantedBy = ["multi-user.target"];
-    after = ["local-fs.target"];
+    wantedBy = [ "multi-user.target" ];
+    after = [ "local-fs.target" ];
 
     serviceConfig = {
       Type = "oneshot";

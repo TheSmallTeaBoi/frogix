@@ -2,10 +2,11 @@
   pkgs,
   config,
   ...
-}: {
+}:
+{
   programs.firefox = {
     enable = true;
-    nativeMessagingHosts = [pkgs.tridactyl-native];
+    nativeMessagingHosts = [ pkgs.tridactyl-native ];
     profiles.theo = {
       isDefault = true;
       extensions.force = true;

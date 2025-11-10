@@ -2,7 +2,8 @@
   pkgs,
   inputs,
   ...
-}: {
+}:
+{
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
     # Ricing stuff
@@ -18,7 +19,6 @@
     ripgrep
     neofetch
     wget
-    rclone
     git
     pulsemixer
     bottom
@@ -27,7 +27,6 @@
     beets
     yt-dlp
     ffmpeg
-    iamb
     qmk
     qmk-udev-rules
     playerctl
@@ -42,7 +41,6 @@
     inputs.nix-alien.packages.x86_64-linux.nix-alien
 
     devenv
-    mysql-workbench
     gnome-keyring
 
     # Random GUI stuff
@@ -84,7 +82,6 @@
     logmein-hamachi # my beloved
     parsec-bin # actual black magic.
     protontricks
-    gamemode
     mangohud
 
     # Piracy stuff :)
@@ -99,6 +96,7 @@
     # Music making
     ardour
 
+    # surge-XT [FIXME]
     AMB-plugins
     aether-lv2
     airwindows
@@ -128,10 +126,10 @@
     oxefmsynth
     plugdata
     quadrafuzz
+    rubberband
     samplv1
     sfizz
     sorcer
-    # surge-XT [FIXME]
     synthv1
     tap-plugins
     vital
@@ -140,8 +138,6 @@
     zam-plugins
     zita-at1
     zynaddsubfx
-
-    rubberband
 
     # Misc
     btrfs-progs # btrfs my beloved

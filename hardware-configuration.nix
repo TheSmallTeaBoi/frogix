@@ -6,20 +6,26 @@
   lib,
   modulesPath,
   ...
-}: {
+}:
+{
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  boot.initrd.availableKernelModules = ["xhci_pci" "ahci" "usbhid" "sd_mod"];
-  boot.initrd.kernelModules = [];
-  boot.kernelModules = ["kvm-intel"];
-  boot.extraModulePackages = [];
+  boot.initrd.availableKernelModules = [
+    "xhci_pci"
+    "ahci"
+    "usbhid"
+    "sd_mod"
+  ];
+  boot.initrd.kernelModules = [ ];
+  boot.kernelModules = [ "kvm-intel" ];
+  boot.extraModulePackages = [ ];
 
   fileSystems."/" = {
     device = "/dev/disk/by-label/nixos";
     fsType = "ext4";
-    options = ["noatime"];
+    options = [ "noatime" ];
   };
 
   fileSystems."/efi" = {
@@ -30,19 +36,26 @@
   fileSystems."/home/theo/Rattus" = {
     device = "/dev/disk/by-uuid/e0fa5f82-c2b8-417d-a4dd-9ff45ee93fb4";
     fsType = "ext4";
-    options = ["nofail"];
+    options = [ "nofail" ];
   };
 
   fileSystems."/home/theo/Data" = {
     device = "/dev/disk/by-uuid/65e258da-2f64-4fa5-a170-afc2de0ff11c";
     fsType = "btrfs";
-    options = ["compress-force=zstd:10" "noatime" "nofail"];
+    options = [
+      "compress-force=zstd:10"
+      "noatime"
+      "nofail"
+    ];
   };
 
   fileSystems."/home/theo/Games" = {
     device = "/dev/disk/by-uuid/4a1edd8b-4456-4893-809a-a269ffcf7690";
     fsType = "ext4";
-    options = ["noatime" "nofail"];
+    options = [
+      "noatime"
+      "nofail"
+    ];
   };
 
   fileSystems."/boot" = {
@@ -60,7 +73,7 @@
   #   options = ["discard" "nofail"];
   # };
 
-  swapDevices = [];
+  swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's

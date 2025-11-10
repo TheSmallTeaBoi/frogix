@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   programs.vesktop = {
     enable = true;
     settings = {
@@ -8,7 +9,7 @@
       hardwareVideoAcceleration = true;
       disableMinSize = true;
       arRPC = true;
-      enabledThemes = ["stylix.css custom.css"];
+      enabledThemes = [ "stylix.css custom.css" ];
     };
   };
   xdg.configFile."vesktop/themes/custom.css".text =

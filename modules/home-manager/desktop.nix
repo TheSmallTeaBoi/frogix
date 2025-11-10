@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   xdg.desktopEntries = {
     steam = {
       name = "Steam";
@@ -6,7 +7,7 @@
       exec = "steam -no-cef-sandbox";
       icon = "steam";
       terminal = false;
-      categories = ["Application"];
+      categories = [ "Application" ];
     };
     vesktop = {
       name = "Vesktop";
