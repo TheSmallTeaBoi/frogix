@@ -4,6 +4,9 @@
 
 NixOS my beloved
 
+> [!NOTE]
+> The pictures in this page are out of date.
+
 #### Features
 
 - Neovim using [nixvim](https://github.com/nix-community/nixvim).
