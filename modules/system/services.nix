@@ -15,6 +15,8 @@
     };
   };
 
+  systemd.oomd.enable = false;
+
   services = {
     # This is needed for Vial and plover
     udev.extraRules = ''
@@ -73,6 +75,8 @@
 
     # Enable the OpenSSH daemon.
     openssh.enable = true;
+
+    earlyoom.enable = true;
 
     # Syncthing
     syncthing = {
