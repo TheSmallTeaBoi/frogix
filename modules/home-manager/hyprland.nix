@@ -156,7 +156,9 @@ in
         # Feishin
         "float, class:(feishin)"
         "center 1, floating:1, class:(feishin)"
-        "size 900 900, class:(feishin)"
+        # If the window is even a pixel wider than it is tall, it'll go into
+        # the horizontal layout
+        "size 900 899, class:(feishin)"
 
         "float, class:(clipse)"
         "float, class:(floating)"
@@ -197,6 +199,7 @@ in
         "$mod, D, exec, rofi -show drun"
         "$mod, E, exec, nemo" # File manager
         "$mod, F, fullscreen"
+        "$mod, S, fullscreen, 1"
         "$mod, J, cyclenext"
         "$mod, K, cyclenext, prev"
         "$mod, L, exec, feishin"
