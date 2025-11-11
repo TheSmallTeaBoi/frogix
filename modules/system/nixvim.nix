@@ -66,6 +66,7 @@
           float={border=_border}
         };
 
+
         -- This is ass, probably.
         -- Disable highlight for TODO, FIX, FIXME, ERROR, INFO, WARNING, etc.
         local function apply_styles()
@@ -162,11 +163,22 @@
       # Make it pretty
       dressing.enable = true;
       indent-blankline.enable = true;
-      colorizer.enable = true;
-      lualine.enable = true;
-      lspkind = {
+      colorizer = {
         enable = true;
+        settings = {
+          user_default_options = {
+            mode = "background";
+            always_update = true;
+            names = true;
+            tailwind = "both";
+            tailwing_opts = {
+              update_names = true;
+            };
+          };
+        };
       };
+      lualine.enable = true;
+      lspkind.enable = true;
 
       # Shh.
       # neocord.enable = true;
@@ -205,7 +217,7 @@
             typescript = [ "prettierd" ];
 
             # Use the "*" filetype to run formatters on all filetypes.
-            #"*" = ["codespell"];
+            "*" = [ "codespell" ];
             # Use the "_" filetype to run formatters on filetypes that don't
             # have other formatters configured.
             "_" = [ "trim_whitespace" ];
