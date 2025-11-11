@@ -69,6 +69,7 @@
     lsfg-vk
     lsfg-vk-ui
     steamtinkerlaunch
+    gpu-screen-recorder-gtk
 
     # Emulation {
     retroarch-full

@@ -30,6 +30,9 @@
 
   time.timeZone = "America/Buenos_Aires";
 
+  # Disable nano (ew)
+  programs.nano.enable = false;
+
   fonts.packages = with pkgs; [
     maple-mono.NF
     noto-fonts
@@ -70,6 +73,8 @@
   nixpkgs.config = {
     allowUnfree = true;
   };
+
+  programs.gpu-screen-recorder.enable = true;
 
   # It's like nix-alien. In fact, I don't know what the difference is.
   programs.nix-ld.enable = true;
