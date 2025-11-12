@@ -43,8 +43,8 @@
   # I love zram.
   zramSwap = {
     enable = true;
-    memoryPercent = 75; # Give me all of it
-    algorithm = "lz4";
+    memoryPercent = 400; # Give me all of it
+    algorithm = "lzo";
   };
 
   # rtkit is optional but recommended
