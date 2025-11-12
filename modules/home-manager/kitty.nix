@@ -9,6 +9,8 @@ in
     settings = {
       shell_integration = "no-cursor";
       cursor_blink_interval = "0.5 ease-in-out";
+      cursor_trail = 1;
+      cursor_trail_decay = "0.1 0.4";
 
       italic_font = "${fontName} Italic";
       bold_italic_font = "${fontName} Bold Italic";
