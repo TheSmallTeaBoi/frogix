@@ -15,6 +15,7 @@
     ./kitty.nix
     ./lazygit.nix
     ./mako.nix
+    ./obsidian.nix
     ./rofi.nix
     ./shell.nix
     ./theme.nix
