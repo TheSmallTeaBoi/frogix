@@ -179,6 +179,7 @@
       };
       lualine.enable = true;
       lspkind.enable = true;
+      tiny-inline-diagnostic.enable = true;
 
       # Shh.
       # neocord.enable = true;
