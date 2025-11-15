@@ -46,6 +46,7 @@
 
     ollama = {
       enable = true;
+      package = pkgs.ollama-cuda;
       acceleration = "cuda";
     };
 
@@ -99,6 +100,11 @@
           };
         };
         folders = {
+          "Books" = {
+            path = "/home/theo/Data/Books/";
+            devices = [ "Phone" ];
+            ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
+          };
           "Obsidian" = {
             path = "/home/theo/Data/Personal/obsidian";
             devices = [ "Phone" ];
