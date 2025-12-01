@@ -10,13 +10,6 @@ let
   main_screen = "WDX DP";
   secondary_screen = "BNQ BenQ G920HDA 25904485019";
 
-  workspace-switcher = pkgs.writeShellScriptBin "rofi-workspaces" ''
-    workspaces=$(hyprctl workspaces -j | ${pkgs.jq}/bin/jq -r '.[] | "\(.id): \(.monitor) | \(.lastwindowtitle // "Empty")"')
-
-    chosen=$(echo "$workspaces" | ${pkgs.rofi}/bin/rofi -dmenu -p "Workspace" | cut -d: -f1)
-
-    [ -n "$chosen" ] && hyprctl dispatch workspace "$chosen"
-  '';
 in
 {
   wayland.windowManager.hyprland = {
@@ -41,6 +34,7 @@ in
         dynamic-cursors = {
           enabled = true;
           mode = "stretch";
+          shake.enabled = false;
         };
         hyprbars = {
           bar_height = 20;
