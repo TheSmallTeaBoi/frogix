@@ -6,7 +6,7 @@
 }:
 {
   boot = {
-    kernelPackages = pkgs.linuxPackages_zen;
+    kernelPackages = pkgs.linuxPackages_xanmod_latest;
     extraModulePackages = [
       config.boot.kernelPackages.v4l2loopback
     ];
