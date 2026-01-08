@@ -71,6 +71,8 @@
     steamtinkerlaunch
     gpu-screen-recorder-gtk
 
+    beammp-launcher
+
     # Emulation {
     retroarch-full
     pcsx2
