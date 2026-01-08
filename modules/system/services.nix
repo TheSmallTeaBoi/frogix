@@ -18,11 +18,24 @@
   systemd.oomd.enable = false;
 
   services = {
-    # This is needed for Vial and plover
-    udev.extraRules = ''
-      KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*vial:f64c2b3c*", MODE="0660", GROUP="users", TAG+="uaccess", TAG+="udev-acl"
-      KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
-    '';
+    udev.extraRules =
+      # Udev
+      ''
+        # This is needed for Vial and plover
+        KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*vial:f64c2b3c*", MODE="0660", GROUP="users", TAG+="uaccess", TAG+="udev-acl"
+        KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
+
+        # Allows Sunshine to access /dev/uinput
+        KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
+        # Allows Sunshine to access /dev/uhid
+        KERNEL=="uhid", TAG+="uaccess"
+        # Joypads
+        KERNEL=="hidraw*" ATTRS{name}=="Sunshine PS5 (virtual) pad" MODE="0660", TAG+="uaccess"
+        SUBSYSTEMS=="input", ATTRS{name}=="Sunshine X-Box One (virtual) pad", MODE="0660", TAG+="uaccess"
+        SUBSYSTEMS=="input", ATTRS{name}=="Sunshine gamepad (virtual) motion sensors", MODE="0660", TAG+="uaccess"
+        SUBSYSTEMS=="input", ATTRS{name}=="Sunshine Nintendo (virtual) pad", MODE="0660", TAG+="uaccess"
+
+      '';
 
     # Drive mounting
     gvfs = {
@@ -43,6 +56,12 @@
     };
 
     tailscale.enable = true;
+
+    sunshine = {
+      enable = true;
+      autoStart = false;
+      package = pkgs.sunshine.override { cudaSupport = true; };
+    };
 
     ollama = {
       enable = true;
@@ -85,8 +104,8 @@
       user = "theo";
       dataDir = "/home/theo/Documents";
       configDir = "/home/theo/.config/syncthing";
-      overrideDevices = true; # overrides any devices added or deleted through the WebUI
-      overrideFolders = true; # overrides any folders added or deleted through the WebUI
+      overrideDevices = false;
+      overrideFolders = false;
       settings = {
         devices = {
           "Phone" = {
@@ -97,6 +116,9 @@
           };
           "Jin's Phone" = {
             id = "JHQQYZL-7WPU4G4-2XAPPAP-273XKST-DFG463C-4IWV6WH-BN6Y7VO-2XJ7VAW";
+          };
+          "Manage" = {
+            id = "LK5X5SY-RRTT6BP-MSDUACH-YX24N6H-4QRXMZC-WWTB7TF-7VPISRE-AY45UAH";
           };
         };
         folders = {

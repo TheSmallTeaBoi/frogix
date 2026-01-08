@@ -66,6 +66,7 @@ in
       misc = {
         mouse_move_enables_dpms = true;
         key_press_enables_dpms = true;
+        enable_anr_dialog = false;
       };
 
       decoration = {
@@ -139,7 +140,8 @@ in
         "${pkgs.xorg.xsetroot}/bin/xsetroot -cursor_name left_ptr"
         "${pkgs.mako}/bin/mako"
         "${pkgs.glances}/bin/glances -w --disable-plugin diskio,connections"
-        "${pkgs.easyeffects}/bin/easyeffects -l Voice --gapplication-service"
+        "${pkgs.easyeffects}/bin/easyeffects -l Voice -l Moondrop --gapplication-service"
+        "${pkgs.sunshine}/bin/sunshine"
       ];
 
       windowrulev2 = [
@@ -238,14 +240,14 @@ in
     enable = true;
     settings = {
       listener = [
+        # {
+        #   timeout = 300;
+        #   on-timeout = "${pkgs.swaylock-fancy}/bin/swaylock-fancy -t 'Hello, Theo'";
+        # }
         {
-          timeout = 300;
-          on-timeout = "${pkgs.swaylock-fancy}/bin/swaylock-fancy -t 'Hello, Theo'";
-        }
-        {
-          timeout = 600;
+          timeout = 1500;
           on-timeout = "hyprctl dispatch dpms off";
-          on-resume = "sleep 3; hyprctl dispatch dpms on";
+          on-resume = "hyprctl dispatch dpms on";
         }
       ];
     };
