@@ -35,6 +35,10 @@
         SUBSYSTEMS=="input", ATTRS{name}=="Sunshine gamepad (virtual) motion sensors", MODE="0660", TAG+="uaccess"
         SUBSYSTEMS=="input", ATTRS{name}=="Sunshine Nintendo (virtual) pad", MODE="0660", TAG+="uaccess"
 
+        # Chirp
+        SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE="0666"
+        SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="0666"
+
       '';
 
     # Drive mounting
@@ -63,11 +67,10 @@
       package = pkgs.sunshine.override { cudaSupport = true; };
     };
 
-    ollama = {
-      enable = true;
-      package = pkgs.ollama-cuda;
-      acceleration = "cuda";
-    };
+    # ollama = {
+    #   enable = true;
+    #   package = pkgs.ollama-cuda;
+    # };
 
     navidrome = {
       enable = true;

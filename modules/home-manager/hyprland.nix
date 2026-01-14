@@ -144,34 +144,33 @@ in
         "${pkgs.sunshine}/bin/sunshine"
       ];
 
-      windowrulev2 = [
-        "workspace 3 silent, class:(steam)"
-        "workspace 2 silent, class:(vesktop)"
-        "workspace 1 silent, class:(firefox)"
+      windowrule = [
+        "workspace 3 silent, match:class steam"
+        "workspace 2 silent, match:class vesktop"
+        "workspace 1 silent, match:class firefox"
 
         # Feishin
-        "float, class:(feishin)"
-        "center 1, floating:1, class:(feishin)"
+        "center 1, float 1, match:class feishin"
         # If the window is even a pixel wider than it is tall, it'll go into
         # the horizontal layout
-        "size 900 899, class:(feishin)"
+        "size 900 899, match:class feishin"
 
-        "float, class:(clipse)"
-        "float, class:(floating)"
-        "size 622 652, class:(clipse)"
-        "noblur, class:^(plugdata)$"
+        "float 1, match:class clipse"
+        "float 1, match:class floating"
+        "size 622 652, match:class clipse"
+        "no_blur 1, match:class plugdata"
 
         # Smart gaps
-        "bordersize 0, floating:0, onworkspace:w[tv1]"
-        "rounding 0, floating:0, onworkspace:w[tv1]"
-        "bordersize 0, floating:0, onworkspace:f[1]"
-        "rounding 0, floating:0, onworkspace:f[1]"
+        "border_size 0, match:float 0, match:workspace w[tv1]"
+        "rounding 0, match:float 0, match:workspace w[tv1]"
+        "border_size 0, match:float 0, match:workspace f[1]"
+        "rounding 0, match:float 0, match:workspace f[1]"
 
         # Only show title bars on floating windows.
-        "plugin:hyprbars:nobar, ^floating:0"
-        "size <800 <600, class:.*"
+        "hyprbars:no_bar 1, match:float 0"
+        "size <800 <600, match:float 1, match:class .*"
 
-        "nearestneighbor, class:^(gamescope)$"
+        "nearest_neighbor 1, match:class gamescope"
       ];
 
       workspace = [

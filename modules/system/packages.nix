@@ -74,9 +74,9 @@
     beammp-launcher
 
     # Emulation {
-    retroarch-full
+    # retroarch-full
     pcsx2
-    flycast
+    # flycast
     ppsspp
     # torzu # I will not forget you.
     # }
@@ -127,7 +127,6 @@
     ninjas2
     noise-repellent
     oxefmsynth
-    plugdata
     quadrafuzz
     rubberband
     samplv1

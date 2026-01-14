@@ -47,7 +47,7 @@ in
   systemd.services.yeetmouse-setup = {
     description = "Rebind USB HID device to leetmouse and configure it";
     wantedBy = [ "multi-user.target" ];
-    after = [ "local-fs.target" ];
+    after = [ "display-manager.service" ];
 
     serviceConfig = {
       Type = "oneshot";

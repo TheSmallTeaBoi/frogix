@@ -145,7 +145,7 @@
       lspconfig.enable = true;
       treesitter = {
         enable = true;
-        folding = true;
+        folding.enable = true;
         settings = {
           highlight.enable = true;
           ensure_installed = [
