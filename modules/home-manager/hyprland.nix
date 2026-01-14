@@ -170,6 +170,8 @@ in
         # Only show title bars on floating windows.
         "plugin:hyprbars:nobar, ^floating:0"
         "size <800 <600, class:.*"
+
+        "nearestneighbor, class:^(gamescope)$"
       ];
 
       workspace = [
