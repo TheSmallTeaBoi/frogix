@@ -43,8 +43,8 @@
   # I love zram.
   zramSwap = {
     enable = true;
-    memoryPercent = 400; # Give me all of it
-    algorithm = "lzo";
+    memoryPercent = 25;
+    algorithm = "zstd";
   };
 
   # rtkit is optional but recommended
@@ -64,6 +64,7 @@
       "input"
       "uinput"
       "audio"
+      "gamemode"
     ];
   };
 
@@ -75,6 +76,7 @@
   };
 
   programs.gpu-screen-recorder.enable = true;
+  programs.gamemode.enable = true;
 
   # It's like nix-alien. In fact, I don't know what the difference is.
   programs.nix-ld.enable = true;
@@ -88,8 +90,12 @@
   # Enable Theme
   environment.variables = {
     NIXOS_OZONE_WL = "1";
+    LIBVA_DRIVER_NAME = "nvidia";
+    NVD_BACKEND = "direct";
+    MOZ_DISABLE_RDD_SANDBOX = "1";
+    GBM_BACKEND = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
   };
-
   qt.enable = true;
 
   environment.systemPackages = with pkgs; [

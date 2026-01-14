@@ -6,7 +6,7 @@
 }:
 {
   boot = {
-    kernelPackages = pkgs.linuxPackages_xanmod_latest;
+    kernelPackages = pkgs.linuxPackages_latest;
     extraModulePackages = [
       config.boot.kernelPackages.v4l2loopback
     ];
@@ -14,13 +14,12 @@
       options v4l2loopback exclusive_caps=1
     '';
     kernel.sysctl = {
-      "vm.swappiness" = lib.mkForce 180;
-      "vm.watermark_boost_factor" = 0;
-      "vm.watermark_scale_factor" = 125;
+      "vm.swappiness" = lib.mkForce 1;
       "vm.page-cluster" = 0;
     };
     kernelParams = [
       "quiet"
+      "threadirqs"
     ];
     loader.timeout = 0;
 

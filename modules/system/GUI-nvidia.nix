@@ -24,12 +24,8 @@
     powerManagement.finegrained = false;
     open = false;
     nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.beta;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
-
-  # Firefox hardware acceleration.
-  environment.variables.LIBVA_DRIVER_NAME = "nvidia";
-  environment.variables.MOZ_DISABLE_RDD_SANDBOX = "1";
 
   programs.firefox.preferences =
     let
