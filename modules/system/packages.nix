@@ -70,6 +70,14 @@
     lsfg-vk-ui
     steamtinkerlaunch
     gpu-screen-recorder-gtk
+    (prismlauncher.override {
+      jdks = with pkgs; [
+        jdk21
+        jdk25
+        jdk17
+        jdk8
+      ];
+    })
 
     beammp-launcher
 

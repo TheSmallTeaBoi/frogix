@@ -17,9 +17,9 @@ in
     xwayland.enable = true;
 
     plugins = [
-      pkgs.hyprlandPlugins.hypr-dynamic-cursors
-      pkgs.hyprlandPlugins.hyprexpo
-      pkgs.hyprlandPlugins.hyprbars
+      # pkgs.hyprlandPlugins.hypr-dynamic-cursors
+      # pkgs.hyprlandPlugins.hyprexpo
+      # pkgs.hyprlandPlugins.hyprbars
     ];
 
     settings = {
@@ -30,29 +30,29 @@ in
         ", preferred, auto, 1"
       ];
 
-      plugin = {
-        dynamic-cursors = {
-          enabled = true;
-          mode = "stretch";
-          shake.enabled = false;
-        };
-        hyprbars = {
-          bar_height = 20;
-          bar_color = "rgb(${config.lib.stylix.colors.base00})";
-          col.text = "rgb(${config.lib.stylix.colors.base05})";
-          inactive_button_color = "rgb(${config.lib.stylix.colors.base00})";
-          bar_text_size = 8;
-          bar_text_font = config.stylix.fonts.sansSerif.name;
-          bar_button_padding = 12;
-          bar_padding = 12;
-          bar_precedence_over_border = true;
-          on_double_click = "hyprctl dispatch fullscreen 1";
-          hyprbars-button = [
-            "rgb(${config.lib.stylix.colors.base08}), 10, , hyprctl dispatch killactive"
-            "rgb(${config.lib.stylix.colors.base0A}), 10, , hyprctl dispatch fullscreen 1"
-          ];
-        };
-      };
+      # plugin = {
+      #   dynamic-cursors = {
+      #     enabled = true;
+      #     mode = "stretch";
+      #     shake.enabled = false;
+      #   };
+      #   hyprbars = {
+      #     bar_height = 20;
+      #     bar_color = "rgb(${config.lib.stylix.colors.base00})";
+      #     col.text = "rgb(${config.lib.stylix.colors.base05})";
+      #     inactive_button_color = "rgb(${config.lib.stylix.colors.base00})";
+      #     bar_text_size = 8;
+      #     bar_text_font = config.stylix.fonts.sansSerif.name;
+      #     bar_button_padding = 12;
+      #     bar_padding = 12;
+      #     bar_precedence_over_border = true;
+      #     on_double_click = "hyprctl dispatch fullscreen 1";
+      #     hyprbars-button = [
+      #       "rgb(${config.lib.stylix.colors.base08}), 10, , hyprctl dispatch killactive"
+      #       "rgb(${config.lib.stylix.colors.base0A}), 10, , hyprctl dispatch fullscreen 1"
+      #     ];
+      #   };
+      # };
 
       xwayland = {
         force_zero_scaling = true;
@@ -140,7 +140,7 @@ in
         "${pkgs.xorg.xsetroot}/bin/xsetroot -cursor_name left_ptr"
         "${pkgs.mako}/bin/mako"
         "${pkgs.glances}/bin/glances -w --disable-plugin diskio,connections"
-        "${pkgs.easyeffects}/bin/easyeffects -l Voice -l Moondrop --gapplication-service"
+        "${pkgs.easyeffects}/bin/easyeffects --gapplication-service"
         "${pkgs.sunshine}/bin/sunshine"
       ];
 
@@ -167,7 +167,7 @@ in
         "rounding 0, match:float 0, match:workspace f[1]"
 
         # Only show title bars on floating windows.
-        "hyprbars:no_bar 1, match:float 0"
+        # "hyprbars:no_bar 1, match:float 0"
         "size <800 <600, match:float 1, match:class .*"
 
         "nearest_neighbor 1, match:class gamescope"
@@ -206,7 +206,7 @@ in
         "$mod, R, exec, kitty --class clipse -e '${pkgs.clipse}/bin/clipse'"
         "$mod, T, killactive"
 
-        "$mod, Q, hyprexpo:expo, toggle"
+        # "$mod, Q, hyprexpo:expo, toggle"
 
         "$mod, TAB, workspace, previous"
         "$mod, Period, exec, rofi -modi emoji -show emoji"
