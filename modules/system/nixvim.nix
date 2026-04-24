@@ -13,7 +13,8 @@
       ghc
       nixfmt
       ormolu
-      prettierd
+      oxfmt
+      zig
     ];
     opts = {
       updatetime = 100;
@@ -32,6 +33,7 @@
       tabstop = 2;
       shiftwidth = 2;
       expandtab = true;
+      termguicolors = true;
       guicursor = "i-ci:ver30-iCursor-blinkwait300-blinkon200-blinkoff150";
 
       textwidth = 80;
@@ -119,6 +121,9 @@
         #html
         html.enable = true;
 
+        #zig
+        zls.enable = true;
+
         #filesystem
         fsautocomplete.enable = true;
       };
@@ -159,6 +164,9 @@
       telescope.enable = true;
       intellitab.enable = true;
       indent-o-matic.enable = true;
+
+      # Zig
+      zig.enable = true;
 
       # Make it pretty
       dressing.enable = true;
@@ -211,11 +219,11 @@
 
             nix = [ "nixfmt" ];
 
-            html = [ "prettierd" ];
-            css = [ "prettierd" ];
-            javascript = [ "prettierd" ];
-            javascriptreact = [ "prettierd" ];
-            typescript = [ "prettierd" ];
+            html = [ "oxfmt" ];
+            css = [ "oxfmt" ];
+            javascript = [ "oxfmt" ];
+            javascriptreact = [ "oxfmt" ];
+            typescript = [ "oxfmt" ];
 
             # Use the "*" filetype to run formatters on all filetypes.
             "*" = [ "codespell" ];

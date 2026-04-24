@@ -17,7 +17,8 @@
     wl-clipboard
     fzf
     ripgrep
-    neofetch
+    # neofetch # They deprecated my boy
+    fastfetch
     wget
     git
     pulsemixer

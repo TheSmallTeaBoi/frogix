@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   ...
 }:
@@ -8,7 +7,7 @@
     # ...
 
     # support both 32- and 64-bit applications
-    wineWowPackages.stable
+    wineWow64Packages.stable
 
     # support 32-bit only
     wine
@@ -20,12 +19,12 @@
     wine64
 
     # wine-staging (version with experimental features)
-    wineWowPackages.staging
+    wineWow64Packages.staging
 
     # winetricks (all versions)
     winetricks
 
     # native wayland support (unstable)
-    wineWowPackages.waylandFull
+    wineWow64Packages.waylandFull
   ];
 }
