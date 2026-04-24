@@ -52,7 +52,8 @@
     # Does anyone know how to only apply this to SSDs?
     fstrim.enable = true;
 
-    ratbagd.enable = true;
+    # Bluetooth
+    blueman.enable = true;
 
     mysql = {
       enable = true;
