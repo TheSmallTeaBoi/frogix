@@ -81,6 +81,7 @@
     })
 
     beammp-launcher
+    flightgear
 
     # Emulation {
     # retroarch-full

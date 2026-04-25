@@ -20,5 +20,14 @@
         "Chat"
       ];
     };
+    flightgear = {
+      name = "FlightGear";
+      exec = "fgfs --fg-root=/home/theo/Games/fgfs/ --launcher";
+      icon = "flightgear";
+      genericName = "Flight Simulator";
+      categories = [
+        "Game"
+      ];
+    };
   };
 }
