@@ -19,6 +19,16 @@
       prettier
       html-tidy
       luaformatter
+
+      pyright
+      typescript
+      typescript-language-server
+      yaml-language-server
+      zls
+      nil
+      lua-language-server
+      tailwindcss-language-server
+      rustywind
     ];
   };
   xdg.configFile."emacs/stylix.el".text =
@@ -26,6 +36,7 @@
       colors = config.lib.stylix.colors.withHashtag;
       fonts = config.stylix.fonts;
     in
+    # elisp
     ''
       (setq doom-font (font-spec :family "${fonts.monospace.name}" :size 14))
       (setq doom-variable-pitch-font (font-spec :family "${fonts.sansSerif.name}" :size 14))
