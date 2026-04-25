@@ -5,10 +5,10 @@
     # NixOS official package source, using the unstable branch here
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    nixvim = {
-      url = "github:nix-community/nixvim/";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # nixvim = {
+    #   url = "github:nix-community/nixvim/";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
 
     musnix = {
       url = "github:musnix/musnix";
@@ -68,8 +68,6 @@
       ...
     }@inputs:
     let
-      system = "x86_64-linux";
-
       ratholomewConfig = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs; };
@@ -84,26 +82,9 @@
           sops-nix.nixosModules.sops
         ];
       };
-
-      unfreePkgs = import nixpkgs {
-        system = "x86_64-linux";
-        config.allowUnfree = true;
-      };
     in
     {
       nixosConfigurations.ratholomew = ratholomewConfig;
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
-      packages = {
-        ${system}.neovim =
-          let
-            nixvim-package = nixvim.legacyPackages.${system}.makeNixvimWithModule {
-              pkgs = unfreePkgs;
-              module = import ./modules/system/nixvim.nix;
-            };
-
-            stylix-module = ratholomewConfig.config.stylix.targets.nixvim.exportedModule;
-          in
-          nixvim-package.extend stylix-module;
-      };
     };
 }
