@@ -130,14 +130,14 @@ in
         "${pkgs.waybar}/bin/waybar"
 
         # Change this to your "primary" screen.
-        "${pkgs.xorg.xrandr}/bin/xrandr --output DP-3 --primary"
+        "${pkgs.xrandr}/bin/xrandr --output DP-3 --primary"
 
         "kill (${pkgs.lsof}/bin/lsof -t -i:10420)"
         "sleep 15 && nicotine -s"
         "${pkgs.clipse}/bin/clipse -listen"
         "firefox"
         "vesktop"
-        "${pkgs.xorg.xsetroot}/bin/xsetroot -cursor_name left_ptr"
+        "${pkgs.xsetroot}/bin/xsetroot -cursor_name left_ptr"
         "${pkgs.mako}/bin/mako"
         "${pkgs.glances}/bin/glances -w --disable-plugin diskio,connections"
         "${pkgs.easyeffects}/bin/easyeffects --gapplication-service"
