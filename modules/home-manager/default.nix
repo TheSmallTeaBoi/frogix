@@ -6,6 +6,8 @@
     ./beets.nix
     ./bottom.nix
     ./desktop.nix
+    ./easyeffects.nix
+    ./emacs.nix
     ./firefox.nix
     ./git.nix
     ./gtk.nix
