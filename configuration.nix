@@ -52,6 +52,7 @@
 
   hardware = {
     uinput.enable = true;
+    bluetooth.enable = true;
   };
 
   home-manager.backupFileExtension = "bk";
@@ -86,6 +87,8 @@
   programs.java = {
     enable = true;
   };
+
+  programs.alvr.enable = true;
 
   # Enable Theme
   environment.variables = {
