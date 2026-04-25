@@ -7,6 +7,7 @@
   programs.firefox = {
     enable = true;
     nativeMessagingHosts = [ pkgs.tridactyl-native ];
+    configPath = "${config.home.homeDirectory}/.mozilla/firefox";
     profiles.theo = {
       isDefault = true;
       extensions.force = true;

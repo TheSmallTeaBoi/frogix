@@ -38,7 +38,6 @@
     vial
 
     # Coding, I guess
-    inputs.self.packages.x86_64-linux.neovim
     inputs.nix-alien.packages.x86_64-linux.nix-alien
 
     devenv
@@ -91,7 +90,6 @@
     # torzu # I will not forget you.
     # }
 
-    lutris
     logmein-hamachi # my beloved
     parsec-bin # actual black magic.
     protontricks
