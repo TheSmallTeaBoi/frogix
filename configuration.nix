@@ -88,8 +88,6 @@
     enable = true;
   };
 
-  programs.alvr.enable = true;
-
   # Enable Theme
   environment.variables = {
     NIXOS_OZONE_WL = "1";
