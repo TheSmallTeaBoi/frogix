@@ -7,7 +7,7 @@
     "x-scheme-handler/https" = [ "firefox.desktop" ];
 
     # Text and code
-    "text/plain" = [ "nvim.desktop" ];
+    "text/plain" = [ "emacs.desktop" ];
 
     # Images
     "image/png" = [ "feh.desktop" ];
