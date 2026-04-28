@@ -13,6 +13,7 @@
     enable = true;
     doomDir = ./doom;
     doomLocalDir = "/home/theo/.config/emacs/";
+    extraPackages = epkgs: [ epkgs.treesit-grammars.with-all-grammars ];
     extraBinPackages = with pkgs; [
       black
       nixfmt
@@ -20,11 +21,17 @@
       html-tidy
       luaformatter
 
+      fd
+      cmake
+      graphviz
+
+      python3
       pyright
       typescript
       typescript-language-server
       yaml-language-server
       zls
+      zig
       nil
       lua-language-server
       tailwindcss-language-server
@@ -40,7 +47,11 @@
     ''
       (setq doom-font (font-spec :family "${fonts.monospace.name}" :size 14))
       (setq doom-variable-pitch-font (font-spec :family "${fonts.sansSerif.name}" :size 14))
-      (setq nerd-icons-font-family (font-spec :family "${fonts.monospace.name}" :size 14))
+      (setq nerd-icons-font-family "${fonts.monospace.name}")
+
+      (set-face-attribute 'font-lock-comment-face nil :slant 'italic)
+      (set-face-attribute 'font-lock-function-name-face nil :slant 'italic)
+      (set-face-attribute 'font-lock-variable-name-face nil :slant 'italic)
 
       (setq doom-symbol-font (font-spec :family "${fonts.monospace.name}"))
 

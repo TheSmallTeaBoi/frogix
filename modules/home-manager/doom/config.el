@@ -41,14 +41,32 @@
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
-(setq display-line-numbers-type relative)
+(setq display-line-numbers-type 'relative)
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/Data/Personal/org/")
+(setq org-directory "~/Data/Personal/Org/")
+(setq org-roam-directory "~/Data/Personal/Org/")
+(setq org-roam-db-location "~/Data/Personal/Org/org-roam.db")
+
+(setq org-roam-database-connector 'sqlite-builtin)
 
 
-(setq doom-modeline-modal-icon nil)
+(use-package! lsp-tailwindcss
+  :init
+  (setq lsp-tailwindcss-add-on-mode t))
+
+(after! company
+  (setq company-idle-delay 0)
+  )
+
+(setq scroll-margin 25)
+
+(custom-set-faces!
+  '(font-lock-comment-face :slant italic)
+  '(font-lock-function-name-face :slant italic)
+  '(font-lock-string-face :slant italic)
+  )
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `with-eval-after-load' block, otherwise Doom's defaults may override your
@@ -80,8 +98,3 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
-
-
-(use-package! lsp-tailwindcss
-  :init
-  (setq lsp-tailwindcss-add-on-mode t))  ;; important — runs alongside other LSPs
