@@ -47,11 +47,14 @@
             starship module character
           end
 
-          # Enter tmux if not started
           if not set -q TMUX
-            set -g TMUX tmux new-session -d -s base
-            eval $TMUX
-            tmux new-session -t base
+              and not set -q INSIDE_EMACS
+              and not set -q VIM
+              and not set -q NVIM
+
+              set -g TMUX tmux new-session -d -s base
+              eval $TMUX
+              tmux new-session -t base
           end
         '';
   };
