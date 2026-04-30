@@ -119,7 +119,7 @@ in
         "LIBVA_DRIVER_NAME,nvidia"
         "XDG_SESSION_TYPE,wayland"
         "GBM_BACKEND,nvidia-drm"
-        " __GLX_VENDOR_LIBRARY_NAME,nvidia"
+        "__GLX_VENDOR_LIBRARY_NAME,nvidia"
         "WLR_RENDERER_ALLOW_SOFTWARE,false"
         "HYPRCURSOR_SIZE,16"
         "XCURSOR_SIZE,16"
@@ -192,18 +192,20 @@ in
       bind = [
         "$mod, Return, exec, kitty"
 
+        "$mod SHIFT, P, workspaceopt, allfloat"
+
         "$mod, C, exec, rofi -show calc -modi calc -no-show-match -no-sort | wl-copy"
         "$mod, D, exec, rofi -show drun"
         "$mod, E, exec, nemo" # File manager
         "$mod, F, fullscreen"
-        "$mod, S, fullscreen, 1"
         "$mod, J, cyclenext"
         "$mod, K, cyclenext, prev"
         "$mod, L, exec, feishin"
         "$mod, M, exec, ${pkgs.rofi-pulse-select}/bin/rofi-pulse-select sink"
+        "$mod, O, emacsclient -c"
         "$mod, P, togglefloating"
-        "$mod SHIFT, P, workspaceopt, allfloat"
         "$mod, R, exec, kitty --class clipse -e '${pkgs.clipse}/bin/clipse'"
+        "$mod, S, fullscreen, 1"
         "$mod, T, killactive"
 
         # "$mod, Q, hyprexpo:expo, toggle"
