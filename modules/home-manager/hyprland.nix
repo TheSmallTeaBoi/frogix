@@ -16,12 +16,6 @@ in
     enable = true;
     xwayland.enable = true;
 
-    plugins = [
-      # pkgs.hyprlandPlugins.hypr-dynamic-cursors
-      # pkgs.hyprlandPlugins.hyprexpo
-      # pkgs.hyprlandPlugins.hyprbars
-    ];
-
     settings = {
       "$mod" = "SUPER";
       monitor = [
@@ -29,30 +23,6 @@ in
         "desc:${secondary_screen}, 1366x768@60, -768x-50, 1, transform, 3"
         ", preferred, auto, 1"
       ];
-
-      # plugin = {
-      #   dynamic-cursors = {
-      #     enabled = true;
-      #     mode = "stretch";
-      #     shake.enabled = false;
-      #   };
-      #   hyprbars = {
-      #     bar_height = 20;
-      #     bar_color = "rgb(${config.lib.stylix.colors.base00})";
-      #     col.text = "rgb(${config.lib.stylix.colors.base05})";
-      #     inactive_button_color = "rgb(${config.lib.stylix.colors.base00})";
-      #     bar_text_size = 8;
-      #     bar_text_font = config.stylix.fonts.sansSerif.name;
-      #     bar_button_padding = 12;
-      #     bar_padding = 12;
-      #     bar_precedence_over_border = true;
-      #     on_double_click = "hyprctl dispatch fullscreen 1";
-      #     hyprbars-button = [
-      #       "rgb(${config.lib.stylix.colors.base08}), 10, , hyprctl dispatch killactive"
-      #       "rgb(${config.lib.stylix.colors.base0A}), 10, , hyprctl dispatch fullscreen 1"
-      #     ];
-      #   };
-      # };
 
       xwayland = {
         force_zero_scaling = true;
@@ -85,7 +55,6 @@ in
           10
           10
         ];
-        # "col.active_border" = "0xf38ba8ff";
         "col.inactive_border" = lib.mkForce "0x00000000";
         animation = [
           "workspaces, 1, 2.5, easeOutQuart"
@@ -101,7 +70,6 @@ in
       cursor = {
         enable_hyprcursor = true;
         no_hardware_cursors = true;
-        # allow_dumb_copy = false;
       };
 
       curves = {
@@ -166,8 +134,6 @@ in
         "border_size 0, match:float 0, match:workspace f[1]"
         "rounding 0, match:float 0, match:workspace f[1]"
 
-        # Only show title bars on floating windows.
-        # "hyprbars:no_bar 1, match:float 0"
         "size <800 <600, match:float 1, match:class .*"
 
         "nearest_neighbor 1, match:class gamescope"
@@ -208,8 +174,6 @@ in
         "$mod, S, fullscreen, 1"
         "$mod, T, killactive"
 
-        # "$mod, Q, hyprexpo:expo, toggle"
-
         "$mod, TAB, workspace, previous"
         "$mod, Period, exec, rofi -modi emoji -show emoji"
 
@@ -218,7 +182,7 @@ in
 
         ",XF86AudioPlay, exec, ${pkgs.playerctl}/bin/playerctl play-pause"
 
-        ", Print, exec, ${pkgs.grimblast}/bin/grimblast copy area"
+        ",Print, exec, ${pkgs.grimblast}/bin/grimblast copy area"
         "SHIFT, Print, exec, ${pkgs.grimblast}/bin/grimblast copy output"
       ]
       ++ (
@@ -243,10 +207,10 @@ in
     enable = true;
     settings = {
       listener = [
-        # {
-        #   timeout = 300;
-        #   on-timeout = "${pkgs.swaylock-fancy}/bin/swaylock-fancy -t 'Hello, Theo'";
-        # }
+        {
+          timeout = 500;
+          on-timeout = "${pkgs.swaylock-fancy}/bin/swaylock-fancy -t 'Hello, Theo'";
+        }
         {
           timeout = 1500;
           on-timeout = "hyprctl dispatch dpms off";
