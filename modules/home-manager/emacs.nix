@@ -20,11 +20,22 @@
       prettier
       html-tidy
       luaformatter
+      shfmt
+      js-beautify
+      stylelint
 
       fd
+      gnumake
       cmake
       graphviz
+      maim
 
+      python314Packages.pyflakes
+      python314Packages.pytest_8_3
+      isort
+      pipenv
+
+      shellcheck
       python3
       pyright
       typescript

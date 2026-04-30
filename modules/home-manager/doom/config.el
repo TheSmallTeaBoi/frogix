@@ -60,7 +60,11 @@
   (setq company-idle-delay 0)
   )
 
-(setq scroll-margin 25)
+(setq scroll-margin 5)
+
+(setq which-key-idle-delay 0.1)
+
+(setq shell-file-name (executable-find "bash"))
 
 (custom-set-faces!
   '(font-lock-comment-face :slant italic)
