@@ -168,7 +168,7 @@ in
         "$mod, K, cyclenext, prev"
         "$mod, L, exec, feishin"
         "$mod, M, exec, ${pkgs.rofi-pulse-select}/bin/rofi-pulse-select sink"
-        "$mod, O, emacsclient -c"
+        "$mod, O, exec, emacsclient -c"
         "$mod, P, togglefloating"
         "$mod, R, exec, kitty --class clipse -e '${pkgs.clipse}/bin/clipse'"
         "$mod, S, fullscreen, 1"
