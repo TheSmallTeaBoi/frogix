@@ -51,6 +51,13 @@
 
 (setq org-roam-database-connector 'sqlite-builtin)
 
+(setq org-roam-capture-templates
+      '(("d" "default" plain "%?"
+         :target
+         (file+head "${slug}.org"
+                    "#+title: ${title}\n")
+         :unnarrowed t)))
+
 
 (use-package! lsp-tailwindcss
   :init
@@ -63,8 +70,6 @@
 (setq scroll-margin 5)
 
 (setq which-key-idle-delay 0.1)
-
-(setq shell-file-name (executable-find "bash"))
 
 (custom-set-faces!
   '(font-lock-comment-face :slant italic)

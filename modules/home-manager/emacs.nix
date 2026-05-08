@@ -47,6 +47,8 @@
       lua-language-server
       tailwindcss-language-server
       rustywind
+
+      texlive.combined.scheme-full
     ];
   };
   xdg.configFile."emacs/stylix.el".text =

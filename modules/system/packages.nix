@@ -24,6 +24,7 @@
     pulsemixer
     bottom
     eza
+    micro
     file
     beets
     yt-dlp
@@ -70,6 +71,7 @@
     lsfg-vk-ui
     steamtinkerlaunch
     gpu-screen-recorder-gtk
+
     (prismlauncher.override {
       jdks = with pkgs; [
         jdk21
