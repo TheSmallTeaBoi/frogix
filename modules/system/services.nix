@@ -7,9 +7,11 @@
 {
   systemd.services.navidrome = {
     # Otherwise it starts before the music library gets mounted
-    after = [ "home-theo-Data.mount" ];
-    requires = [ "home-theo-Data.mount" ];
+    after = [ "storage.mount" ];
+    requires = [ "storage.mount" ];
+    serviceConfig.PrivateUsers = lib.mkForce false;
     serviceConfig = {
+      RootDirectory = lib.mkForce "";
       ProtectHome = lib.mkForce "read-only";
       EnvironmentFile = config.sops.secrets.navidrome_env.path;
     };
@@ -77,7 +79,7 @@
     navidrome = {
       enable = true;
       settings = {
-        MusicFolder = "/home/theo/Data/Music/";
+        MusicFolder = "/storage/Music/";
         Address = "0.0.0.0";
       };
     };
@@ -127,23 +129,23 @@
           };
         };
         folders = {
-          "Books" = {
-            path = "/home/theo/Data/Books/";
+          "Obsidian" = {
+            path = "/storage/Personal/obsidian";
             devices = [ "Phone" ];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
           };
-          "Obsidian" = {
-            path = "/home/theo/Data/Personal/obsidian";
+          "Org" = {
+            path = "/storage/Personal/Org";
             devices = [ "Phone" ];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
           };
           "z7ezp-ya3ym" = {
-            path = "/home/theo/Rattus/musik/02 Projects/collab/";
+            path = "/storage/musik/02 Projects/collab/";
             devices = [ "JTB" ];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
           };
           "wargame-lore" = {
-            path = "/home/theo/Data/Personal/wargame/";
+            path = "/storage/Personal/wargame/";
             devices = [ "Jin's Phone" ];
             ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
           };

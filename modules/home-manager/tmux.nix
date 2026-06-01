@@ -61,11 +61,6 @@
             "Break Pane"                         t break-pane \
             "Join Pane"                          j "choose-window 'join-pane -h -s \"%%\"'" \
             "#{?window_zoomed_flag,Unzoom,Zoom}" z "resize-pane -Z" \
-            "" \
-            "Nvim"                                "new-window -n "Nvim" -c '#{pane_current_path}' 'nvim'" \
-            "With directory"                      "new-window -n "Nvim" -c '#{pane_current_path}' 'nvim .'" \
-            "Notes"                              󰏪 "new-window -n "Notes" -c '/home/theo/Data/Personal/diary/' 'nvim notes.txt'" \
-            "Nix"                                󱄅 "new-window -n "Nix" -c '/home/theo/frogix/' 'nvim .'" \
             ""\
             "Lazygit"                             "new-window -n "Lazygit" -c '#{pane_current_path}' 'lazygit'" \
             "Bottom"                              "new-window -n "Bottom" 'btm'"

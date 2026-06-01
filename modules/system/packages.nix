@@ -28,6 +28,7 @@
     file
     beets
     yt-dlp
+    rclone
     ffmpeg
     qmk
     qmk-udev-rules
@@ -99,6 +100,8 @@
 
     # Piracy stuff :)
     aria2
+    jellyfin-desktop
+    stremio-linux-shell
 
     # Music stuff
     nicotine-plus
@@ -109,7 +112,6 @@
     # Music making
     ardour
 
-    # surge-XT [FIXME]
     AMB-plugins
     aether-lv2
     airwindows

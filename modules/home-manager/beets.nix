@@ -4,13 +4,13 @@
     # yaml
     ''
       plugins: convert duplicates rewrite badfiles embedart fetchart lastgenre deezer discogs spotify musicbrainz lyrics export missing edit mbsync inline chroma autobpm fromfilename
-      directory: /home/theo/Data/Music/
+      directory: /storage/Music/
       import:
         move: yes
         duplicate_action: merge
         write: yes
       convert:
-        dest: /home/theo/Data/music-lossier/
+        dest: /storage/music-lossier/
         never_convert_lossy_files: yes
         format: opus
         formats:
@@ -32,7 +32,6 @@
         keys: acoustid_fingerprint
       fetchart:
         auto: yes
-        sources: filesystem coverart itunes amazon albumart wikipedia fanarttv
       embedart:
         auto: yes
         remove_art_file: yes

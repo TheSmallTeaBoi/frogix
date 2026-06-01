@@ -45,9 +45,10 @@
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/Data/Personal/Org/")
-(setq org-roam-directory "~/Data/Personal/Org/")
-(setq org-roam-db-location "~/Data/Personal/Org/org-roam.db")
+(setq org-directory "/storage/Personal/Org/")
+(setq org-roam-directory "/storage/Personal/Org/")
+(setq org-roam-db-location "/storage/Personal/Org/org-roam.db")
+(setq calendar-date-style 'european) ;; Use a sane timestamp format.
 
 (setq org-roam-database-connector 'sqlite-builtin)
 
@@ -57,6 +58,19 @@
          (file+head "${slug}.org"
                     "#+title: ${title}\n")
          :unnarrowed t)))
+
+;; Booklet export. Use `#+BOOKLET: t`
+(defun my/org-booklet-advice (orig-fn &rest args)
+  (let ((outfile (apply orig-fn args)))
+    (when (and outfile
+               (equal (org-collect-keywords '("BOOKLET"))
+                      '(("BOOKLET" "t"))))
+      (shell-command
+       (format "pdfbook2 --paper=a4paper %s"
+               (shell-quote-argument outfile))))
+    outfile))
+
+(advice-add 'org-latex-export-to-pdf :around #'my/org-booklet-advice)
 
 
 (use-package! lsp-tailwindcss
@@ -76,6 +90,8 @@
   '(font-lock-function-name-face :slant italic)
   '(font-lock-string-face :slant italic)
   )
+
+(add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `with-eval-after-load' block, otherwise Doom's defaults may override your

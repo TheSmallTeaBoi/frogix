@@ -35,6 +35,7 @@
       isort
       pipenv
 
+      ispell
       shellcheck
       python3
       pyright
@@ -51,6 +52,11 @@
       texlive.combined.scheme-full
     ];
   };
+  xdg.configFile."emacs/snippets" = {
+    source = ./doom/snippets;
+    recursive = false;
+  };
+
   xdg.configFile."emacs/stylix.el".text =
     let
       colors = config.lib.stylix.colors.withHashtag;

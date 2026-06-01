@@ -17,15 +17,16 @@
     ];
 
     shellAliases = {
+      det = "tmux detach";
+      dev = "nix develop --command fish"; # This shit sucks
+      e = "emacsclient -c";
       l = "eza -lh --icons";
-      ls = "eza --icons";
       la = "eza -a --icons";
       ll = "eza -i --icons";
-      tree = "eza --tree --icons";
+      ls = "eza --icons";
       nixb = "sudo nixos-rebuild switch --flake ~/frogix/";
       nsearch = "nix search nixpkgs";
-      dev = "nix develop --command fish"; # This shit sucks
-      det = "tmux detach";
+      tree = "eza --tree --icons";
     };
     # fix starship prompt to only have newlines after the first command
     # https://github.com/starship/starship/issues/560#issuecomment-1465630645
@@ -39,6 +40,7 @@
     # add transient prompt for fish via transient.fish plugin in fish.nix
     # the starship transience module doesn't handle empty commands properly
     # https://github.com/starship/starship/issues/4929
+    # Add a tmux session when you start fish
     interactiveShellInit =
       lib.mkAfter
         # Fish

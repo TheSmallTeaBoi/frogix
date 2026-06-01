@@ -5,12 +5,16 @@
   config,
   lib,
   modulesPath,
+  pkgs,
   ...
 }:
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
+
+  environment.systemPackages = [ pkgs.mergerfs ];
+  programs.fuse.userAllowOther = true;
 
   boot.initrd.availableKernelModules = [
     "xhci_pci"
@@ -33,13 +37,13 @@
     fsType = "autofs";
   };
 
-  fileSystems."/home/theo/Rattus" = {
+  fileSystems."/mnt/HDD1" = {
     device = "/dev/disk/by-uuid/e0fa5f82-c2b8-417d-a4dd-9ff45ee93fb4";
     fsType = "ext4";
     options = [ "nofail" ];
   };
 
-  fileSystems."/home/theo/Data" = {
+  fileSystems."/mnt/HDD2" = {
     device = "/dev/disk/by-uuid/65e258da-2f64-4fa5-a170-afc2de0ff11c";
     fsType = "btrfs";
     options = [
@@ -49,7 +53,7 @@
     ];
   };
 
-  fileSystems."/home/theo/Games" = {
+  fileSystems."/mnt/HDD3" = {
     device = "/dev/disk/by-uuid/4a1edd8b-4456-4893-809a-a269ffcf7690";
     fsType = "ext4";
     options = [
@@ -63,15 +67,26 @@
     fsType = "vfat";
   };
 
+  systemd.tmpfiles.rules = [
+    "d /storage 0777 theo users -"
+  ];
+
+  fileSystems."/storage" = {
+    device = "/mnt/HDD*";
+    fsType = "fuse.mergerfs";
+    options = [
+      "defaults"
+      "allow_other"
+      "cache.files=off"
+      "dropcacheonclose=true"
+      "category.create=mfs"
+      "nofail"
+      "umask=002"
+    ];
+  };
+
   # Use tmpfs for /tmp/
   boot.tmp.useTmpfs = true;
-
-  # This shit doesn't work anymore, seems lexar SSDs don't have the greatest QC
-  # fileSystems."/home/theo/SSD" = {
-  #   device = "/dev/disk/by-uuid/47686783-7cf2-40e3-98cc-72e17b420217";
-  #   fsType = "ext4";
-  #   options = ["discard" "nofail"];
-  # };
 
   swapDevices = [ ];
 
