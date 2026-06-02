@@ -36,6 +36,10 @@
       inputs.hyprland.follows = "hyprland";
     };
 
+    niri-nix = {
+      url = "git+https://codeberg.org/BANanaD3V/niri-nix";
+    };
+
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -80,6 +84,7 @@
           nix-index-database.nixosModules.nix-index
           stylix.nixosModules.stylix
           sops-nix.nixosModules.sops
+          inputs.niri-nix.nixosModules.default
         ];
       };
     in

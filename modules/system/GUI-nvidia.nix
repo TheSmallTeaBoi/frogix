@@ -54,6 +54,10 @@
       inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
   };
 
+  programs.niri = {
+    enable = true;
+  };
+
   services.libinput = {
     enable = true;
 
@@ -71,7 +75,7 @@
   services.displayManager = {
     sddm.enable = true;
     sddm.wayland.enable = true;
-    defaultSession = "hyprland";
+    defaultSession = "niri";
     autoLogin = {
       enable = true;
       user = "theo";

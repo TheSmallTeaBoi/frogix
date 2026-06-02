@@ -54,6 +54,8 @@
     appimage-run
     nemo
 
+    xwayland-satellite
+
     heroic-unwrapped
 
     # Art?
