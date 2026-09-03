@@ -7,7 +7,8 @@
   nixpkgs.config.allowUnfree = true;
   environment.systemPackages = with pkgs; [
     # Ricing stuff
-    catppuccin-papirus-folders
+    pywal16
+    psmisc
     waybar-mpris
     mako
     rofi
@@ -15,6 +16,7 @@
     # Terminal tools
     clipse
     wl-clipboard
+    wtype
     fzf
     ripgrep
     # neofetch # They deprecated my boy
@@ -26,6 +28,7 @@
     eza
     micro
     file
+    ranger # Mostly for qutebrowser to be honest.
     beets
     yt-dlp
     rclone
@@ -36,6 +39,8 @@
     picotts
     mp3val
     flac
+    bubblewrap
+    opencode
 
     vial
 
@@ -45,14 +50,17 @@
     devenv
     gnome-keyring
 
+    (tic-80.override { withPro = true; }) # :3
+
     # Random GUI stuff
     feh
-    obsidian # /shrug
+    obsidian # Moving to org, keeping it for older notes, just for some time.
     pandoc
     warpinator
     grimblast
     appimage-run
     nemo
+    calibre
 
     xwayland-satellite
 
@@ -62,10 +70,7 @@
     obs-studio
 
     # compressed stuff
-    xarchiver
     unar
-    unzip
-    zip
     p7zip
 
     # Game stuff
@@ -78,20 +83,14 @@
     (prismlauncher.override {
       jdks = with pkgs; [
         jdk21
-        jdk25
-        jdk17
-        jdk8
       ];
     })
 
     beammp-launcher
-    flightgear
 
     # Emulation {
     # retroarch-full
     pcsx2
-    # flycast
-    ppsspp
     # torzu # I will not forget you.
     # }
 
@@ -102,7 +101,6 @@
 
     # Piracy stuff :)
     aria2
-    jellyfin-desktop
     stremio-linux-shell
 
     # Music stuff
@@ -112,8 +110,6 @@
     feishin
 
     # Music making
-    ardour
-
     AMB-plugins
     aether-lv2
     airwindows

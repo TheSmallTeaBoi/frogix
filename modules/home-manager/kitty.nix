@@ -1,6 +1,5 @@
-{ config, ... }:
 let
-  fontName = config.stylix.fonts.monospace.name;
+  fontName = "Maple Mono NF";
 in
 {
   programs.kitty = {
@@ -16,6 +15,8 @@ in
       bold_italic_font = "${fontName} Bold Italic";
       bold_font = "${fontName} Bold";
 
+      background_opacity = "0.8";
+
       enable_audio_bell = false;
       confirm_os_window_close = 0;
       window_padding_width = 18;
@@ -25,6 +26,10 @@ in
       tab_powerline_style = "angled";
       tab_title_template = "{title}{' :{}:'.format(num_windows) if num_windows > 1 else ''}";
     };
+    extraConfig = ''
+      allow_remote_control yes
+      include ~/.cache/wal/colors-kitty.conf
+    '';
     # some sort of race condition with kitty and starship
     # https://github.com/kovidgoyal/kitty/issues/4476#issuecomment-1013617251
     shellIntegration.enableBashIntegration = false;

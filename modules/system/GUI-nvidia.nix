@@ -44,15 +44,8 @@
       # This can be determined by reading the output of the
       # `vainfo` command, after the driver is enabled with
       # the environment variable.
-      "media.av1.enabled" = false;
+      "media.av1.enabled" = true;
     };
-
-  programs.hyprland = {
-    enable = true;
-    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-    portalPackage =
-      inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.xdg-desktop-portal-hyprland;
-  };
 
   programs.niri = {
     enable = true;

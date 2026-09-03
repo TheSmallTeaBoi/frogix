@@ -25,6 +25,8 @@
         set -g status-left ""
         set -g status-right ""
 
+        run-shell -b 'if [ -r ~/.cache/wal/colors.sh ]; then . ~/.cache/wal/colors.sh; tmux set -g status-style "bg=$background,fg=$foreground"; tmux set -g message-style "bg=$color4,fg=$foreground"; tmux set -g mode-style "bg=$color4,fg=$foreground"; tmux set -g pane-border-style "fg=$color0"; tmux set -g pane-active-border-style "fg=$color4"; fi'
+
         # Reorder windows when one gets deleted.
         set -g renumber-windows on
 

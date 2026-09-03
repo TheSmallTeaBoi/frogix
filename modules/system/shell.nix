@@ -14,8 +14,8 @@
   environment = {
     systemPackages = [ pkgs.nix-your-shell ];
     variables = {
-      EDITOR = "nvim";
-      VISUAL = "nvim";
+      EDITOR = "emacs";
+      VISUAL = "emacs";
       XDG_DATA_HOME = "$HOME/.local/share";
       XDG_CONFIG_HOME = "$HOME/.config";
       XDG_STATE_HOME = "$HOME/.local/state";

@@ -10,7 +10,6 @@
     ./shell.nix
     ./sops.nix
     ./steam.nix
-    ./theme.nix
     ./wine.nix
     ./yeetmouse.nix
   ];

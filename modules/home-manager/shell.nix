@@ -19,7 +19,7 @@
     shellAliases = {
       det = "tmux detach";
       dev = "nix develop --command fish"; # This shit sucks
-      e = "emacsclient -c";
+      e = "emacs";
       l = "eza -lh --icons";
       la = "eza -a --icons";
       ll = "eza -i --icons";
@@ -73,9 +73,11 @@
     enableFishIntegration = true;
     settings =
       let
-        dir_bg = "#ea76cb";
-        accent_style = "bg:${dir_bg} fg:#4c4f69";
-        important_style = "bg:#4c4f69 fg:#eff1f5";
+        bg = "1";
+        fg = "0";
+
+        accent_style = "bg:${bg} fg:${fg}";
+        important_style = "bg:${fg} fg:${bg}";
       in
       {
         add_newline = false;
@@ -83,17 +85,17 @@
           # begin left format
           "$username"
           "$hostname"
-          "$directory[](${dir_bg}) "
+          "$directory[](${bg}) "
           # end left format
           "$fill"
           # begin right format
-          "[█](${dir_bg})"
+          "[█](${bg})"
           "[](${accent_style})"
           "$git_branch"
           "$git_state"
           "$git_status"
           "$nix_shell"
-          "[█](${dir_bg})"
+          "[█](${bg})"
           # end right format
           "$line_break"
           "$character"
@@ -101,9 +103,9 @@
 
         # modules
         character = {
-          error_symbol = "[ ](bold red)";
-          success_symbol = "[](purple)";
-          vimcmd_symbol = "[](green)";
+          error_symbol = "[ ](${bg})";
+          success_symbol = "[](${bg})";
+          vimcmd_symbol = "[](${bg})";
         };
         username = {
           style_root = important_style;

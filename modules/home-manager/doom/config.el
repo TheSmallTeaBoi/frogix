@@ -35,9 +35,9 @@
 ;; `load-theme' function. This is the default:
 (setq doom-theme 'doom-one)
 
-(let ((stylix-file (expand-file-name "~/.config/emacs/stylix.el")))
-  (when (file-exists-p stylix-file)
-    (load-file stylix-file)))
+(let ((pywal-file (expand-file-name "~/.config/emacs/pywal.el")))
+  (when (file-exists-p pywal-file)
+    (load-file pywal-file)))
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -58,6 +58,10 @@
          (file+head "${slug}.org"
                     "#+title: ${title}\n")
          :unnarrowed t)))
+
+;; Transparent background
+(set-frame-parameter nil 'alpha-background 80)
+(add-to-list 'default-frame-alist '(alpha-background . 80))
 
 ;; Booklet export. Use `#+BOOKLET: t`
 (defun my/org-booklet-advice (orig-fn &rest args)

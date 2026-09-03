@@ -1,34 +1,39 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 {
   gtk = {
     enable = true;
 
+    theme.name = "FlatColor";
+
     iconTheme = {
       name = "Papirus-Dark";
-      package = pkgs.catppuccin-papirus-folders;
+      package = pkgs.papirus-icon-theme;
     };
 
     gtk3.extraConfig = {
-      Settings = ''
-        gtk-application-prefer-dark-theme=1
-        gtk-cursor-theme-size=8
-      '';
+      gtk-application-prefer-dark-theme = 1;
+      gtk-cursor-theme-size = 8;
     };
-    gtk4.extraConfig = {
-      Settings = ''
-        gtk-application-prefer-dark-theme=1
-        gtk-cursor-theme-size=8
-      '';
+
+    gtk4 = {
+      theme = null;
+      extraConfig = {
+        gtk-application-prefer-dark-theme = 1;
+        gtk-cursor-theme-size = 8;
+      };
     };
+
   };
   home.pointerCursor = {
-    name = "catppuccin-mocha-light-cursors";
+    enable = true;
+    name = "Bibata-Modern-Ice";
     gtk.enable = true;
     x11.enable = true;
     size = 8;
-    package = pkgs.catppuccin-cursors.mochaLight;
+    package = pkgs.bibata-cursors;
   };
   qt = {
     enable = true;
+    platformTheme.name = "gtk3";
   };
 }

@@ -1,22 +1,102 @@
 {
   pkgs,
-  config,
   lib,
   ...
 }:
 let
   main_screen = "DP-3";
   secondary_screen = "HDMI-A-1";
+
+  get-muted = pkgs.writeShellApplication {
+    name = "get-muted";
+    runtimeInputs = with pkgs; [
+      wireplumber
+      gnugrep
+    ];
+    text = ''
+      if wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED; then
+          printf '{"text":"󰍭","class":"muted","tooltip":"Microphone muted"}'
+      else
+          printf '{"text":"󰍬","class":"live","tooltip":"Microphone live"}'
+      fi
+    '';
+  };
+
+  set-muted = pkgs.writeShellApplication {
+    name = "set-muted";
+    runtimeInputs = with pkgs; [
+      wireplumber
+    ];
+    text = ''
+      wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+      pkill -RTMIN+8 waybar
+    '';
+  };
+
 in
 {
+
+  programs.hyprlock = {
+    enable = true;
+    settings = {
+      general = {
+        hide_cursor = true;
+        ignore_empty_input = true;
+      };
+
+      animations = {
+        enabled = true;
+        fade_in = {
+          duration = 300;
+          bezier = "easeOutQuint";
+        };
+        fade_out = {
+          duration = 300;
+          bezier = "easeOutQuint";
+        };
+      };
+
+      background = [
+        {
+          path = "screenshot";
+          blur_passes = 3;
+          blur_size = 6;
+        }
+      ];
+      input-field = [
+        {
+          monitor = "";
+          size = "20%, 5%";
+          outline_thickness = 3;
+          inner_color = "rgba(0, 0, 0, 0.0)";
+
+          outer_color = "rgba(33ccffee) rgba(00ff99ee) 45deg";
+          check_color = "rgba(00ff99ee) rgba(ff6633ee) 120deg";
+          fail_color = "rgba(ff6633ee) rgba(ff0066ee) 40deg";
+
+          font_color = "rgb(143, 143, 143)";
+          fade_on_empty = false;
+          rounding = 15;
+
+          position = "0, -20";
+          halign = "center";
+          valign = "center";
+        }
+      ];
+    };
+  };
 
   wayland.windowManager.niri = {
     enable = true;
     settings = {
 
-      prefer-no-csd = { };
-      cursor.xcursor-size = 8;
+      include = [ "~/.cache/wal/niri-colors.kdl" ];
 
+      prefer-no-csd = { };
+      cursor = {
+        xcursor-size = 8;
+        hide-after-inactive-ms = 1000;
+      };
       environment = {
         LIBVA_DRIVER_NAME = "nvidia";
         XDG_SESSION_TYPE = "wayland";
@@ -33,7 +113,8 @@ in
             x = 0;
             y = 0;
           };
-          variable-refresh-rate = { };
+          focus-at-startup = { };
+          # variable-refresh-rate = { };
         }
         {
           _args = [ secondary_screen ];
@@ -48,6 +129,9 @@ in
           # Niri works like shit with vertical screens 🥀
           layout = {
             default-column-width = {
+              proportion = 1.0;
+            };
+            preset-column-widths = {
               proportion = 1.0;
             };
             always-center-single-column = { };
@@ -67,20 +151,36 @@ in
           accel-profile = "flat";
         };
         focus-follows-mouse = { };
-      };
-
-      layout = {
-        gaps = 10;
-        border = {
-          width = 3;
-          inactive-color = "#00000000";
-        };
-        focus-ring.off = { };
+        warp-mouse-to-focus = { };
+        workspace-auto-back-and-forth = { };
       };
 
       spawn-at-startup = [
-        { _args = [ "${pkgs.swaylock-fancy}/bin/swaylock-fancy" ]; }
-        { _args = [ "${pkgs.waybar}/bin/waybar" ]; }
+        { _args = [ "${pkgs.awww}/bin/awww-daemon" ]; }
+        {
+          _args = [
+            "input-remapper-control"
+            "--command"
+            "autoload"
+          ];
+        }
+
+        # Run pywal after awww-daemon is already up
+        {
+          _args = [
+            "${pkgs.bash}/bin/bash"
+            "-c"
+            "until ${pkgs.awww}/bin/awww query >/dev/null 2>&1 && [ -S /run/user/$(id -u)/emacs/server ]; do sleep 0.2; done && set-wal \"$(find /storage/Walls/ | shuf -n 1)\""
+          ];
+        }
+        { _args = [ "hyprlock --grace 0" ]; }
+        {
+          _args = [
+            "${pkgs.bash}/bin/bash"
+            "-c"
+            "until [ -f ~/.cache/wal/colors.css ]; do sleep 0.2; done && ${pkgs.waybar}/bin/waybar"
+          ];
+        }
         {
           _args = [
             "sh"
@@ -101,29 +201,19 @@ in
             "-listen"
           ];
         }
-        { _args = [ "firefox" ]; }
+        { _args = [ "qutebrowser" ]; }
         { _args = [ "vesktop" ]; }
-        { _args = [ "${pkgs.mako}/bin/mako" ]; }
-        {
-          _args = [
-            "${pkgs.glances}/bin/glances"
-            "-w"
-            "--disable-plugin"
-            "diskio,connections"
-          ];
-        }
         {
           _args = [
             "${pkgs.easyeffects}/bin/easyeffects"
             "--gapplication-service"
           ];
         }
-        { _args = [ "${pkgs.sunshine}/bin/sunshine" ]; }
       ];
 
       workspace = [
         {
-          _args = [ "firefox" ];
+          _args = [ "browser" ];
           open-on-output = main_screen;
         }
         {
@@ -138,8 +228,14 @@ in
 
       window-rule = [
         {
-          geometry-corner-radius = 5;
+          geometry-corner-radius = 10;
           clip-to-geometry = true;
+          background-effect = {
+            blur = true;
+          };
+        }
+        {
+          match._props.is-active = false;
         }
         {
           match._props.app-id = "steam";
@@ -147,14 +243,30 @@ in
           open-focused = false;
         }
         {
+          match._props = {
+            app-id = "steam";
+            title = "r#\"^notificationtoasts_\d+_desktop$\"#";
+          };
+          default-floating-position = {
+            _props.x = 10;
+            _props.y = 10;
+            _props.relative-to = "bottom-right";
+          };
+        }
+        {
+          match._props.app-id = "gamescope";
+          open-on-output = main_screen;
+        }
+        {
           match._props.app-id = "vesktop";
           open-on-workspace = "discord";
           open-focused = false;
         }
         {
-          match._props.app-id = "firefox";
-          open-on-workspace = "firefox";
+          match._props.app-id = "qute";
+          open-on-workspace = "browser";
           open-focused = false;
+          open-maximized = true;
         }
         {
           match._props.app-id = "feishin";
@@ -182,10 +294,12 @@ in
         }
       ];
 
-      # Direct keybind mappings (no `.action` structures)
       binds = {
         "Mod+Tab" = {
           focus-monitor-next = { };
+        };
+        "Mod+Control+Tab" = {
+          move-window-to-monitor-next = { };
         };
         "Mod+Return" = {
           spawn._args = [ "kitty" ];
@@ -221,16 +335,16 @@ in
         "Mod+L" = {
           spawn._args = [ "feishin" ];
         };
-        "Mod+M" = {
+        "Mod+Shift+W" = {
           spawn._args = [
-            "${pkgs.rofi-pulse-select}/bin/rofi-pulse-select"
-            "sink"
+            "sh"
+            "-c"
+            "set-wal $(find /storage/Walls/ | shuf -n 1)"
           ];
         };
         "Mod+O" = {
           spawn._args = [
-            "emacsclient"
-            "-c"
+            "emacs"
           ];
         };
         "Mod+P" = {
@@ -257,20 +371,77 @@ in
             "emoji"
           ];
         };
+
+        "Super+WheelScrollUp" = {
+          _props.cooldown-ms = 150;
+          focus-workspace-up = { };
+        };
+
+        "Super+WheelScrollDown" = {
+          _props.cooldown-ms = 150;
+          focus-workspace-down = { };
+        };
+
+        "Super+WheelScrollLeft" = {
+          _props.cooldown-ms = 150;
+          focus-column-left = { };
+        };
+
+        "Super+WheelScrollRight" = {
+          _props.cooldown-ms = 150;
+          focus-column-right = { };
+        };
+
         "Print" = {
-          spawn._args = [
-            "${pkgs.grimblast}/bin/grimblast"
-            "copy"
-            "area"
-          ];
+          screenshot = { };
         };
+
         "Shift+Print" = {
+          screenshot-screen._props.write-to-disk = false;
+        };
+        "Control+Print" = {
+          screenshot-window._props.write-to-disk = false;
+        };
+
+        "Super+Shift+Print" = {
+          screenshot-screen = { };
+        };
+        "Super+Control+Print" = {
+          screenshot-window = { };
+        };
+
+        "XF86AudioPlay" = {
           spawn._args = [
-            "${pkgs.grimblast}/bin/grimblast"
-            "copy"
-            "output"
+            "playerctl"
+            "play-pause"
           ];
         };
+        "XF86AudioRaiseVolume" = {
+          spawn._args = [
+            "pulsemixer"
+            "--change-volume"
+            "+5"
+            "--max-volume"
+            "100"
+          ];
+        };
+        "XF86AudioLowerVolume" = {
+          spawn._args = [
+            "pulsemixer"
+            "--change-volume"
+            "-5"
+            "--max-volume"
+            "100"
+          ];
+        };
+
+        #    F17
+        "Alt+XF86Launch8" = {
+          spawn._args = [
+            (lib.getExe set-muted)
+          ];
+        };
+
       }
       // (builtins.listToAttrs (
         builtins.concatLists (
@@ -298,6 +469,7 @@ in
         )
       ));
     };
+
   };
 
   services.hypridle = {
@@ -306,7 +478,7 @@ in
       listener = [
         {
           timeout = 500;
-          on-timeout = "${pkgs.swaylock-fancy}/bin/swaylock-fancy -t 'Hello, Theo'";
+          on-timeout = "${pkgs.bash}/bin/bash -c 'hyprlock --grace 120; set-wal $(find /storage/Walls/ | shuf -n 1)'";
         }
         {
           timeout = 1500;
@@ -316,16 +488,13 @@ in
     };
   };
 
-  services.hyprpaper = {
-    enable = true;
-  };
-
   programs.waybar = {
     enable = true;
     settings = {
       mainBar = {
         layer = "top";
         position = "top";
+        reload_style_on_change = true;
         height = 15;
         output = "!${secondary_screen}";
         modules-left = [ "niri/workspaces" ];
@@ -350,29 +519,41 @@ in
           "escape" = true;
           "hide-empty-text" = true;
         };
+
       };
       secondaryBar = {
         layer = "top";
         position = "top";
+        reload_style_on_change = true;
         height = 15;
         output = "${secondary_screen}";
         modules-left = [ "niri/workspaces" ];
         modules-center = [ "niri/window" ];
         modules-right = [
+          "custom/mic"
           "cpu"
           "memory"
         ];
         "niri/window" = {
           separate-outputs = true;
         };
+        "custom/mic" = {
+          "exec" = "${get-muted}/bin/get-muted";
+          "interval" = 1;
+          "signal" = 8;
+          "on-click" = "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+          "return-type" = "json";
+        };
       };
     };
     style =
       lib.mkAfter # css
         ''
+          @import url("file:///home/theo/.cache/wal/waybar.css");
+
           * {
-              background: ${config.lib.stylix.colors.withHashtag.base00};
-              color: ${config.lib.stylix.colors.withHashtag.base05};
+              background: @background;
+              color: @foreground;
               border: none;
               border-radius: 0;
               font-size: 10px;
@@ -382,7 +563,7 @@ in
           }
 
           tooltip {
-              border: 1px solid ;
+              border: 1px solid @color4;
           }
 
           #workspaces button {
@@ -393,18 +574,18 @@ in
 
           #workspaces button.active,
           #workspaces button.focused {
-               border-bottom: 3px solid ;
-               border-top: 3px solid;
+               border-bottom: 3px solid @color4;
+               border-top: 3px solid @color4;
           }
 
           #workspaces button.urgent {
-               border-bottom: 3px solid;
-               border-top: 3px solid;
+               border-bottom: 3px solid @color1;
+               border-top: 3px solid @color1;
           }
 
           #workspaces button.visible {
-               border-bottom: 3px solid;
-               color: ${config.lib.stylix.colors.withHashtag.base05};
+               border-bottom: 3px solid @color2;
+               color: @foreground;
           }
 
           label.module{

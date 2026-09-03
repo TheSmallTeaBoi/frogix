@@ -6,6 +6,7 @@
       pkgs.rofi-emoji
       pkgs.rofi-calc
     ];
+    theme = "~/.cache/wal/colors-rofi-dark.rasi";
     extraConfig = {
       modi = "run,drun,window";
       icon-theme = "Oranchelo";

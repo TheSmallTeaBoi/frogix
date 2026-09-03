@@ -17,7 +17,7 @@ NixOS my beloved
 - Using flakes because that's the correct way of using nix.
 - Using [home-manager](https://github.com/nix-community/home-manager).
 - Fairly light, but not the main focus.
-- Rice for everything using [catppuccin](https://github.com/catppuccin/catppuccin).
+- Dynamic rice for everything using pywal16.
 ![screenshot1](/images/image1.png)
 ![screenshot2](/images/image2.png)
 

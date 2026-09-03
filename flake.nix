@@ -5,17 +5,20 @@
     # NixOS official package source, using the unstable branch here
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # nixvim = {
-    #   url = "github:nix-community/nixvim/";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    infract = {
+      url = "github:NaokoAF/InFract/a53fc2f4184f125d44a225cdf8f0bff0b499d27c?dir=nix";
+      # url = "path:/home/theo/git/InFract/?dir=nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     musnix = {
       url = "github:musnix/musnix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nix-alien = {
       url = "github:thiagokokada/nix-alien";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     yeetmouse = {
@@ -28,25 +31,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    plover-flake.url = "github:openstenoproject/plover-flake";
-
-    hyprland.url = "github:hyprwm/Hyprland";
-    hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins";
-      inputs.hyprland.follows = "hyprland";
-    };
-
     niri-nix = {
       url = "git+https://codeberg.org/BANanaD3V/niri-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    stylix = {
-      url = "github:nix-community/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -63,11 +54,9 @@
   outputs =
     {
       nixpkgs,
-      nixvim,
       home-manager,
       yeetmouse,
       nix-index-database,
-      stylix,
       sops-nix,
       ...
     }@inputs:
@@ -82,9 +71,9 @@
           inputs.musnix.nixosModules.musnix
           yeetmouse.nixosModules.default
           nix-index-database.nixosModules.nix-index
-          stylix.nixosModules.stylix
           sops-nix.nixosModules.sops
           inputs.niri-nix.nixosModules.default
+          inputs.infract.nixosModules.default
         ];
       };
     in

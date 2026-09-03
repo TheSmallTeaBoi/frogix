@@ -9,17 +9,27 @@
   ];
 
   # Enable "experimental" features
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 3d";
+    };
+    optimise = {
+      automatic = true;
+      dates = [ "06:00" ];
+    };
+    settings = {
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+    };
+  };
   nix.settings.trusted-users = [
     "root"
     "@wheel"
   ];
-
-  # This could a default at this point lol.
-  nix.optimise.automatic = true;
 
   networking.hostName = "ratholomew"; # Define your hostname.
 
@@ -53,9 +63,10 @@
   hardware = {
     uinput.enable = true;
     bluetooth.enable = true;
+    opentabletdriver.enable = true;
   };
 
-  home-manager.backupFileExtension = "bk";
+  home-manager.backupFileExtension = "back";
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.theo = {
@@ -66,14 +77,22 @@
       "uinput"
       "audio"
       "gamemode"
+      "bluetooth"
     ];
   };
 
   # Disable the firewall altogether.
   networking.firewall.enable = false;
 
+  # I usually have internet.
+  documentation.enable = false;
+
   nixpkgs.config = {
     allowUnfree = true;
+    permittedInsecurePackages = [
+      "pnpm-10.29.2" # FIXME this shouldn't be needed at some point
+      "quickjs-2025-09-13-2" # FIXME uhhh, this _is_ a pretty big issue, I think? It's just needed for tic-80.
+    ];
   };
 
   programs.gpu-screen-recorder.enable = true;
@@ -96,6 +115,7 @@
     MOZ_DISABLE_RDD_SANDBOX = "1";
     GBM_BACKEND = "nvidia-drm";
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    OPENCODE_ENABLE_EXA = "1";
   };
   qt.enable = true;
 

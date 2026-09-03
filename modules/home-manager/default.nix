@@ -2,7 +2,6 @@
 {
   imports = [
     inputs.niri-nix.homeModules.default
-    inputs.niri-nix.homeModules.stylix
 
     # ./plover.nix
     ./aichat.nix
@@ -11,7 +10,7 @@
     ./desktop.nix
     ./easyeffects.nix
     ./emacs.nix
-    ./firefox.nix
+    ./browser.nix
     ./git.nix
     ./gtk.nix
     ./home.nix
@@ -21,10 +20,9 @@
     ./lazygit.nix
     ./mako.nix
     ./niri.nix
-    ./obsidian.nix
     ./rofi.nix
     ./shell.nix
-    ./theme.nix
+    ./pywal.nix
     ./tmux.nix
     ./vesktop.nix
     ./xdg.nix

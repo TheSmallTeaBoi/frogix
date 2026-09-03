@@ -2,12 +2,26 @@
 {
   xdg.mimeApps.defaultApplications = {
     # Web
-    "text/html" = [ "firefox.desktop" ];
-    "x-scheme-handler/http" = [ "firefox.desktop" ];
-    "x-scheme-handler/https" = [ "firefox.desktop" ];
+    "text/html" = [ "qute.desktop" ];
+    "x-scheme-handler/http" = [ "qute.desktop" ];
+    "x-scheme-handler/https" = [ "qute.desktop" ];
+    "x-scheme-handler/ftp" = [ "qute.desktop" ];
+    "application/xhtml+xml" = [ "qute.desktop" ];
+    "application/xml" = [ "qute.desktop" ];
 
     # Text and code
     "text/plain" = [ "emacs.desktop" ];
+    "text/markdown" = [ "emacs.desktop" ];
+    "text/x-markdown" = [ "emacs.desktop" ];
+    "text/x-org" = [ "emacs.desktop" ];
+    "text/css" = [ "emacs.desktop" ];
+    "text/javascript" = [ "emacs.desktop" ];
+    "text/x-python" = [ "emacs.desktop" ];
+    "text/x-shellscript" = [ "emacs.desktop" ];
+    "text/x-csrc" = [ "emacs.desktop" ];
+    "text/xml" = [ "emacs.desktop" ];
+    "application/json" = [ "emacs.desktop" ];
+    "application/x-nix" = [ "emacs.desktop" ];
 
     # Images
     "image/png" = [ "feh.desktop" ];
@@ -28,12 +42,12 @@
     "application/x-rar" = [ "xarchiver.desktop" ];
 
     # PDF and docs
-    "application/pdf" = [ "firefox.desktop" ];
+    "application/pdf" = [ "qute.desktop" ];
 
     # Folders and file management
     "inode/directory" = [ "nemo.desktop" ];
 
     # Music
-    "x-scheme-handler/music" = [ "tauonmb.desktop" ];
+    "x-scheme-handler/music" = [ "mpv.desktop" ];
   };
 }

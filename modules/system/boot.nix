@@ -7,6 +7,10 @@
 {
   boot = {
     kernelPackages = pkgs.linuxPackages_latest;
+    kernelModules = [
+      "ntsync"
+      "uinput"
+    ];
     extraModulePackages = [
       config.boot.kernelPackages.v4l2loopback
     ];
@@ -20,10 +24,10 @@
     kernelParams = [
       "quiet"
       "threadirqs"
+      "mitigations=off"
     ];
     loader.timeout = 0;
 
-    # Use the systemd-boot EFI boot loader.
     loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
@@ -31,6 +35,15 @@
 
     initrd.checkJournalingFS = false; # fsck seems to always fail, for whatever reason.
   };
+
+  security.pam.loginLimits = [
+    {
+      domain = "@users";
+      type = "-";
+      item = "memlock";
+      value = "unlimited";
+    }
+  ];
 
   powerManagement.cpuFreqGovernor = "performance";
 }

@@ -11,7 +11,7 @@
 
   home-manager = {
     extraSpecialArgs = { inherit inputs outputs; };
-    useGlobalPkgs = false;
+    useGlobalPkgs = true;
     useUserPackages = true;
     users = {
       # Import your home-manager configuration

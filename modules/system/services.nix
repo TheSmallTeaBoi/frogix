@@ -19,7 +19,16 @@
 
   systemd.oomd.enable = false;
 
+  security.pam.services.hyprlock = { };
+
   services = {
+    infract = {
+      enable = true;
+      environment = {
+        INFRACT_CONVERTER = "SINPUT";
+      };
+    };
+
     udev.extraRules =
       # Udev
       ''
@@ -42,6 +51,9 @@
         SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE="0666"
         SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="0666"
 
+        # Alpakka controller
+        SUBSYSTEMS=="usb", ATTRS{idVendor}=="045e", MODE="0660", GROUP="plugdev", SYMLINK+="webusb", TAG+="uaccess"
+        SUBSYSTEMS=="usb", ATTRS{idVendor}=="0170", MODE="0660", GROUP="plugdev", SYMLINK+="webusb", TAG+="uaccess"
       '';
 
     # Drive mounting
@@ -76,6 +88,8 @@
     #   package = pkgs.ollama-cuda;
     # };
 
+    input-remapper.enable = true;
+
     navidrome = {
       enable = true;
       settings = {
@@ -107,7 +121,7 @@
 
     # Syncthing
     syncthing = {
-      enable = true;
+      enable = false;
       user = "theo";
       dataDir = "/home/theo/Documents";
       configDir = "/home/theo/.config/syncthing";

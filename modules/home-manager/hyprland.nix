@@ -1,6 +1,5 @@
 {
   pkgs,
-  config,
   lib,
   ...
 }:
@@ -107,7 +106,6 @@ in
         "vesktop"
         "${pkgs.xsetroot}/bin/xsetroot -cursor_name left_ptr"
         "${pkgs.mako}/bin/mako"
-        "${pkgs.glances}/bin/glances -w --disable-plugin diskio,connections"
         "${pkgs.easyeffects}/bin/easyeffects --gapplication-service"
         "${pkgs.sunshine}/bin/sunshine"
       ];
@@ -168,7 +166,7 @@ in
         "$mod, K, cyclenext, prev"
         "$mod, L, exec, feishin"
         "$mod, M, exec, ${pkgs.rofi-pulse-select}/bin/rofi-pulse-select sink"
-        "$mod, O, exec, emacsclient -c"
+        "$mod, O, exec, emacs"
         "$mod, P, togglefloating"
         "$mod, R, exec, kitty --class clipse -e '${pkgs.clipse}/bin/clipse'"
         "$mod, S, fullscreen, 1"
@@ -230,6 +228,7 @@ in
       mainBar = {
         layer = "top";
         position = "top";
+        reload_style_on_change = true;
         height = 15;
         output = "!${secondary_screen}";
         modules-left = [ "hyprland/workspaces" ];
@@ -260,6 +259,7 @@ in
       secondaryBar = {
         layer = "top";
         position = "top";
+        reload_style_on_change = true;
         height = 15;
         output = "${secondary_screen}";
         modules-left = [ "hyprland/workspaces" ];
@@ -278,9 +278,11 @@ in
       lib.mkAfter
         #css
         ''
+          @import url("file:///home/theo/.cache/wal/waybar.css");
+
           * {
-              background: ${config.lib.stylix.colors.withHashtag.base00};
-              color: ${config.lib.stylix.colors.withHashtag.base05};
+              background: @background;
+              color: @foreground;
               border: none;
               border-radius: 0;
               font-size: 10px;
@@ -291,7 +293,7 @@ in
 
 
           tooltip {
-              border: 1px solid ;
+              border: 1px solid @color4;
           }
 
           #workspaces button {
@@ -301,18 +303,18 @@ in
           }
 
           #workspaces button.active {
-               border-bottom: 3px solid ;
-               border-top: 3px solid;
+               border-bottom: 3px solid @color4;
+               border-top: 3px solid @color4;
           }
 
           #workspaces button.urgent {
-               border-bottom: 3px solid;
-               border-top: 3px solid;
+               border-bottom: 3px solid @color1;
+               border-top: 3px solid @color1;
           }
 
           #workspaces button.visible {
-               border-bottom: 3px solid;
-               color: ${config.lib.stylix.colors.withHashtag.base05};
+               border-bottom: 3px solid @color2;
+               color: @foreground;
           }
 
           label.module{
