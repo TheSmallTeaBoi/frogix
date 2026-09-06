@@ -82,8 +82,23 @@
   (setq lsp-tailwindcss-add-on-mode t))
 
 (after! company
-  (setq company-idle-delay 0)
-  )
+  (setq company-idle-delay 0))
+
+;; Let Eglot (company-capf) run alongside keywords/snippets in Lua.
+(after! lua-mode
+  (set-company-backend! '(lua-mode lua-ts-mode)
+    '(:separate company-capf company-lua company-yasnippet)))
+
+;; Virtual text: Eglot inlay hints (types, param names) where the server supports them.
+(after! eglot
+  (add-hook 'eglot-managed-mode-hook #'eglot-inlay-hints-mode))
+
+(after! gcmh
+  (setq gcmh-high-cons-threshold (* 32 1024 1024) ; collect at 32MB, not 128MB
+        gcmh-idle-delay 5))                       ; GC promptly when idle
+
+;; New frames re-scan fonts; don't throw the cache away to save memory.
+(setq inhibit-compacting-font-caches t)
 
 (setq scroll-margin 5)
 
@@ -92,7 +107,9 @@
 (custom-set-faces!
   '(font-lock-comment-face :slant italic)
   '(font-lock-function-name-face :slant italic)
+  '(font-lock-function-call-face :slant italic)
   '(font-lock-string-face :slant italic)
+  '(font-lock-doc-face :slant italic)
   )
 
 (add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")

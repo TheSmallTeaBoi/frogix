@@ -19,7 +19,6 @@
       nixfmt
       prettier
       html-tidy
-      luaformatter
       shfmt
       js-beautify
       stylelint
