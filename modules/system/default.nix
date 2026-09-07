@@ -3,6 +3,7 @@
     ./GUI-nvidia.nix
     ./boot.nix
     ./droidcam.nix
+    ./hermes.nix
     ./musnix.nix
     ./networkd.nix
     ./packages.nix

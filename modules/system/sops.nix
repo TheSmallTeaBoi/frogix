@@ -10,6 +10,12 @@
       navidrome_env = {
         owner = config.services.navidrome.user;
       };
+      hermes_env = {
+        owner = "theo";
+      };
+      hermes_dashboard_token = {
+        owner = config.services.hermes-agent.user;
+      };
     };
   };
 }

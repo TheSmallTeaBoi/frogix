@@ -84,6 +84,14 @@ in
   };
 
   xdg.configFile = {
+    "gtk-3.0/gtk.css".text = ''
+      @import url("file://${walCache}/colors.css");
+    '';
+
+    "gtk-4.0/gtk.css".text = ''
+      @import url("file://${walCache}/colors.css");
+    '';
+
     "wal/templates/mako-colors".text = ''
       background-color={background}
       text-color={foreground}
@@ -279,11 +287,15 @@ in
             `(font-lock-variable-name-face         :foreground "{color1}")
             `(font-lock-function-name-face         :foreground "{color4}")))
 
-        (add-hook 'after-make-frame-functions
-                  (lambda (frame)
-                    (with-selected-frame frame
-                      (doom/reload-font)
-                      (frogix/apply-pywal-theme))))
+        (defvar frogix/font-reloaded nil)
+
+        (defun frogix/apply-pywal-theme-to-frame (frame)
+          (with-selected-frame frame
+            (unless frogix/font-reloaded
+              (setq frogix/font-reloaded t)
+              (doom/reload-font))
+            (frogix/apply-pywal-theme)))
+        (add-hook 'after-make-frame-functions #'frogix/apply-pywal-theme-to-frame)
         (add-hook 'doom-load-theme-hook #'frogix/apply-pywal-theme)
 
         (when doom-theme

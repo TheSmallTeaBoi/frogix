@@ -46,6 +46,7 @@
 
     # Coding, I guess
     inputs.nix-alien.packages.x86_64-linux.nix-alien
+    # inputs.hermes-agent.packages.x86_64-linux.desktop # BROKEN UPSTREAM 2026-09-07: node headers hash mismatch, see hermes-agent#61443/#72095
 
     devenv
     gnome-keyring
@@ -127,7 +128,6 @@
     distrho-ports
     dragonfly-reverb
     drumkv1
-    eq10q
     geonkick
     guitarix
     helm

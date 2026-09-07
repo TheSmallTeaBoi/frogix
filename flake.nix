@@ -50,6 +50,11 @@
       url = "github:marienz/nix-doom-emacs-unstraightened";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
     {
@@ -58,6 +63,7 @@
       yeetmouse,
       nix-index-database,
       sops-nix,
+      hermes-agent,
       ...
     }@inputs:
     let
@@ -74,6 +80,7 @@
           sops-nix.nixosModules.sops
           inputs.niri-nix.nixosModules.default
           inputs.infract.nixosModules.default
+          hermes-agent.nixosModules.default
         ];
       };
     in

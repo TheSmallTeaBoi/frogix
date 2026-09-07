@@ -165,6 +165,18 @@ in
           ];
         }
 
+        # OpenCode
+        {
+          _args = [
+            "opencode"
+            "serve"
+            "--port"
+            "4096"
+            "--hostname"
+            "0.0.0.0"
+          ];
+        }
+
         # Run pywal after awww-daemon is already up
         {
           _args = [
