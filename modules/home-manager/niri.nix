@@ -356,7 +356,8 @@ in
         };
         "Mod+O" = {
           spawn._args = [
-            "emacs"
+            "emacsclient"
+            "-c"
           ];
         };
         "Mod+P" = {

@@ -19,6 +19,8 @@
 
   systemd.oomd.enable = false;
 
+  security.pam.services.sddm.enableGnomeKeyring = true;
+  security.pam.services.login.enableGnomeKeyring = true;
   security.pam.services.hyprlock = { };
 
   services = {

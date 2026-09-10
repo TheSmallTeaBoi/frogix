@@ -13,5 +13,6 @@
     ./steam.nix
     ./wine.nix
     ./yeetmouse.nix
+    ./zen-proxy.nix
   ];
 }

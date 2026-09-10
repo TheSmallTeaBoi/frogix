@@ -1,27 +1,28 @@
 { ... }:
 {
+  xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications = {
     # Web
-    "text/html" = [ "qute.desktop" ];
-    "x-scheme-handler/http" = [ "qute.desktop" ];
-    "x-scheme-handler/https" = [ "qute.desktop" ];
-    "x-scheme-handler/ftp" = [ "qute.desktop" ];
-    "application/xhtml+xml" = [ "qute.desktop" ];
-    "application/xml" = [ "qute.desktop" ];
+    "text/html" = [ "org.qutebrowser.qutebrowser.desktop" ];
+    "x-scheme-handler/http" = [ "org.qutebrowser.qutebrowser.desktop" ];
+    "x-scheme-handler/https" = [ "org.qutebrowser.qutebrowser.desktop" ];
+    "x-scheme-handler/ftp" = [ "org.qutebrowser.qutebrowser.desktop" ];
+    "application/xhtml+xml" = [ "org.qutebrowser.qutebrowser.desktop" ];
+    "application/xml" = [ "org.qutebrowser.qutebrowser.desktop" ];
 
     # Text and code
-    "text/plain" = [ "emacs.desktop" ];
-    "text/markdown" = [ "emacs.desktop" ];
-    "text/x-markdown" = [ "emacs.desktop" ];
-    "text/x-org" = [ "emacs.desktop" ];
-    "text/css" = [ "emacs.desktop" ];
-    "text/javascript" = [ "emacs.desktop" ];
-    "text/x-python" = [ "emacs.desktop" ];
-    "text/x-shellscript" = [ "emacs.desktop" ];
-    "text/x-csrc" = [ "emacs.desktop" ];
-    "text/xml" = [ "emacs.desktop" ];
-    "application/json" = [ "emacs.desktop" ];
-    "application/x-nix" = [ "emacs.desktop" ];
+    "text/plain" = [ "emacsclient.desktop" ];
+    "text/markdown" = [ "emacsclient.desktop" ];
+    "text/x-markdown" = [ "emacsclient.desktop" ];
+    "text/x-org" = [ "emacsclient.desktop" ];
+    "text/css" = [ "emacsclient.desktop" ];
+    "text/javascript" = [ "emacsclient.desktop" ];
+    "text/x-python" = [ "emacsclient.desktop" ];
+    "text/x-shellscript" = [ "emacsclient.desktop" ];
+    "text/x-csrc" = [ "emacsclient.desktop" ];
+    "text/xml" = [ "emacsclient.desktop" ];
+    "application/json" = [ "emacsclient.desktop" ];
+    "application/x-nix" = [ "emacsclient.desktop" ];
 
     # Images
     "image/png" = [ "feh.desktop" ];
@@ -42,7 +43,7 @@
     "application/x-rar" = [ "xarchiver.desktop" ];
 
     # PDF and docs
-    "application/pdf" = [ "qute.desktop" ];
+    "application/pdf" = [ "org.qutebrowser.qutebrowser.desktop" ];
 
     # Folders and file management
     "inode/directory" = [ "nemo.desktop" ];

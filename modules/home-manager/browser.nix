@@ -80,7 +80,8 @@ in
       };
 
       editor.command = [
-        "emacs"
+        "emacsclient"
+        "-c"
         "{file}"
       ];
 
