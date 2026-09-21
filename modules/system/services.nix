@@ -85,11 +85,6 @@
       package = pkgs.sunshine.override { cudaSupport = true; };
     };
 
-    # ollama = {
-    #   enable = true;
-    #   package = pkgs.ollama-cuda;
-    # };
-
     input-remapper.enable = true;
 
     navidrome = {

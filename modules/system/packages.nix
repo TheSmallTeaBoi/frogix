@@ -40,16 +40,15 @@
     mp3val
     flac
     bubblewrap
-    opencode
 
     vial
 
     # Coding, I guess
     inputs.nix-alien.packages.x86_64-linux.nix-alien
-    # inputs.hermes-agent.packages.x86_64-linux.desktop # BROKEN UPSTREAM 2026-09-07: node headers hash mismatch, see hermes-agent#61443/#72095
 
     devenv
     gnome-keyring
+    sops
 
     (tic-80.override { withPro = true; }) # :3
 
@@ -76,8 +75,8 @@
 
     # Game stuff
 
-    lsfg-vk
-    lsfg-vk-ui
+    inputs.lsfg-vk-nix.packages.${pkgs.stdenv.hostPlatform.system}.lsfg-vk
+    inputs.lsfg-vk-nix.packages.${pkgs.stdenv.hostPlatform.system}.lsfg-vk-ui
     steamtinkerlaunch
     gpu-screen-recorder-gtk
 

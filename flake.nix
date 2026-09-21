@@ -5,6 +5,11 @@
     # NixOS official package source, using the unstable branch here
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    lsfg-vk-nix = {
+      url = "github:Nyramu/lsfg-vk-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     infract = {
       url = "github:NaokoAF/InFract/a53fc2f4184f125d44a225cdf8f0bff0b499d27c?dir=nix";
       # url = "path:/home/theo/git/InFract/?dir=nix";
@@ -80,7 +85,6 @@
           sops-nix.nixosModules.sops
           inputs.niri-nix.nixosModules.default
           inputs.infract.nixosModules.default
-          hermes-agent.nixosModules.default
         ];
       };
     in

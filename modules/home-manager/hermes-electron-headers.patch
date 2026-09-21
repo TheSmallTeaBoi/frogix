@@ -1,0 +1,13 @@
+diff --git a/nix/desktop.nix b/nix/desktop.nix
+index 7f7bcfd..fe0b556 100644
+--- a/nix/desktop.nix
++++ b/nix/desktop.nix
+@@ -41,7 +41,7 @@ let
+ 
+   electronHeaders = pkgs.fetchurl {
+     url = "https://artifacts.electronjs.org/headers/dist/v${electron.version}/node-v${electron.version}-headers.tar.gz";
+-    sha256 = "sha256-f8bSbLRmtbP93CJAvEBs+sHWDZ1xP2bcpLhC1EnOmZU=";
++    sha256 = "sha256-xDgc5PpkcLpWHnlqVcjBD3SxJKtkUoSGLnJaSSrxJtI="; # fixed 2026-09-11: electron 43.5.1 headers re-cut upstream; upstream pin stale, see nix/desktop.nix electronHeaders
+   };
+ 
+   # node-pty ships no Electron-tagged prebuild we can trust to match this

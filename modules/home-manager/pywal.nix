@@ -308,6 +308,20 @@ in
             --purple-5: {color5};
         }
       '';
+    # qt5ct / qt6ct palette (fusion style + custom colors).
+    # exported by wal to ~/.cache/wal/qt-colors.conf on every set-wal run,
+    # then symlinked into both qt5ct/colors/ and qt6ct/colors/ below.
+    # 21 entries = qpalette roles: windowtext, button, light, midlight,
+    # dark, mid, text, brighttext, buttontext, base, window, shadow,
+    # highlight, highlightedtext, link, linkvisited, alternatebase,
+    # norole, tooltipbase, tooltiptext, placeholdertext.
+    "wal/templates/qt-colors.conf".text = ''
+      [ColorScheme]
+      active_colors={foreground}, {color0}, {color8}, {color8}, {color0}, {color8}, {foreground}, {color15}, {foreground}, {background}, {background}, {color0}, {color4}, {background}, {color6}, {color5}, {color0}, {background}, {color0}, {foreground}, {color8}
+      disabled_colors={color8}, {color0}, {color8}, {color8}, {color0}, {color8}, {color8}, {color15}, {color8}, {background}, {background}, {color0}, {color8}, {color8}, {color8}, {color8}, {color0}, {background}, {color0}, {color8}, {color8}
+      inactive_colors={foreground}, {color0}, {color8}, {color8}, {color0}, {color8}, {foreground}, {color15}, {foreground}, {background}, {background}, {color0}, {color4}, {background}, {color6}, {color5}, {color0}, {background}, {color0}, {foreground}, {color8}
+    '';
+
     "wal/templates/emacs.el".text =
       #elisp
       ''
@@ -364,6 +378,27 @@ in
 
     "emacs/pywal.el".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/emacs.el";
     "vesktop/themes/custom.css".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/vesktop.css";
+
+    # qt reads its palette at app startup, so symlink the wal output
+    # straight in. no set-wal hook change needed, just relaunch qt apps.
+    "qt5ct/colors/pywal.conf".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/qt-colors.conf";
+    "qt6ct/colors/pywal.conf".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/qt-colors.conf";
+
+    # point both qt config tools at fusion + the pywal scheme above.
+    "qt5ct/qt5ct.conf".text = ''
+      [Appearance]
+      style=fusion
+      icon_theme=Papirus-Dark
+      custom_palette=true
+      color_scheme_path=${config.home.homeDirectory}/.config/qt5ct/colors/pywal.conf
+    '';
+    "qt6ct/qt6ct.conf".text = ''
+      [Appearance]
+      style=fusion
+      icon_theme=Papirus-Dark
+      custom_palette=true
+      color_scheme_path=${config.home.homeDirectory}/.config/qt6ct/colors/pywal.conf
+    '';
   };
 
   home.activation.seedPywal = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

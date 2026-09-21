@@ -8,6 +8,12 @@
     ./hardware-configuration.nix
   ];
 
+  # Cache for cuda
+  nix.settings = {
+    substituters = [ "https://cache.nixos-cuda.org" ];
+    trusted-public-keys = [ "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=" ];
+  };
+
   # Enable "experimental" features
   nix = {
     gc = {
@@ -115,7 +121,6 @@
     MOZ_DISABLE_RDD_SANDBOX = "1";
     GBM_BACKEND = "nvidia-drm";
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-    OPENCODE_ENABLE_EXA = "1";
   };
   qt.enable = true;
 

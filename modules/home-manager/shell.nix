@@ -20,13 +20,13 @@
       det = "tmux detach";
       dev = "nix develop --command fish"; # This shit sucks
       e = "emacs";
-      l = "eza -lh --icons";
-      la = "eza -a --icons";
-      ll = "eza -i --icons";
-      ls = "eza --icons";
+      l = "eza -lh --icons --";
+      la = "eza -a --icons --";
+      ll = "eza -i --icons --";
+      ls = "eza --icons --";
       nixb = "sudo nixos-rebuild switch --flake ~/frogix/";
       nsearch = "nix search nixpkgs";
-      tree = "eza --tree --icons";
+      tree = "eza --tree --icons --";
     };
     # fix starship prompt to only have newlines after the first command
     # https://github.com/starship/starship/issues/560#issuecomment-1465630645

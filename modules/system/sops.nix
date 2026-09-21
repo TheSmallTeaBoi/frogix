@@ -10,12 +10,9 @@
       navidrome_env = {
         owner = config.services.navidrome.user;
       };
-      hermes_env = {
-        owner = "theo";
-      };
-      hermes_dashboard_token = {
-        owner = config.services.hermes-agent.user;
-      };
+      # hermes_env / hermes_dashboard_token removed 2026-09-21 together with
+      # the hermes stack; encrypted leftovers in secrets.yaml can be pruned
+      # by hand with `sops secrets/secrets.yaml` if wanted.
     };
   };
 }

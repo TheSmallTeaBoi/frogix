@@ -51,6 +51,14 @@
   };
   qt = {
     enable = true;
-    platformTheme.name = "gtk3";
+    platformTheme.name = "qtct";
+    style.name = "fusion";
   };
+
+  # qt5ct / qt6ct so qt5 + qt6 both read the pywal palette.
+  # hm sets QT_QPA_PLATFORMTHEME from platformTheme.name.
+  home.packages = with pkgs; [
+    libsForQt5.qt5ct
+    qt6Packages.qt6ct
+  ];
 }
