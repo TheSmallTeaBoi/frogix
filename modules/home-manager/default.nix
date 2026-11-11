@@ -5,6 +5,7 @@
     inputs.hermes-agent.homeManagerModules.default
 
     # ./plover.nix
+    ./audio.nix
     ./beets.nix
     ./bottom.nix
     ./desktop.nix
@@ -24,6 +25,7 @@
     ./rofi.nix
     ./shell.nix
     ./pywal.nix
+    ./sunshine.nix
     ./qute-adblock
     ./tmux.nix
     ./vesktop.nix

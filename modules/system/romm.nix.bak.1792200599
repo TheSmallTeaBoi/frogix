@@ -1,0 +1,52 @@
+{ pkgs, lib, config, ... }:
+{
+  # Bind-mount existing ROM collection (396G, 142 platforms) into RomM's library path.
+  # /storage/Roms uses TOSEC naming ("Sony - Playstation", "Atari - 2600");
+  # RomM matches these against IGDB automatically on scan.
+  fileSystems."/var/lib/romm/library/roms" = {
+    device = "/storage/Roms";
+    fsType = "none";
+    options = [ "bind" ];
+  };
+
+  services.romm = {
+    enable = true;
+    listenAddress = "0.0.0.0";
+    port = 8080;
+    nginx.virtualHost = "romm.localhost";
+    environmentFile = config.sops.secrets.romm_env.path;
+    extraEnvironment = {
+      HASHEOUS_API_ENABLED = "true";
+      LAUNCHBOX_API_ENABLED = "true";
+      ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA = "true";
+      FLASHPOINT_API_ENABLED = "true";
+      HLTB_API_ENABLED = "true";
+    };
+  };
+
+  # Make the nginx vhost the default so the thor can reach it by IP
+  services.nginx.virtualHosts."romm.localhost" = {
+    default = true;
+  };
+
+  # RomM needs to read /storage/Roms (owned by theo:users)
+  users.users.romm.extraGroups = [ "users" ];
+
+  # Start after /storage is mounted (same pattern as navidrome)
+  systemd.services.romm = {
+    after = [ "storage.mount" ];
+    requires = [ "storage.mount" ];
+  };
+  systemd.services.romm-init = {
+    after = [ "storage.mount" ];
+    requires = [ "storage.mount" ];
+  };
+  systemd.services.romm-worker = {
+    after = [ "storage.mount" ];
+    requires = [ "storage.mount" ];
+  };
+  systemd.services.romm-scheduler = {
+    after = [ "storage.mount" ];
+    requires = [ "storage.mount" ];
+  };
+}

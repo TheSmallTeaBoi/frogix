@@ -26,11 +26,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    yeetmouse = {
-      url = "github:AndyFilter/YeetMouse?dir=nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -65,7 +60,6 @@
     {
       nixpkgs,
       home-manager,
-      yeetmouse,
       nix-index-database,
       sops-nix,
       hermes-agent,
@@ -80,7 +74,6 @@
           ./modules
           home-manager.nixosModules.home-manager
           inputs.musnix.nixosModules.musnix
-          yeetmouse.nixosModules.default
           nix-index-database.nixosModules.nix-index
           sops-nix.nixosModules.sops
           inputs.niri-nix.nixosModules.default

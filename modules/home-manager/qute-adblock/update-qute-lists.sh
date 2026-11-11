@@ -1,30 +1,46 @@
 #!/bin/sh
-# update-qute-lists.sh - bump the pinned easylist/easylist rev in default.nix.
-# usage: ./update-qute-lists.sh [rev]   (default: current master HEAD)
+# update-qute-lists.sh - bump the pinned easylist + uBO uAssets revs in bundle.nix.
+# usage: ./update-qute-lists.sh [easylist-rev [uassets-rev]]  (default: master HEADs)
 # needs: curl, nix. fetchFromGitHub hashes the *unpacked* tree, so we use
 # nix-prefetch-url --unpack (NOT nix store prefetch-file, which hashes the file).
 set -eu
 cd "$(dirname "$0")"
 NIXFILE="bundle.nix"
 
+pin() {
+  REPO="$1"
+  REV="$2"
+  echo "$REPO -> $REV"
+  NIX32=$(nix-prefetch-url --unpack \
+    "https://github.com/$REPO/archive/$REV.tar.gz" 2>/dev/null | tail -n 1)
+  HASH=$(nix hash convert --hash-algo sha256 --to sri "$NIX32" 2>/dev/null)
+
+  awk -v repo="$REPO" -v rev="$REV" -v hash="$HASH" '
+    $0 ~ "repo = \"" repo "\"" { inrepo = 1 }
+    inrepo && /rev = "/ { sub(/"[0-9a-f]{40}"/, "\"" rev "\""); }
+    inrepo && /hash = "sha256-/ { sub(/sha256-[A-Za-z0-9+\/=]+/, hash); inrepo = 0 }
+    { print }
+  ' "$NIXFILE" > "$NIXFILE.new"
+  mv "$NIXFILE.new" "$NIXFILE"
+}
+
+EL_REPO="easylist/easylist"
+UA_REPO="uBlockOrigin/uAssets"
+
 if [ "$#" -ge 1 ]; then
-  REV="$1"
+  EL_REV="$1"
 else
-  REV=$(curl -s --max-time 30 "https://api.github.com/repos/easylist/easylist/commits/master" \
+  EL_REV=$(curl -s --max-time 30 "https://api.github.com/repos/$EL_REPO/commits/master" \
     | grep '"sha"' | head -n 1 | cut -d'"' -f4)
 fi
-echo "rev: $REV"
-NIX32=$(nix-prefetch-url --unpack \
-  "https://github.com/easylist/easylist/archive/$REV.tar.gz" 2>/dev/null | tail -n 1)
-HASH=$(nix hash convert --hash-algo sha256 --to sri "$NIX32" 2>/dev/null)
-echo "hash: $HASH"
+if [ "$#" -ge 2 ]; then
+  UA_REV="$2"
+else
+  UA_REV=$(curl -s --max-time 30 "https://api.github.com/repos/$UA_REPO/commits/master" \
+    | grep '"sha"' | head -n 1 | cut -d'"' -f4)
+fi
 
-sed -i "s|rev = \"[0-9a-f]\\{40\\}\";|rev = \"$REV\";|" "$NIXFILE"
-awk -v hash="$HASH" '
-  /rev = "[0-9a-f]{40}";/ {want=1}
-  want==1 && /hash = "sha256-/ {sub(/sha256-[A-Za-z0-9+\/=]+/, hash); want=0}
-  {print}
-' "$NIXFILE" > "$NIXFILE.new"
-mv "$NIXFILE.new" "$NIXFILE"
+pin "$EL_REPO" "$EL_REV"
+pin "$UA_REPO" "$UA_REV"
 grep -n 'rev = \|hash = ' "$NIXFILE" | head -n 4
 echo "now: rebuild, verify qute, commit the diff."

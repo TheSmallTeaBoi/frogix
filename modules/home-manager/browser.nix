@@ -119,6 +119,9 @@ in
         " bm" = "tab-move";
         " bb" = "tab-select";
 
+        # Two browser windows, one per screen
+        " bt" = "cmd-set-text -s :tab-take";
+
         # Containers
         " co" = "spawn --userscript container-open";
         " ca" = "cmd-set-text -s :spawn --userscript container-add";
@@ -237,6 +240,7 @@ in
           'userscript:_qute_stylesheet' : ['*Refused to apply inline style   because it violates the following Content Security Policy directive:   *'],
           'userscript:_qute_js' : ['*TrustedHTML*']
         }
+
 
       '';
   };

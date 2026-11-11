@@ -3,14 +3,18 @@
     ./GUI-nvidia.nix
     ./boot.nix
     ./droidcam.nix
+    ./emeet-linux.nix
     ./musnix.nix
     ./networkd.nix
     ./packages.nix
+    ./romm.nix
     ./services.nix
     ./shell.nix
     ./sops.nix
     ./steam.nix
+    ./torbox.nix
+    ./torbox-music-sync.nix
     ./wine.nix
-    ./yeetmouse.nix
+    ./xodus-nexus.nix
   ];
 }

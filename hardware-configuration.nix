@@ -82,6 +82,14 @@
       "category.create=mfs"
       "nofail"
       "umask=002"
+      # mergerfs expands the /mnt/HDD* glob when /storage mounts and is happy to
+      # union empty mountpoints, so the union would come up seconds before the
+      # disks did and anything reading it at boot (navidrome, romm) would scan a
+      # blank library. Requiring the branches makes /storage wait for the real
+      # filesystems; navidrome already waits for /storage.
+      "x-systemd.requires-mounts-for=/mnt/HDD1"
+      "x-systemd.requires-mounts-for=/mnt/HDD2"
+      "x-systemd.requires-mounts-for=/mnt/HDD3"
     ];
   };
 

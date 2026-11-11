@@ -4,8 +4,9 @@
   ...
 }:
 let
-  main_screen = "DP-3";
-  secondary_screen = "HDMI-A-1";
+  main_screen = "DP-4";
+  left_screen = "HDMI-A-1";
+  right_screen = "HDMI-A-3";
 
   get-muted = pkgs.writeShellApplication {
     name = "get-muted";
@@ -58,6 +59,10 @@ in
 
       background = [
         {
+          color = "rgb(0, 0, 0)";
+        }
+        {
+          monitor = "DP-4";
           path = "screenshot";
           blur_passes = 3;
           blur_size = 6;
@@ -65,7 +70,7 @@ in
       ];
       input-field = [
         {
-          monitor = "";
+          monitor = "DP-4";
           size = "20%, 5%";
           outline_thickness = 3;
           inner_color = "rgba(0, 0, 0, 0.0)";
@@ -110,18 +115,18 @@ in
           mode = "1920x1080@180";
           scale = 1.0;
           position._props = {
-            x = 0;
+            x = 768;
             y = 0;
           };
           focus-at-startup = { };
           # variable-refresh-rate = { };
         }
         {
-          _args = [ secondary_screen ];
-          mode = "1366x768@60";
+          _args = [ left_screen ];
+          # mode = "1366x768@60";
           scale = 1.0;
           position._props = {
-            x = -768;
+            x = 0;
             y = -50;
           };
           transform = "270";
@@ -135,6 +140,15 @@ in
               proportion = 1.0;
             };
             always-center-single-column = { };
+          };
+        }
+        {
+          _args = [ right_screen ];
+          # mode = "1366x768@60";
+          scale = 1.0;
+          position._props = {
+            x = 2688;
+            y = 312;
           };
         }
       ];
@@ -201,7 +215,7 @@ in
             "-listen"
           ];
         }
-        { _args = [ "qutebrowser" ]; }
+        { _args = [ "${pkgs.qutebrowser}/bin/qutebrowser" ]; }
         { _args = [ "vesktop" ]; }
         {
           _args = [
@@ -213,16 +227,12 @@ in
 
       workspace = [
         {
-          _args = [ "browser" ];
+          _args = [ "󰖟" ]; # browser
           open-on-output = main_screen;
         }
         {
-          _args = [ "discord" ];
-          open-on-output = secondary_screen;
-        }
-        {
-          _args = [ "terminal" ];
-          open-on-output = secondary_screen;
+          _args = [ "" ]; # discord
+          open-on-output = left_screen;
         }
       ];
 
@@ -239,7 +249,7 @@ in
         }
         {
           match._props.app-id = "steam";
-          open-on-workspace = "terminal";
+          open-on-output = right_screen;
           open-focused = false;
         }
         {
@@ -254,17 +264,13 @@ in
           };
         }
         {
-          match._props.app-id = "gamescope";
-          open-on-output = main_screen;
-        }
-        {
           match._props.app-id = "vesktop";
-          open-on-workspace = "discord";
+          open-on-workspace = ""; # discord
           open-focused = false;
         }
         {
           match._props.app-id = "qute";
-          open-on-workspace = "browser";
+          open-on-workspace = "󰖟"; # browser
           open-focused = false;
           open-maximized = true;
         }
@@ -298,8 +304,14 @@ in
         "Mod+Tab" = {
           focus-monitor-next = { };
         };
+        "Mod+Grave" = {
+          focus-monitor-previous = { };
+        };
         "Mod+Control+Tab" = {
           move-window-to-monitor-next = { };
+        };
+        "Mod+Control+Grave" = {
+          move-window-to-monitor-previous = { };
         };
         "Mod+Return" = {
           spawn._args = [ "kitty" ];
@@ -421,7 +433,7 @@ in
           spawn._args = [
             "pulsemixer"
             "--change-volume"
-            "+5"
+            "+1"
             "--max-volume"
             "100"
           ];
@@ -430,7 +442,7 @@ in
           spawn._args = [
             "pulsemixer"
             "--change-volume"
-            "-5"
+            "-1"
             "--max-volume"
             "100"
           ];
@@ -483,7 +495,8 @@ in
         }
         {
           timeout = 1500;
-          on-timeout = "niri msg action power-off-monitors";
+          on-timeout = "${pkgs.bash}/bin/bash -c 'niri msg output DP-4 off; niri msg output HDMI-A-1 off'";
+          on-resume = "${pkgs.bash}/bin/bash -c 'niri msg output DP-4 on; niri msg output HDMI-A-1 on'";
         }
       ];
     };
@@ -497,7 +510,7 @@ in
         position = "top";
         reload_style_on_change = true;
         height = 15;
-        output = "!${secondary_screen}";
+        output = "!${left_screen}";
         modules-left = [ "niri/workspaces" ];
         modules-center = [
           "niri/window"
@@ -527,7 +540,7 @@ in
         position = "top";
         reload_style_on_change = true;
         height = 15;
-        output = "${secondary_screen}";
+        output = "${left_screen}";
         modules-left = [ "niri/workspaces" ];
         modules-center = [ "niri/window" ];
         modules-right = [

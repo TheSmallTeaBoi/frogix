@@ -12,6 +12,16 @@
     enable = true;
     functions = {
       fish_greeting = "";
+
+      # Kill tmux sessions nothing is attached to anymore
+      tmux-clean = {
+        description = "Kill tmux sessions with no attached clients";
+        body = ''
+          tmux list-sessions -F '#{session_name} #{session_attached}' \
+            | awk '$2 == 0 {print $1}' \
+            | xargs -r -n1 tmux kill-session -t
+        '';
+      };
     };
     plugins = [
     ];
@@ -54,9 +64,13 @@
               and not set -q VIM
               and not set -q NVIM
 
-              set -g TMUX tmux new-session -d -s base
-              eval $TMUX
-              tmux new-session -t base
+          # Every terminal shares the same windows through grouped sessions,
+          # but each gets its own current-window pointer.
+          if tmux has-session -t base 2>/dev/null
+              exec tmux new-session -s "t-$fish_pid" -t base
+          else
+              exec tmux new-session -A -s base
+          end
           end
         '';
   };

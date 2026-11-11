@@ -46,7 +46,6 @@
       zig
       nil
       lua-language-server
-      tailwindcss-language-server
       rustywind
 
       texliveFull

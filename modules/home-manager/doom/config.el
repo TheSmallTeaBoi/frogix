@@ -77,10 +77,6 @@
 (advice-add 'org-latex-export-to-pdf :around #'my/org-booklet-advice)
 
 
-(use-package! lsp-tailwindcss
-  :init
-  (setq lsp-tailwindcss-add-on-mode t))
-
 (after! company
   (setq company-idle-delay 0))
 

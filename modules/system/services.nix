@@ -81,7 +81,8 @@
 
     sunshine = {
       enable = true;
-      autoStart = false;
+      # Start with the graphical session; it never gets socket-activated
+      autoStart = true;
       package = pkgs.sunshine.override { cudaSupport = true; };
     };
 
@@ -109,6 +110,48 @@
       alsa.support32Bit = true;
       pulse.enable = true;
       jack.enable = true;
+
+      # Emotiva Little Ego+ (usb-20ee:0020): 44.1..384 kHz, S32_LE/DSD.
+      extraConfig = {
+        pipewire."92-hires-clock" = {
+          "context.properties" = {
+            "default.clock.rate" = 48000;
+            "default.clock.allowed-rates" = [
+              44100
+              48000
+              88200
+              96000
+              176400
+              192000
+              352800
+              384000
+            ];
+            "default.clock.quantum" = 1024;
+            "default.clock.max-quantum" = 2048;
+            "default.clock.min-quantum" = 32;
+            "resample.quality" = 14;
+          };
+        };
+        pipewire-pulse."92-pulse-f32" = {
+          "pulse.properties" = {
+            "pulse.default.format" = "F32";
+            "pulse.default.rate" = 48000;
+          };
+        };
+      };
+
+      wireplumber.extraConfig."92-emotiva-s32le" = {
+        "monitor.alsa.rules" = [
+          {
+            matches = [
+              { node.name = "~alsa_output\\.usb-Emotiva.*"; }
+            ];
+            actions.update-props = {
+              "audio.format" = "S32_LE";
+            };
+          }
+        ];
+      };
     };
 
     # Enable the OpenSSH daemon.
