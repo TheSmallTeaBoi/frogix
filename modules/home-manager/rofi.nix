@@ -1,12 +1,16 @@
 { pkgs, ... }:
 {
+  # vitrina-styled theme; colours come from ~/.cache/wal/rofi-colors.rasi
+  # (pywal template in pywal.nix), so it follows the wallpaper.
+  xdg.configFile."rofi/vitrina.rasi".source = ./rofi-vitrina.rasi;
+
   programs.rofi = {
     enable = true;
     plugins = [
       pkgs.rofi-emoji
       pkgs.rofi-calc
     ];
-    theme = "~/.cache/wal/colors-rofi-dark.rasi";
+    theme = "~/.config/rofi/vitrina.rasi";
     extraConfig = {
       modi = "run,drun,window";
       icon-theme = "Oranchelo";

@@ -59,10 +59,6 @@
                     "#+title: ${title}\n")
          :unnarrowed t)))
 
-;; Transparent background
-(set-frame-parameter nil 'alpha-background 80)
-(add-to-list 'default-frame-alist '(alpha-background . 80))
-
 ;; Booklet export. Use `#+BOOKLET: t`
 (defun my/org-booklet-advice (orig-fn &rest args)
   (let ((outfile (apply orig-fn args)))

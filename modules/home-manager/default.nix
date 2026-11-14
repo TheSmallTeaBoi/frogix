@@ -29,6 +29,7 @@
     ./qute-adblock
     ./tmux.nix
     ./vesktop.nix
+    ./vitrina.nix
     ./xdg.nix
     ./zoxide.nix
   ];

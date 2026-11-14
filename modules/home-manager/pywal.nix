@@ -7,6 +7,78 @@
 let
   walCache = "${config.home.homeDirectory}/.cache/wal";
 
+  # One file decides the rice's mode. Every consumer reads it:
+  #   set-wal        -> pywal palette (light = `wal -l` + a contrast fix)
+  #   qutebrowser    -> config.py sets colors.webpage.preferred_color_scheme
+  #   vitrina/kitty  -> through the pywal cache (colors.json / colors-kitty.conf)
+  #   GTK/libadwaita -> through dconf (color-scheme + theme variant)
+  riceModeFile = "${config.home.homeDirectory}/.config/rice/mode";
+
+  # pywal's -l palette gets the background/foreground right but keeps the
+  # wallpaper's original accent hues, which were picked to sit on a dark
+  # background. On a near-white bg the pale ones drop to ~1.3:1 (measured on
+  # random /storage/Walls picks) — invisible focus rings, tab indicators and
+  # terminal ANSI colors. Two repairs, then `wal -R` re-exports every template:
+  #   color8        -> muted/secondary TEXT slot, floor 4.5:1
+  #   color1-6,9-14 -> accent slots, floor 3.5:1 (blend toward black: keeps hue)
+  # Foreground lands at ~9.9:1 on its own; nothing else is touched.
+  modeFix = pkgs.writeText "wal-light-contrast.py" ''
+    import json
+    import sys
+
+    path = sys.argv[1]
+    with open(path) as f:
+        data = json.load(f)
+
+    bg = data["special"]["background"]
+    fg = data["special"]["foreground"]
+    slot = data["colors"]["color8"]
+
+
+    def rgb(h):
+        h = h.lstrip("#")
+        return tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+
+
+    def lum(h):
+        def chan(c):
+            return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+        r, g, b = rgb(h)
+        return 0.2126 * chan(r) + 0.7152 * chan(g) + 0.0722 * chan(b)
+
+
+    def contrast(a, b):
+        la, lb = lum(a), lum(b)
+        hi, lo = max(la, lb), min(la, lb)
+        return (hi + 0.05) / (lo + 0.05)
+
+
+    def blend(a, b, t):
+        ca, cb = rgb(a), rgb(b)
+        return "#%02x%02x%02x" % tuple(
+            round((ca[i] + (cb[i] - ca[i]) * t) * 255) for i in range(3))
+
+
+    def raise_to(col, target, towards):
+        fixed = col
+        t = 0.0
+        while contrast(bg, fixed) < target and t < 1.0:
+            t += 0.05
+            fixed = blend(col, towards, t)
+        return fixed
+
+    data["colors"]["color8"] = raise_to(slot, 4.5, fg)
+
+    accents = ["color%d" % i for i in range(1, 7)] + \
+              ["color%d" % i for i in range(9, 15)]
+    for name in accents:
+        data["colors"][name] = raise_to(data["colors"][name], 3.5, "#000000")
+
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
+  '';
+
   set-wal = (
     let
       pywal16-full = pkgs.pywal16.override {
@@ -26,7 +98,12 @@ let
         procps
         mako
         pywalfox-native
-        glib # gsettings: poke GTK so running apps re-read gtk.css
+        glib # gsettings/glib runtime (kept for the pywalfox path)
+        dconf # gtk-theme / icon-theme / color-scheme, schema-free
+        python3
+        niri
+        coreutils
+        gnused
       ];
       text = ''
         set -euo pipefail
@@ -36,19 +113,72 @@ let
           echo "usage: wal-set <image-or-pywal-args...>" >&2
           exit 2
         fi
-        wal --backend colorz -n -i "$@" || true
-        # wal -R regenerates all templates incl. gtk-colors.css; the gtk.css
-        # files only @import it, so force running GTK3/4 apps to re-read by
-        # toggling the theme. libadwaita apps may still need a restart.
-        gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3" 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3-dark" 2>/dev/null || true
+
+        mode_file="${riceModeFile}"
+        mode="dark"
+        if [ -r "$mode_file" ]; then
+          mode="$(tr -d '[:space:]' < "$mode_file")"
+        fi
+        if [ "$mode" != "light" ]; then
+          mode="dark"
+        fi
+
+        wal_args=(--backend colorz -n)
+        if [ "$mode" = "light" ]; then
+          wal_args+=(-l)
+        fi
+        wal "''${wal_args[@]}" -i "$@" || true
+
+        if [ "$mode" = "light" ]; then
+          python3 ${modeFix} "$HOME/.cache/wal/colors.json" || true
+          # -R re-exports every template (kitty, niri, gtk, qt, emacs, ...) from
+          # the contrast-patched palette; -n leaves the wallpaper alone.
+          wal -R -n -q || true
+        fi
+
+        # The one dconf key that must follow the mode: the portal color-scheme
+        # that libadwaita / chromium / electron / firefox read. dconf directly —
+        # gsettings without a schema dir silently did nothing here.
+        # gtk-theme and icon-theme stay declared in gtk.nix (home-manager's gtk
+        # module re-derives them from gtk.theme.name on every activation, so
+        # writing them here would just be a losing fight, and GTK3 reads the
+        # name from settings.ini anyway).
+        if [ "$mode" = "light" ]; then
+          color_scheme="prefer-light"
+        else
+          color_scheme="prefer-dark"
+        fi
+        dconf write /org/gnome/desktop/interface/color-scheme "'$color_scheme'" 2>/dev/null || true
+
         awww img "$1" --transition-type any --transition-duration 2 --transition-fps 180
-        qutebrowser --target auto ":config-source"
+
+        # qutebrowser re-reads config.py (chrome colors live). only poke an
+        # instance that is already running: a CLI call with no IPC peer opens a
+        # whole browser window.
+        if pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
+          qutebrowser --target auto ":config-source" || true
+        fi
+
         pkill -USR2 waybar 2>/dev/null || true
         makoctl reload 2>/dev/null || true
         pkill -USR1 kitty 2>/dev/null || true
         if command -v tmux >/dev/null 2>&1; then
           tmux source-file ~/.config/tmux/tmux.conf >/dev/null 2>&1 || true
+        fi
+
+        # niri only auto-reloads on config.kdl edits, not on this include.
+        niri_sock="''${NIRI_SOCKET:-}"
+        if [ -z "$niri_sock" ]; then
+          niri_dir="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+          for s in "$niri_dir"/niri.wayland-1.*.sock; do
+            if [ -S "$s" ]; then
+              niri_sock="$s"
+              break
+            fi
+          done
+        fi
+        if [ -n "$niri_sock" ]; then
+          NIRI_SOCKET="$niri_sock" niri msg action reload-config >/dev/null 2>&1 || true
         fi
 
         pywalfox update
@@ -61,11 +191,88 @@ let
       '';
     }
   );
+
+  # rice-mode [light|dark|toggle] — no argument prints the current mode.
+  # Flips the marker, re-derives the palette from the wallpaper that is on
+  # screen, and restarts qutebrowser (its website color scheme is a startup-only
+  # blink setting: configdata.yml marks it `restart: true`, and `:restart`
+  # reloads the saved session so tabs come back).
+  rice-mode = pkgs.writeShellApplication {
+    name = "rice-mode";
+    runtimeInputs = with pkgs; [
+      coreutils
+      gnused
+      gnugrep
+      procps
+      qutebrowser
+      curl
+      set-wal
+    ];
+    text = ''
+      set -euo pipefail
+
+      mode_file="${riceModeFile}"
+      current="dark"
+      if [ -r "$mode_file" ]; then
+        current="$(tr -d '[:space:]' < "$mode_file")"
+      fi
+
+      restart_qute=1
+      args=()
+      for arg in "$@"; do
+        case "$arg" in
+          --no-qute) restart_qute=0 ;;
+          *) args+=("$arg") ;;
+        esac
+      done
+
+      want="''${args[0]:-}"
+      case "$want" in
+        "") echo "$current"; exit 0 ;;
+        light|dark) ;;
+        toggle)
+          if [ "$current" = "light" ]; then
+            want="dark"
+          else
+            want="light"
+          fi
+          ;;
+        *)
+          echo "usage: rice-mode [light|dark|toggle] [--no-qute]" >&2
+          exit 2
+          ;;
+      esac
+
+      mkdir -p "$(dirname "$mode_file")"
+      printf '%s\n' "$want" > "$mode_file"
+
+      wall="$(sed -n 's/.*"wallpaper": *"\(.*\)",*$/\1/p' "$HOME/.cache/wal/colors.json" 2>/dev/null | head -n1)"
+      if [ -z "$wall" ] || [ ! -e "$wall" ]; then
+        wall="$(find /storage/Walls -type f | shuf -n 1)"
+      fi
+      set-wal "$wall"
+
+      # live path: config.py re-applies the mode to every open page over the
+      # devtools protocol (ricecdp.py), triggered by the :config-source set-wal
+      # already sent. Restart only when that port is missing, i.e. qute was
+      # started without QTWEBENGINE_REMOTE_DEBUGGING (blink flag is the only
+      # lever then, and that one is startup-only).
+      cdp_port="''${RICE_CDP_PORT:-9222}"
+      if [ "$restart_qute" = 1 ] && pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
+        if ! curl -sf --max-time 1 "http://127.0.0.1:$cdp_port/json/version" >/dev/null 2>&1; then
+          qutebrowser --target auto ":restart" || true
+        fi
+      fi
+
+      echo "rice mode: $want"
+    '';
+  };
 in
 {
 
   home.packages = [
     set-wal
+    rice-mode
   ];
 
   systemd.user.services.wal-cycle = {
@@ -115,8 +322,8 @@ in
       @define-color theme_fg_color {foreground};
       @define-color theme_base_color {background};
       @define-color theme_text_color {foreground};
-      @define-color theme_selected_bg_color {color4};
-      @define-color theme_selected_fg_color {background};
+      @define-color theme_selected_bg_color {color1};
+      @define-color theme_selected_fg_color {foreground};
       @define-color insensitive_bg_color {color0};
       @define-color insensitive_fg_color {color8};
       @define-color insensitive_base_color {color0};
@@ -131,9 +338,9 @@ in
       @define-color success_color {color2};
 
       /* libadwaita / adw-gtk3 vars */
-      @define-color accent_bg_color {color4};
+      @define-color accent_bg_color {color1};
       @define-color accent_fg_color {background};
-      @define-color accent_color {color4};
+      @define-color accent_color {color1};
       @define-color window_bg_color {background};
       @define-color window_fg_color {foreground};
       @define-color view_bg_color {background};
@@ -149,6 +356,145 @@ in
       @define-color dialog_fg_color {foreground};
       @define-color sidebar_bg_color {color0};
       @define-color sidebar_fg_color {foreground};
+
+      /* vitrina polish — match the quickshell island */
+      headerbar, .titlebar {
+          box-shadow: none;
+          border-bottom: 1px solid alpha(@accent_color, 0.22);
+      }
+
+      button, entry, spinbutton, dropdown, menubutton > button, .card {
+          border-radius: 10px;
+      }
+
+      popover > contents, popover.background {
+          border-radius: 12px;
+          border: 1px solid alpha(@accent_color, 0.22);
+      }
+
+      *:selected, *:selected:focus {
+          background-color: alpha(@accent_color, 0.30);
+          color: @theme_fg_color;
+      }
+
+      tooltip, tooltip.background {
+          border-radius: 8px;
+          border: 1px solid alpha(@accent_color, 0.22);
+      }
+    '';
+
+    # rofi palette for the "vitrina" rofi theme (modules/home-manager/rofi-vitrina.rasi).
+    # rasi has no alpha() function, so the soft variants are hex + 2-digit alpha,
+    # which rofi parses as #RRGGBBAA.
+    "wal/templates/rofi-colors.rasi".text = ''
+      /* Generated by pywal — rofi palette for the vitrina theme */
+      * {
+          vt-bg: {background};
+          vt-bg0: {color0};
+          vt-fg: {foreground};
+          vt-accent: {color1};
+          vt-accent2: {color2};
+          vt-muted: {color8};
+          vt-accent-3d: {color1}3d;
+          vt-accent-45: {color1}45;
+          vt-accent-26: {color1}26;
+          vt-accent-14: {color1}14;
+          vt-fg-0a: {foreground}0a;
+          vt-fg-14: {foreground}14;
+      }
+    '';
+
+    # vitrina lock screen (hyprlock). the whole config is templated because
+    # hyprlock has no colour-only include: niri.nix symlinks
+    # ~/.config/hypr/hyprlock.conf at ${walCache}/hyprlock.conf.
+    "wal/templates/hyprlock.conf".text = ''
+      # vitrina lock screen — generated by pywal
+      $vt_bg = rgba({background.strip}f2)
+      $vt_scrim = rgba({background.strip}9e)
+      $vt_fg = rgba({foreground.strip}ff)
+      $vt_muted = rgba({color8.strip}ff)
+      $vt_accent = rgba({color1.strip}ff)
+      $vt_accent_soft = rgba({color1.strip}45)
+      $vt_font = Maple Mono NF
+
+      general {
+          hide_cursor = true
+          ignore_empty_input = true
+      }
+
+      animations {
+          enabled = true
+          bezier = easeOutQuint, 0.23, 1, 0.32, 1
+          animation = fadeIn, 1, 4, easeOutQuint
+          animation = fadeOut, 1, 4, easeOutQuint
+          animation = inputFieldDots, 1, 2, easeOutQuint
+      }
+
+      # side screens: plain black
+      background {
+          monitor =
+          color = rgba(000000ff)
+      }
+
+      # main screen: the current wallpaper, untouched
+      background {
+          monitor = DP-4
+          path = {wallpaper}
+          blur_passes = 0
+      }
+
+      # slight dim so the card separates from the wallpaper
+      shape {
+          monitor = DP-4
+          size = 100%, 100%
+          color = $vt_scrim
+          rounding = 0
+          position = 0, 0
+      }
+
+      shape {
+          monitor = DP-4
+          size = 470, 300
+          color = $vt_bg
+          rounding = 22
+          border_size = 1
+          border_color = rgba({color1.strip}66)
+          position = 0, 0
+      }
+
+      label {
+          monitor = DP-4
+          text = cmd[update:1000] date +"%H:%M"
+          font_family = $vt_font
+          font_size = 56
+          color = $vt_fg
+          position = 0, 62
+      }
+
+      label {
+          monitor = DP-4
+          text = cmd[update:60000] date +"%A %-d %B"
+          font_family = $vt_font
+          font_size = 13
+          color = rgba({foreground.strip}b3)
+          position = 0, -6
+      }
+
+      input-field {
+          monitor = DP-4
+          size = 340, 50
+          position = 0, -84
+          rounding = 12
+          outline_thickness = 1
+          inner_color = rgba({foreground.strip}0a)
+          outer_color = $vt_accent_soft
+          check_color = $vt_accent
+          fail_color = rgba({color2.strip}ff)
+          font_color = $vt_fg
+          font_family = $vt_font
+          placeholder_text = Password
+          fade_on_empty = false
+      }
     '';
 
     "wal/templates/mako-colors".text = ''
@@ -226,87 +572,249 @@ in
     "wal/templates/vesktop.css".text =
       #css
       ''
-        /* import theme modules */
-        @import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
+/* ═══════════════════════════════════════════════════════════════
+   vitrina-material — a discord theme
+   material shapes (flat cards, soft washes, one radius scale)
+   + vitrina identity (pywal surfaces, color1 accent, ALLCAPS
+   accent usernames, Cantarell, nerd glyphs via fallback).
+   layout scaffolding: refact0r/midnight (design-token mapping).
+   ═══════════════════════════════════════════════════════════════ */
+@import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
 
-        /* color options */
-        :root {
-            --colors: on;
+:root {
+    --colors: on;
 
-            /* text colors */
-            --text-0: {background};   /* text on colored elements */
-            --text-1: {foreground};   /* bright white-ish text */
-            --text-2: {foreground};   /* headings */
-            --text-3: {foreground};   /* normal text */
-            --text-4: {foreground};   /* icons/channels */
-            --text-5: {foreground};   /* muted  */
+    /* proportional face; code + nerd glyphs keep the mono */
+    --font: 'Cantarell';
+    --code-font: 'Maple Mono NF';
 
-            /* background and dark colors */
-            --bg-1: color-mix(in srgb, {color8} 50%, {background}00);
-            --bg-2: color-mix(in srgb, {color8} 50%, {background}00);
-            --bg-3: color-mix(in srgb, {color8} 50%, {background}00);
-            --bg-4: {background}b3;
-            --hover: {color8}1a; /* channels and buttons when hovered */
-            --active: {color8}33; /* channels and buttons when clicked or selected */
-            --active-2: {color8}4d; /* extra state for transparent buttons */
-            --message-hover: #0000001a; /* messages when hovered */
+    /* text */
+    --text-0: {background};
+    --text-1: {foreground};
+    --text-2: {foreground};
+    --text-3: {foreground};
+    --text-4: {foreground};
+    --text-5: {foreground};
+    --text-link: var(--vt-accent);
 
-            /* accent colors */
-            --accent-1: {color7}; /* links and other accent text */
-            --accent-2: {color12}; /* small accent elements */
-            --accent-3: {color4}; /* accent buttons */
-            --accent-4: {color12}; /* accent buttons when hovered */
-            --accent-5: {color4}; /* accent buttons when clicked */
-            --accent-new: var(--accent-2);
-            --mention: linear-gradient(to right, color-mix(in hsl, {color12}, transparent 90%) 40%, transparent);
-            --mention-hover: linear-gradient(to right, color-mix(in hsl, {color12}, transparent 95%) 40%, transparent);
-            --reply: linear-gradient(to right, color-mix(in hsl, {color15}, transparent 90%) 40%, transparent);
-            --reply-hover: linear-gradient(to right, color-mix(in hsl, {color15}, transparent 95%) 40%, transparent);
+    /* surfaces — one base, two raised steps, all opaque */
+    --bg-1: {background};
+    --bg-2: color-mix(in srgb, {color8} 10%, {background});
+    --bg-3: color-mix(in srgb, {color8} 18%, {background});
+    --bg-4: {background};
+    --hover: {color8}1a;
+    --active: {color8}33;
+    --active-2: {color8}4d;
+    --message-hover: {color8}14;
 
-            /* status indicator colors */
-            --online: {color6};
-            --dnd: {color1};
-            --idle: {color5};
-            --streaming: {color3};
-            --offline: {color7};
+    /* one accent: color1, like every other vitrina surface */
+    --vt-accent: {color1};
+    --vt-accent-wash: {color1}26;
+    --vt-accent-soft: {color1}45;
+    --accent-1: {color1};
+    --accent-2: {color1};
+    --accent-3: {color1};
+    --accent-4: {color2};
+    --accent-5: {color2};
+    --accent-new: {color1};
+    --mention: linear-gradient(to right, {color1}26 40%, transparent);
+    --mention-hover: linear-gradient(to right, {color1}1a 40%, transparent);
+    --reply: linear-gradient(to right, {color1}26 40%, transparent);
+    --reply-hover: linear-gradient(to right, {color1}1a 40%, transparent);
 
-            /* border colors */
-            --border-light: var(--hover);
-            --border: var(--active);
-            --border-hover: var(--active);
-            --button-border: {color8}1a;
+    /* status */
+    --online: {color6};
+    --dnd: {color1};
+    --idle: {color5};
+    --streaming: {color3};
+    --offline: {color7};
 
-            /* base colors */
-            --red-1: {color9};
-            --red-2: {color1};
-            --red-3: {color1};
-            --red-4: {color1};
-            --red-5: {color1};
+    /* borders: hairlines, like the island */
+    --border-light: var(--hover);
+    --border: var(--active);
+    --border-hover: var(--active);
+    --button-border: {color8}1a;
 
-            --green-1: {color10};
-            --green-2: {color2};
-            --green-3: {color2};
-            --green-4: {color2};
-            --green-5: {color2};
+    /* semantic ramps stay semantic */
+    --red-1: {color9};   --red-2: {color1};   --red-3: {color1};   --red-4: {color1};   --red-5: {color1};
+    --green-1: {color10}; --green-2: {color2}; --green-3: {color2}; --green-4: {color2}; --green-5: {color2};
+    --blue-1: {color12};  --blue-2: {color1};  --blue-3: {color1};  --blue-4: {color1};  --blue-5: {color1};
+    --yellow-1: {color11}; --yellow-2: {color3}; --yellow-3: {color3}; --yellow-4: {color3}; --yellow-5: {color3};
+    --purple-1: {color13}; --purple-2: {color5}; --purple-3: {color5}; --purple-4: {color5}; --purple-5: {color5};
 
-            --blue-1: {color12};
-            --blue-2: {color4};
-            --blue-3: {color4};
-            --blue-4: {color4};
-            --blue-5: {color4};
+    /* ── material: one radius scale, flat elevation, tighter gaps ── */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --gap: 10px;
+    --border-thickness: 1px;
+    --divider-thickness: 3px;
+    --elevation-low: none;
+    --elevation-medium: none;
+    --elevation-high: none;
+    --panel-backdrop-filter: none;
+}
 
-            --yellow-1: {color11};
-            --yellow-2: {color3};
-            --yellow-3: {color3};
-            --yellow-4: {color3};
-            --yellow-5: {color3};
+/* ── panels as flat cards: hairline border, no shadows ── */
+[class*="guilds_"],
+[class*="sidebarList_"],
+[class*="panels_"],
+[class*="chatContent_"],
+[class*="membersWrap_"],
+[class*="subtitleContainer_"],
+[class*="searchResultsWrap_"],
+[class*="peopleColumn_"],
+[class*="nowPlayingColumn_"] {
+    border: var(--border-thickness) solid var(--border) !important;
+}
 
-            --purple-1: {color13};
-            --purple-2: {color5};
-            --purple-3: {color5};
-            --purple-4: {color5};
-            --purple-5: {color5};
-        }
+/* the app canvas behind the cards */
+[class*="bg_"] {
+    background: var(--bg-1) !important;
+}
+
+/* ── material states: soft accent washes, never solid fills ── */
+[class*="modeSelected"],
+[class*="modeSelected"]:hover {
+    background: var(--vt-accent-wash) !important;
+}
+
+[class*="modeConnected"],
+[class*="modeUnread"] {
+    background: var(--active) !important;
+}
+
+/* mention pill: wash, not solid */
+[class*="mentioned"] {
+    background: var(--vt-accent-wash) !important;
+}
+[class*="mentioned"]:before {
+    background: var(--vt-accent) !important;
+}
+
+/* ── embeds + code: quiet flat cards ── */
+[class*="embedFull"] {
+    background: var(--bg-2) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+}
+
+.markup code,
+[class*="markup"] code {
+    background: var(--bg-3) !important;
+    border-radius: 6px !important;
+}
+
+/* ── scrollbars: 4px, rounded, quiet ── */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--active);
+    border-radius: 2px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ── tooltips: small flat cards ── */
+[class*="tooltip"] {
+    background: var(--bg-3) !important;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm) !important;
+    box-shadow: none !important;
+}
+
+/* ── inputs: soft surface, accent focus ring ── */
+[class*="searchBar"],
+[class*="attachWrapper"],
+[class*="channelTextArea"] {
+    border-radius: var(--radius-md) !important;
+}
+
+/* ── vitrina: ALLCAPS accent usernames and detail headers ── */
+[class*="username"],
+[class*="nickname"],
+[class*="nameTag"] span {
+    text-transform: uppercase !important;
+    color: var(--vt-accent) !important;
+    font-weight: 600;
+}
+
+[class*="membersGroup"],
+[class*="timestamp"] {
+    text-transform: uppercase;
+    color: var(--vt-accent) !important;
+    letter-spacing: 0.03em;
+}
+
+/* channel categories: caps + muted, like the island headers */
+[class*="containerDefault"] [class*="name_"] {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── portrait-friendly: the channel / DM list collapses to a rail and
+   OVERLAPS the chat when open — the chat never reflows. exact classes
+   from midnight's build-pinned selectors ── */
+
+/* the group is overflow:hidden and only as wide as the collapsed rail
+   (guilds + 14px), so it CLIPS the expanded list at its edge — the list
+   was expanding all along, just invisible. unclip + lift above the chat */
+.sidebar_pog62O {
+    overflow: visible !important;
+    position: relative;
+    /* above the chat (z-auto), BELOW discord's modal/lightbox layer
+       (z 1002) — 9999 here put the rail over the image lightbox */
+    z-index: 100;
+}
+
+.sidebarList_pog62O {
+    position: relative;
+    z-index: 10;
+    /* static geometry: layout never changes, the reveal is clip-only
+       (compositor) — animating width reflows the virtualized channel
+       tree every frame and stutters */
+    width: min(50vw, 480px) !important;
+    min-width: 14px !important;
+    margin-right: calc(14px - min(50vw, 480px)) !important;
+    overflow: hidden !important;
+    border-left: 2px solid var(--vt-accent-soft) !important;
+    clip-path: inset(0 calc(100% - 14px) 0 0);
+    transition: clip-path 0.18s ease;
+}
+
+/* the real resize bar is sidebarResizeHandle_pog62O and it sits ON the
+   rail's right edge, stealing the hover — let the rail take it back */
+.sidebarResizeHandle_pog62O {
+    pointer-events: none !important;
+}
+
+/* open on any part of the sidebar group: guilds, the gutter between
+   panels, the rail — the group box covers them all */
+.sidebar_pog62O:hover .sidebarList_pog62O {
+    clip-path: inset(0 0 0 0);
+}
+
+/* the user panel (pfp + mute/deafen/settings) is a SIBLING of the list
+   and its icon row is wider than the collapsed rail. hidden completely
+   when closed (visibility beats the !important card border shorthand),
+   grows back in lockstep with the list on hover */
+.panels_pog62O {
+    overflow: hidden !important;
+    max-height: 0 !important;
+    visibility: hidden;
+    /* static geometry, same as the list — only height animates */
+    width: calc(min(50vw, 480px) + 78px) !important;
+    margin-right: calc(14px - min(50vw, 480px)) !important;
+    transition: max-height 0.18s ease;
+}
+
+.sidebar_pog62O:hover .panels_pog62O {
+    visibility: visible;
+    max-height: 200px !important;
+}
       '';
     # qt5ct / qt6ct palette (fusion style + custom colors).
     # exported by wal to ~/.cache/wal/qt-colors.conf on every set-wal run,
@@ -317,9 +825,9 @@ in
     # norole, tooltipbase, tooltiptext, placeholdertext.
     "wal/templates/qt-colors.conf".text = ''
       [ColorScheme]
-      active_colors={foreground}, {color0}, {color8}, {color8}, {color0}, {color8}, {foreground}, {color15}, {foreground}, {background}, {background}, {color0}, {color4}, {background}, {color6}, {color5}, {color0}, {background}, {color0}, {foreground}, {color8}
+      active_colors={foreground}, {color0}, {color8}, {color8}, {color0}, {color8}, {foreground}, {color15}, {foreground}, {background}, {background}, {color0}, {color1}, {background}, {color6}, {color5}, {color0}, {background}, {color0}, {foreground}, {color8}
       disabled_colors={color8}, {color0}, {color8}, {color8}, {color0}, {color8}, {color8}, {color15}, {color8}, {background}, {background}, {color0}, {color8}, {color8}, {color8}, {color8}, {color0}, {background}, {color0}, {color8}, {color8}
-      inactive_colors={foreground}, {color0}, {color8}, {color8}, {color0}, {color8}, {foreground}, {color15}, {foreground}, {background}, {background}, {color0}, {color4}, {background}, {color6}, {color5}, {color0}, {background}, {color0}, {foreground}, {color8}
+      inactive_colors={foreground}, {color0}, {color8}, {color8}, {color0}, {color8}, {foreground}, {color15}, {foreground}, {background}, {background}, {color0}, {color1}, {background}, {color6}, {color5}, {color0}, {background}, {color0}, {foreground}, {color8}
     '';
 
     "wal/templates/emacs.el".text =
@@ -378,6 +886,7 @@ in
 
     "emacs/pywal.el".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/emacs.el";
     "vesktop/themes/custom.css".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/vesktop.css";
+    "hypr/hyprlock.conf".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/hyprlock.conf";
 
     # qt reads its palette at app startup, so symlink the wal output
     # straight in. no set-wal hook change needed, just relaunch qt apps.
@@ -391,6 +900,9 @@ in
       icon_theme=Papirus-Dark
       custom_palette=true
       color_scheme_path=${config.home.homeDirectory}/.config/qt5ct/colors/pywal.conf
+      [Fonts]
+      general="Maple Mono NF,10,-1,5,50,0,0,0,0,0"
+      fixed="Maple Mono NF,10,-1,5,50,0,0,0,0,0"
     '';
     "qt6ct/qt6ct.conf".text = ''
       [Appearance]
@@ -398,6 +910,9 @@ in
       icon_theme=Papirus-Dark
       custom_palette=true
       color_scheme_path=${config.home.homeDirectory}/.config/qt6ct/colors/pywal.conf
+      [Fonts]
+      general="Maple Mono NF,10,-1,5,50,0,0,0,0,0"
+      fixed="Maple Mono NF,10,-1,5,50,0,0,0,0,0"
     '';
   };
 

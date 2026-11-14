@@ -112,10 +112,18 @@
       jack.enable = true;
 
       # Emotiva Little Ego+ (usb-20ee:0020): 44.1..384 kHz, S32_LE/DSD.
+      # Quantum 64 measured stable 2026-11-13 (DAC hw period 32 @48k, 16 at
+      # force-quantum 32, zero kernel usb-audio errors). Bump to 128/256 if
+      # xruns crackle — this is the one latency knob.
+      # Graph pinned at 96k (2026-11-13): vesktop holds a resident 48k output
+      # stream that vetoes auto rate-switching while active, so the DAC sat at
+      # 48k whenever discord ran. Pinned 96k = DAC always 24-bit/96k; 48k
+      # sources resample at exact 2.0 ratio (quality 14). allowed-rates still
+      # lets a 176.4/192k stream re-clock the graph when no 48k anchor is up.
       extraConfig = {
         pipewire."92-hires-clock" = {
           "context.properties" = {
-            "default.clock.rate" = 48000;
+            "default.clock.rate" = 96000;
             "default.clock.allowed-rates" = [
               44100
               48000
@@ -126,7 +134,7 @@
               352800
               384000
             ];
-            "default.clock.quantum" = 1024;
+            "default.clock.quantum" = 64;
             "default.clock.max-quantum" = 2048;
             "default.clock.min-quantum" = 32;
             "resample.quality" = 14;

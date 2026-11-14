@@ -7,6 +7,9 @@
       #tmux
       ''
         set -s escape-time 0
+
+        # Let kitty graphics escape sequences through (walltui image previews)
+        set -s allow-passthrough on
         set -g prefix M-a
         set -g status-position bottom
 

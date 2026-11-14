@@ -37,59 +37,10 @@ let
 in
 {
 
-  programs.hyprlock = {
-    enable = true;
-    settings = {
-      general = {
-        hide_cursor = true;
-        ignore_empty_input = true;
-      };
-
-      animations = {
-        enabled = true;
-        fade_in = {
-          duration = 300;
-          bezier = "easeOutQuint";
-        };
-        fade_out = {
-          duration = 300;
-          bezier = "easeOutQuint";
-        };
-      };
-
-      background = [
-        {
-          color = "rgb(0, 0, 0)";
-        }
-        {
-          monitor = "DP-4";
-          path = "screenshot";
-          blur_passes = 3;
-          blur_size = 6;
-        }
-      ];
-      input-field = [
-        {
-          monitor = "DP-4";
-          size = "20%, 5%";
-          outline_thickness = 3;
-          inner_color = "rgba(0, 0, 0, 0.0)";
-
-          outer_color = "rgba(33ccffee) rgba(00ff99ee) 45deg";
-          check_color = "rgba(00ff99ee) rgba(ff6633ee) 120deg";
-          fail_color = "rgba(ff6633ee) rgba(ff0066ee) 40deg";
-
-          font_color = "rgb(143, 143, 143)";
-          fade_on_empty = false;
-          rounding = 15;
-
-          position = "0, -20";
-          halign = "center";
-          valign = "center";
-        }
-      ];
-    };
-  };
+  # hyprlock: config is pywal-rendered (modules/home-manager/pywal.nix) and
+  # symlinked in there, so the lock screen follows the wallpaper. the PAM
+  # service comes from modules/system/services.nix.
+  home.packages = [ pkgs.hyprlock ];
 
   wayland.windowManager.niri = {
     enable = true;
@@ -192,7 +143,7 @@ in
           _args = [
             "${pkgs.bash}/bin/bash"
             "-c"
-            "until [ -f ~/.cache/wal/colors.css ]; do sleep 0.2; done && ${pkgs.waybar}/bin/waybar"
+            "until [ -f ~/.cache/wal/colors.json ]; do sleep 0.2; done && ${pkgs.quickshell}/bin/quickshell -p /home/theo/.config/vitrina"
           ];
         }
         {
@@ -215,7 +166,15 @@ in
             "-listen"
           ];
         }
-        { _args = [ "${pkgs.qutebrowser}/bin/qutebrowser" ]; }
+        # QTWEBENGINE_REMOTE_DEBUGGING: loopback-only devtools port; ricecdp.py
+        # uses it to flip prefers-color-scheme on live pages without a restart.
+        {
+          _args = [
+            "${pkgs.bash}/bin/bash"
+            "-c"
+            "QTWEBENGINE_REMOTE_DEBUGGING=9222 exec ${pkgs.qutebrowser}/bin/qutebrowser"
+          ];
+        }
         { _args = [ "vesktop" ]; }
         {
           _args = [
@@ -238,11 +197,9 @@ in
 
       window-rule = [
         {
-          geometry-corner-radius = 10;
+          # flat look: no compositor blur on windows
+          geometry-corner-radius = 14;
           clip-to-geometry = true;
-          background-effect = {
-            blur = true;
-          };
         }
         {
           match._props.is-active = false;
@@ -352,6 +309,12 @@ in
             "sh"
             "-c"
             "set-wal $(find /storage/Walls/ | shuf -n 1)"
+          ];
+        };
+        "Mod+Shift+L" = {
+          spawn._args = [
+            "rice-mode"
+            "toggle"
           ];
         };
         "Mod+O" = {

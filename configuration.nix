@@ -97,6 +97,7 @@
     allowUnfree = true;
     permittedInsecurePackages = [
       "pnpm-10.29.2" # FIXME this shouldn't be needed at some point
+      "qutebrowser-3.7.0" # FIXME eMudhra TLS certs.
       "quickjs-2025-09-13-2" # FIXME uhhh, this _is_ a pretty big issue, I think? It's just needed for tic-80.
     ];
   };

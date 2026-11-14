@@ -25,6 +25,10 @@ let
 in
 {
   xdg.configFile."qutebrowser/pywalQute".source = pywalQute;
+
+  # live light/dark for websites over the devtools protocol (see the module's
+  # docstring; needs QTWEBENGINE_REMOTE_DEBUGGING, set on the niri spawn line)
+  xdg.configFile."qutebrowser/ricecdp.py".source = ./qute-rice/ricecdp.py;
   xdg.configFile."qutebrowser/greasemonkey/sponsorblock.js".source = sponsorblock;
 
   xdg.dataFile = {
@@ -64,6 +68,8 @@ in
       tabs.show = "multiple";
 
       colors.webpage = {
+        # startup default only — extraConfig below re-sets this from
+        # ~/.config/rice/mode on every start / :config-source.
         preferred_color_scheme = "dark";
         darkmode.enabled = false;
         darkmode.algorithm = "lightness-cielab";
@@ -221,6 +227,31 @@ in
       ''
         import pywalQute.draw
         import json
+        import os
+
+        # rice mode (see pywal.nix). chrome colors follow the pywal cache on
+        # their own; websites need this explicit opt-in. RESTART-ONLY:
+        # qutebrowser hands preferredColorScheme to QtWebEngine as a blink
+        # setting at startup (configdata.yml: `restart: true`), so `rice-mode`
+        # restarts the browser after flipping the mode file.
+        mode_path = os.path.expanduser('~/.config/rice/mode')
+        try:
+            with open(mode_path) as f:
+                rice_mode = f.read().strip()
+        except OSError:
+            rice_mode = 'dark'
+        if rice_mode != 'light':
+            rice_mode = 'dark'
+
+        config.set('colors.webpage.preferred_color_scheme', rice_mode)
+
+        # and push it to the live pages: preferred_color_scheme is a startup-only
+        # blink flag, ricecdp flips the media feature over devtools instead.
+        import ricecdp
+        ricecdp.apply()
+        config.set('colors.webpage.darkmode.enabled', rice_mode == 'dark', 'qute://*')
+        config.set('colors.webpage.darkmode.enabled', rice_mode == 'dark',
+                   'www.w3schools.com')
 
         pywalQute.draw.color(c, {
             'spacing': {

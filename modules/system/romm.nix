@@ -87,14 +87,32 @@
   # worker is the least-moving fix (a scan then occupies the worker for its
   # duration, same as 5.2.x did). Split it into a second unit if scans ever need
   # to run alongside metadata tasks.
+  # The nixos module gives every satellite unit Requires=romm.service. When
+  # romm.service's first start attempt fails and systemd's own retry then
+  # succeeds, the satellites' start jobs are cancelled with result 'dependency'
+  # -- which Restart=on-failure never rescues. They stay dead while the web UI
+  # looks fine, and every scan is refused with "No scan worker is listening".
+  # Happened 2026-11-13: the switch restarted postgres in the same transaction
+  # and romm's ExecStartPre ran against it cold. The worker/scheduler/watcher
+  # only need redis and the database, not the API server (upstream runs them as
+  # independent processes), so order them after romm.service without requiring
+  # it, and give romm itself room for a slow migrate.
+  systemd.services.romm.serviceConfig.TimeoutStartSec = lib.mkForce "5m";
   systemd.services.romm-worker = {
     after = [ "storage.mount" ];
-    requires = [ "storage.mount" ];
+    requires = lib.mkForce [ "storage.mount" ];
+    wants = [ "romm.service" ];
     serviceConfig.ExecStart = lib.mkForce "${config.services.romm.package}/bin/romm-worker high default low scans streaming";
   };
   systemd.services.romm-scheduler = {
     after = [ "storage.mount" ];
-    requires = [ "storage.mount" ];
+    requires = lib.mkForce [ "storage.mount" ];
+    wants = [ "romm.service" ];
+  };
+  systemd.services.romm-watcher = {
+    after = [ "storage.mount" ];
+    requires = lib.mkForce [ "storage.mount" ];
+    wants = [ "romm.service" ];
   };
 
   # Deploy config.yml (TOSEC folder -> RomM slug mappings) on rebuild.

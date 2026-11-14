@@ -3,6 +3,12 @@
   gtk = {
     enable = true;
 
+    # proportional UI face everywhere (nerd glyphs fall back per-glyph)
+    font = {
+      name = "Cantarell";
+      size = 10;
+    };
+
     theme = {
       name = "adw-gtk3-dark";
       package = pkgs.adw-gtk3;
@@ -34,13 +40,11 @@
   # header, see issue) and fights over gtk-theme-name. Keep theme pins in
   # gtk4.extraConfig instead.
 
-  dconf.settings = {
-    "org/gnome/desktop/interface" = {
-      gtk-theme = "adw-gtk3-dark";
-      icon-theme = "Papirus-Dark";
-      color-scheme = "prefer-dark";
-    };
-  };
+  # NOTE: gtk-theme / icon-theme / color-scheme are deliberately NOT declared in
+  # dconf.settings. They are mode-dependent now (light vs dark, see pywal.nix),
+  # and a declarative dconf key is rewritten on every activation — a rebuild
+  # would silently drag a light rice back to prefer-dark until the next set-wal.
+  # set-wal is the single writer for those three keys.
   home.pointerCursor = {
     enable = true;
     name = "Bibata-Modern-Ice";

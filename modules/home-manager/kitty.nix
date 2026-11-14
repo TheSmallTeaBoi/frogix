@@ -15,7 +15,8 @@ in
       bold_italic_font = "${fontName} Bold Italic";
       bold_font = "${fontName} Bold";
 
-      background_opacity = "0.8";
+      # flat look: fully opaque terminal
+      background_opacity = "1.0";
 
       enable_audio_bell = false;
       confirm_os_window_close = 0;
