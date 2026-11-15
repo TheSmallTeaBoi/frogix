@@ -45,9 +45,11 @@
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
-(setq org-directory "/storage/Personal/Org/")
-(setq org-roam-directory "/storage/Personal/Org/")
-(setq org-roam-db-location "/storage/Personal/Org/org-roam.db")
+;; org paths: set frogix.emacs.orgDirectory and frogix exports FROGIX_ORG_DIR;
+;; without it doom's default org directory is used.
+(setq org-directory (or (getenv "FROGIX_ORG_DIR") "~/org/"))
+(setq org-roam-directory org-directory)
+(setq org-roam-db-location (expand-file-name "org-roam.db" org-directory))
 (setq calendar-date-style 'european) ;; Use a sane timestamp format.
 
 (setq org-roam-database-connector 'sqlite-builtin)

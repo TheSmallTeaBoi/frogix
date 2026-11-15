@@ -1,98 +1,114 @@
-{ pkgs, ... }:
 {
-  programs.tmux = {
-    enable = true;
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.frogix.tmux;
+in
+{
+  options.frogix."tmux".enable = lib.mkOption {
+    type = lib.types.bool;
+    default = config.frogix.enable;
+    description = "tmux with the pywal status theme";
+  };
 
-    extraConfig =
-      #tmux
-      ''
-        set -s escape-time 0
+  config = lib.mkIf cfg.enable {
+    programs.tmux = {
+      enable = true;
 
-        # Let kitty graphics escape sequences through (walltui image previews)
-        set -s allow-passthrough on
-        set -g prefix M-a
-        set -g status-position bottom
+      extraConfig =
+        #tmux
+        ''
+          set -s escape-time 0
 
-        # Set titles correctly
-        set -g set-titles on
-        set -g set-titles-string "#T"
+          # Let kitty graphics escape sequences through (walltui image previews)
+          set -s allow-passthrough on
+          set -g prefix M-a
+          set -g status-position bottom
 
-        # 0-Index makes sense for offsets, not this.
-        set -g base-index 1
-        setw -g pane-base-index 1
+          # Set titles correctly
+          set -g set-titles on
+          set -g set-titles-string "#T"
 
-        # Me when this piece of software is still stuck in 1996
-        set-option -g default-terminal "tmux-256color"
+          # 0-Index makes sense for offsets, not this.
+          set -g base-index 1
+          setw -g pane-base-index 1
 
-        # Set the modules
-        set -g status-left ""
-        set -g status-right ""
+          # Me when this piece of software is still stuck in 1996
+          set-option -g default-terminal "tmux-256color"
 
-        run-shell -b 'if [ -r ~/.cache/wal/colors.sh ]; then . ~/.cache/wal/colors.sh; tmux set -g status-style "bg=$background,fg=$foreground"; tmux set -g message-style "bg=$color4,fg=$foreground"; tmux set -g mode-style "bg=$color4,fg=$foreground"; tmux set -g pane-border-style "fg=$color0"; tmux set -g pane-active-border-style "fg=$color4"; fi'
+          # Set the modules
+          set -g status-left ""
+          set -g status-right ""
 
-        # Reorder windows when one gets deleted.
-        set -g renumber-windows on
+          run-shell -b 'if [ -r ~/.cache/wal/colors.sh ]; then . ~/.cache/wal/colors.sh; tmux set -g status-style "bg=$background,fg=$foreground"; tmux set -g message-style "bg=$color4,fg=$foreground"; tmux set -g mode-style "bg=$color4,fg=$foreground"; tmux set -g pane-border-style "fg=$color0"; tmux set -g pane-active-border-style "fg=$color4"; fi'
 
-        # Don't display status line if only 1 window
-        if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"
-        set-hook -g window-linked 'if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"'
-        set-hook -g window-unlinked 'if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"'
+          # Reorder windows when one gets deleted.
+          set -g renumber-windows on
 
-        # It's 2025, ffs
-        set-option -g history-limit 250000
+          # Don't display status line if only 1 window
+          if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"
+          set-hook -g window-linked 'if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"'
+          set-hook -g window-unlinked 'if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"'
 
-        # M-Space brings out the menu
-        bind-key -n M-Space display-menu\
-            "New Session"                        S "command-prompt -p \"New Session:\" \"new-session -A -s '%%'\"" \
-            "Kill Session"                       x "kill-session" \
-            "Kill Other Session(s)"              X "kill-session -a" \
-            "" \
-            "New Window"                          new-window \
-            "With directory"                      "new-window -c '#{pane_current_path}'" \
-            "Kill Window"                        󰆴 "killw"  \
-            "Choose Window"                      󰒅 choose-window \
-            "Previous Window"                     previous-window \
-            "Next Window"                         next-window \
-            "Swap Window Right"                   "swap-window -t -1" \
-            "Swap Window Left"                    "swap-window -t +1" \
-            "Horizontal Split"                    "split-window -h" \
-            "Vertical Split"                      "split-window -v"  \
-            "" \
-            "Layout Horizontal"                   "select-layout even-horizontal"  \
-            "Layout Vertical"                     "select-layout even-horizontal"  \
-            "" \
-            "Swap Pane Up"                       < "swap-pane -U" \
-            "Swap Pane Down"                     > "swap-pane -D" \
-            "Break Pane"                         t break-pane \
-            "Join Pane"                          j "choose-window 'join-pane -h -s \"%%\"'" \
-            "#{?window_zoomed_flag,Unzoom,Zoom}" z "resize-pane -Z" \
-            ""\
-            "Lazygit"                             "new-window -n "Lazygit" -c '#{pane_current_path}' 'lazygit'" \
-            "Bottom"                              "new-window -n "Bottom" 'btm'"
+          # It's 2025, ffs
+          set-option -g history-limit 250000
 
-
-
-        bind                                     h split-window -h
-        bind                                     v split-window -v
-        bind -n                              M-Tab last-window
-        bind -n                                M-n select-pane -t :.+
-        bind -n                                M-p select-pane -t :.-
-
-        # Go to window with Alt+1-9
-        bind -n                                M-1 selectw -t 1
-        bind -n                                M-2 selectw -t 2
-        bind -n                                M-3 selectw -t 3
-        bind -n                                M-4 selectw -t 4
-        bind -n                                M-5 selectw -t 5
-        bind -n                                M-6 selectw -t 6
-        bind -n                                M-7 selectw -t 7
-        bind -n                                M-8 selectw -t 8
-        bind -n                                M-9 selectw -t 9
+          # M-Space brings out the menu
+          bind-key -n M-Space display-menu\
+              "New Session"                        S "command-prompt -p \"New Session:\" \"new-session -A -s '%%'\"" \
+              "Kill Session"                       x "kill-session" \
+              "Kill Other Session(s)"              X "kill-session -a" \
+              "" \
+              "New Window"                          new-window \
+              "With directory"                      "new-window -c '#{pane_current_path}'" \
+              "Kill Window"                        󰆴 "killw"  \
+              "Choose Window"                      󰒅 choose-window \
+              "Previous Window"                     previous-window \
+              "Next Window"                         next-window \
+              "Swap Window Right"                   "swap-window -t -1" \
+              "Swap Window Left"                    "swap-window -t +1" \
+              "Horizontal Split"                    "split-window -h" \
+              "Vertical Split"                      "split-window -v"  \
+              "" \
+              "Layout Horizontal"                   "select-layout even-horizontal"  \
+              "Layout Vertical"                     "select-layout even-horizontal"  \
+              "" \
+              "Swap Pane Up"                       < "swap-pane -U" \
+              "Swap Pane Down"                     > "swap-pane -D" \
+              "Break Pane"                         t break-pane \
+              "Join Pane"                          j "choose-window 'join-pane -h -s \"%%\"'" \
+              "#{?window_zoomed_flag,Unzoom,Zoom}" z "resize-pane -Z" \
+              ""\
+              "Lazygit"                             "new-window -n "Lazygit" -c '#{pane_current_path}' 'lazygit'" \
+              "Bottom"                              "new-window -n "Bottom" 'btm'"
 
 
-        # Unbind
-        unbind                                '"'
-        unbind                                %
-      '';
+
+          bind                                     h split-window -h
+          bind                                     v split-window -v
+          bind -n                              M-Tab last-window
+          bind -n                                M-n select-pane -t :.+
+          bind -n                                M-p select-pane -t :.-
+
+          # Go to window with Alt+1-9
+          bind -n                                M-1 selectw -t 1
+          bind -n                                M-2 selectw -t 2
+          bind -n                                M-3 selectw -t 3
+          bind -n                                M-4 selectw -t 4
+          bind -n                                M-5 selectw -t 5
+          bind -n                                M-6 selectw -t 6
+          bind -n                                M-7 selectw -t 7
+          bind -n                                M-8 selectw -t 8
+          bind -n                                M-9 selectw -t 9
+
+
+          # Unbind
+          unbind                                '"'
+          unbind                                %
+        '';
+    };
   };
 }

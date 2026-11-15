@@ -1,9 +1,11 @@
 {
-  pkgs,
+  config,
   lib,
+  pkgs,
   ...
 }:
 let
+  cfg = config.frogix.sunshine;
   launch-gamescope = pkgs.writeShellApplication {
     name = "launch-gamescope";
 
@@ -82,9 +84,9 @@ let
           # Land it fullscreen on DP-3's currently active workspace.
           # focus-monitor first so the workspace index resolves against DP-3.
           WS_IDX="$(niri msg --json workspaces 2>/dev/null \
-              | jq -r '[.[] | select(.output == "DP-3" and .is_active)] | first | .idx // empty' \
+              | jq -r '[.[] | select(.output == "${cfg.output}" and .is_active)] | first | .idx // empty' \
               || true)"
-          niri msg action focus-monitor DP-3 || true
+          niri msg action focus-monitor ${cfg.output} || true
           niri msg action focus-window --id "$WIN_ID" || true
           if [ -n "$WS_IDX" ]; then
               niri msg action move-window-to-workspace "$WS_IDX" || true
@@ -100,35 +102,24 @@ let
   };
 in
 {
-  xdg.configFile."sunshine/apps.json".text = builtins.toJSON {
-    apps = [
-      {
-        auto-detach = true;
-        cmd = lib.getExe launch-gamescope;
-        exclude-global-prep-cmd = false;
-        exit-timeout = 5;
-        image-path = "steam.png";
-        name = "Steam Big Picture";
-        wait-all = true;
-      }
-    ];
-    env = {
-      PATH = "$(PATH):$(HOME)/.local/bin";
+  options.frogix.sunshine = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = config.frogix.enable;
+      description = "sunshine game streaming with the gamescope launcher";
+    };
+    output = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "monitor sunshine captures (null = sunshine auto-detects)";
     };
   };
-  xdg.configFile."sunshine/apps.json".force = true;
 
-  xdg.configFile."sunshine/sunshine.conf".text = ''
-    capture = wlr
-    ds5_inputtino_randomize_mac = disabled
-    encoder = nvenc
-    min_log_level = 2
-    minimum_fps_target = 30
-    nvenc_preset = 4
-    nvenc_vbv_increase = 100
-    output_name = DP-3
-    system_tray = disabled
-    wan_encryption_mode = 1
-  '';
-  xdg.configFile."sunshine/sunshine.conf".force = true;
+  config = lib.mkIf cfg.enable {
+    # sunshine.conf and apps.json are deliberately NOT managed: sunshine
+    # generates and then rewrites both at runtime, and managing them just
+    # produces backup-file churn on every switch. the launcher stays on PATH
+    # so a hand-maintained apps.json can reference it by name.
+    home.packages = [ launch-gamescope ];
+  };
 }

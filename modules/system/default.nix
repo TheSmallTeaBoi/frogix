@@ -1,5 +1,11 @@
 {
   imports = [
+    ./core.nix
+    ./gaming.nix
+    ./nix-settings.nix
+    ./user.nix
+    ./virt.nix
+    ./frogix.nix
     ./GUI-nvidia.nix
     ./boot.nix
     ./droidcam.nix

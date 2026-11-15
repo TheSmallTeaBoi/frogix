@@ -12,9 +12,9 @@ import "."
 ShellRoot {
     id: shell
 
-    readonly property var mainScreen: Quickshell.screens.find(s => s.name === "DP-4") ?? Quickshell.primaryScreen
-    readonly property var sideScreens: Quickshell.screens.filter(s => s.name !== "DP-4")
-    readonly property var mainWs: wsByOutput["DP-4"] ?? null
+    readonly property var mainScreen: Quickshell.screens.find(s => s.name === Quickshell.env("FROGIX_MAIN_SCREEN")) ?? Quickshell.primaryScreen
+    readonly property var sideScreens: Quickshell.screens.filter(s => s !== shell.mainScreen)
+    readonly property var mainWs: wsByOutput[Quickshell.env("FROGIX_MAIN_SCREEN")] ?? null
 
     property var wsByOutput: ({})
 
@@ -131,7 +131,38 @@ ShellRoot {
         onNotification: (n) => {
             n.tracked = true
             shell.hasUnread = true
+            if (!island.expanded) {
+                shell.flashNotif = n
+                notifFlashTimer.restart()
+            }
         }
+    }
+
+    property var flashNotif: null
+    property bool nightLight: false
+
+    /* night light switch state, mirrored by the vitrina-nightlight script */
+    FileView {
+        path: "/run/user/1000/vitrina-nightlight"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: {
+            reload()
+            shell.nightLight = loaded
+        }
+        onLoaded: shell.nightLight = true
+        onLoadFailed: shell.nightLight = false
+    }
+
+    Process {
+        id: nightLightToggle
+        command: ["vitrina-nightlight"]
+    }
+
+    Timer {
+        id: notifFlashTimer
+        interval: 8000
+        onTriggered: shell.flashNotif = null
     }
 
     property bool hasPlayer: false
@@ -278,18 +309,124 @@ ShellRoot {
     property var wifiNets: []
     property var btDevices: []
     property bool osdVisible: false
+    property bool brightSeen: false
+    property string osdKind: "volume"
     property real osdValue: 0
     property bool osdMuted: false
+
+    /* brightness OSD — the vitrina-bright script writes the value here.
+       reload() is async: parse in onLoaded, not right after reload() */
+    FileView {
+        id: brightFlag
+        path: "/run/user/1000/vitrina-bright"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            if (shell.brightSeen) {
+                const val = parseInt(String(brightFlag.data()).trim())
+                if (!isNaN(val)) {
+                    shell.osdKind = "bright"
+                    shell.osdValue = Math.max(0, Math.min(1, val / 100))
+                    shell.osdMuted = false
+                    shell.osdVisible = true
+                    osdTimer.restart()
+                }
+            }
+        }
+    }
+    property bool hotkeysVisible: false
+
+    /* niri bind toggles this file; inotify-driven, no polling */
+    FileView {
+        id: hotkeyFlag
+        path: "/run/user/1000/vitrina-hotkeys"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: {
+            reload();
+            shell.hotkeysVisible = loaded;
+        }
+        onLoaded: shell.hotkeysVisible = true
+        onLoadFailed: shell.hotkeysVisible = false
+    }
+
+    Process {
+        id: hideHotkeys
+        command: ["rm", "-f", "/run/user/1000/vitrina-hotkeys"]
+    }
+
+    readonly property var hotkeyGroups: [
+        {
+            "name": "apps",
+            "items": [
+                { "key": "mod+d", "label": "App Launcher" },
+                { "key": "mod+enter", "label": "Terminal" },
+                { "key": "mod+o", "label": "Emacs" },
+                { "key": "mod+e", "label": "Files" },
+                { "key": "mod+l", "label": "Feishin" },
+                { "key": "mod+r", "label": "Clipboard" },
+                { "key": "mod+c", "label": "Calculator" },
+                { "key": "mod+.", "label": "Emoji" }
+            ]
+        },
+        {
+            "name": "windows",
+            "items": [
+                { "key": "mod+t", "label": "Close Window" },
+                { "key": "mod+w", "label": "Window Switcher" },
+                { "key": "mod+f", "label": "Fullscreen" },
+                { "key": "mod+s", "label": "Maximize" },
+                { "key": "mod+p", "label": "Float" },
+                { "key": "mod+j / mod+k", "label": "Focus Down / Up" },
+                { "key": "mod+left / mod+right", "label": "Focus Column" },
+                { "key": "mod+shift+left / mod+shift+right", "label": "Move Column" },
+                { "key": "mod+shift+j / mod+shift+k", "label": "Move Down / Up" },
+                { "key": "mod+[ / mod+]", "label": "Consume / Expel" },
+                { "key": "mod+minus / mod+=", "label": "Column Width" },
+                { "key": "mod+tab / mod+`", "label": "Monitor Next / Prev" },
+                { "key": "mod+ctrl+tab / mod+ctrl+`", "label": "Move To Monitor" }
+            ]
+        },
+        {
+            "name": "workspaces",
+            "items": [
+                { "key": "mod+1..9", "label": "Focus Workspace" },
+                { "key": "mod+ctrl+1..9", "label": "Move To Workspace" },
+                { "key": "mod+pgup / mod+pgdn", "label": "Workspace Up / Down" },
+                { "key": "mod+ctrl+pgup / mod+ctrl+pgdn", "label": "Move Up / Down" },
+                { "key": "super+wheel", "label": "Switch Workspace / Column" }
+            ]
+        },
+        {
+            "name": "system",
+            "items": [
+                { "key": "print", "label": "Screenshot" },
+                { "key": "shift+print", "label": "Screen To Clipboard" },
+                { "key": "ctrl+print", "label": "Window To Clipboard" },
+                { "key": "mod+shift+w", "label": "Next Wallpaper" },
+                { "key": "mod+shift+l", "label": "Rice Mode" },
+                { "key": "mod+n", "label": "Night Light" },
+                { "key": "xf86audionext / xf86audioprev", "label": "Player Next / Prev" },
+                { "key": "xf86audiomute", "label": "Sink Mute" },
+                { "key": "xf86audiomicmute / f17", "label": "Mic Mute" },
+                { "key": "xf86monbrightnessup / down", "label": "Brightness" },
+                { "key": "mod+shift+/", "label": "This Reminder" }
+            ]
+        }
+    ]
 
     Connections {
         target: Wp
         function onSinkVolChanged() {
+            shell.osdKind = "volume"
             shell.osdValue = Wp.sinkVol
             shell.osdMuted = Wp.sinkMuted
             shell.osdVisible = true
             osdTimer.restart()
         }
         function onSinkMutedChanged() {
+            shell.osdKind = "volume"
             shell.osdValue = Wp.sinkVol
             shell.osdMuted = Wp.sinkMuted
             shell.osdVisible = true
@@ -517,6 +654,7 @@ ShellRoot {
     }
 
     Component.onCompleted: {
+        shell.brightSeen = true
         wifiStatusProc.running = true
         btStatusProc.running = true
         connStatusProc.running = true
@@ -525,7 +663,7 @@ ShellRoot {
     }
 
     Variants {
-        model: Quickshell.screens.filter(s => s.name === "DP-4")
+        model: Quickshell.screens.filter(s => s === shell.mainScreen)
 
         PanelWindow {
             id: island
@@ -694,7 +832,7 @@ ShellRoot {
                         anchors.top: parent.top
                         anchors.topMargin: 2
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: island.expanded ? 740 : headRow.width + 24
+                        width: island.expanded ? 740 : (notifRow.active ? notifRow.width + 24 : headRow.width + 24)
                         height: island.expanded ? Math.min(cols.implicitHeight + cols.y + 22, island.panelMaxH) : 26
                         radius: island.expanded ? 22 : 13
                         color: Colors.bg
@@ -735,6 +873,14 @@ ShellRoot {
                 y: 0
                 height: 26
                 spacing: 8
+                opacity: notifRow.active ? 0 : 1
+                visible: opacity > 0.01
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 180
+                    }
+                }
 
                 Behavior on x {
                     NumberAnimation {
@@ -742,6 +888,7 @@ ShellRoot {
                         easing.type: Easing.OutCubic
                     }
                 }
+
 
                 Row {
                     height: parent.height
@@ -802,6 +949,47 @@ ShellRoot {
                     }
                 }
             }
+
+                Row {
+                    id: notifRow
+                    readonly property bool active: shell.flashNotif !== null && !island.expanded
+                    x: 12
+                    y: 0
+                    height: 26
+                    spacing: 8
+                    opacity: active ? 1 : 0
+                    visible: opacity > 0.01
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 180
+                        }
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "\uf0f3"
+                        font.family: "Maple Mono NF"
+                        font.pixelSize: 13
+                        color: Colors.accent
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.min(implicitWidth, 240)
+                        elide: Text.ElideRight
+                        text: shell.flashNotif ? shell.flashNotif.summary : ""
+                        font.pixelSize: 12
+                        font.weight: Font.DemiBold
+                        color: Colors.fg
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: text.length > 0
+                        width: Math.min(implicitWidth, 260)
+                        elide: Text.ElideRight
+                        text: shell.flashNotif && shell.flashNotif.body ? shell.flashNotif.body.replace(/\n/g, " ") : ""
+                        font.pixelSize: 12
+                        color: Colors.muted
+                    }
+                }
 
             MouseArea {
                 x: island.expanded ? (morph.width - headRow.width) / 2 : 0
@@ -1898,6 +2086,56 @@ ShellRoot {
                                                     }
                                                 }
 
+
+                                                Row {
+                                                    width: parent.width
+                                                    spacing: 8
+                                                    visible: island.connView === ""
+
+                                                    Rectangle {
+                                                        width: (parent.width - 8) / 2
+                                                        height: 56
+                                                        radius: 16
+                                                        color: shell.nightLight ? Colors.alpha(Colors.accent, "2e") : Colors.alpha(Colors.fg, "0a")
+                                                        border.width: 1
+                                                        border.color: shell.nightLight ? "transparent" : Colors.alpha(Colors.fg, "12")
+
+                                                        Text {
+                                                            id: nlIcon
+                                                            x: 12
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            text: "\uf186"
+                                                            font.family: "Maple Mono NF"
+                                                            font.pixelSize: 18
+                                                            color: shell.nightLight ? Colors.accent : Colors.muted
+                                                        }
+
+                                                        Column {
+                                                            anchors.left: nlIcon.right
+                                                            anchors.leftMargin: 10
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            spacing: 1
+
+                                                            Text {
+                                                                text: "Night Light"
+                                                                font.pixelSize: 11
+                                                                font.weight: Font.DemiBold
+                                                                color: shell.nightLight ? Colors.fg : Colors.muted
+                                                            }
+
+                                                            Text {
+                                                                text: shell.nightLight ? "On" : "Off"
+                                                                font.pixelSize: 10
+                                                                color: Colors.muted
+                                                            }
+                                                        }
+
+                                                        MouseArea {
+                                                            anchors.fill: parent
+                                                            onClicked: nightLightToggle.running = true
+                                                        }
+                                                    }
+                                                }
                                                 Item {
                                                     visible: island.connView === "wifi"
                                                     width: parent.width
@@ -2958,7 +3196,7 @@ ShellRoot {
     }
 
     Variants {
-        model: Quickshell.screens.filter(s => s.name === "DP-4")
+        model: Quickshell.screens.filter(s => s === shell.mainScreen)
 
         PanelWindow {
             id: osdWin
@@ -3015,10 +3253,10 @@ ShellRoot {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: shell.osdMuted ? "\uf026" : (shell.osdValue > 0.5 ? "\uf028" : "\uf027")
+                        text: shell.osdKind === "bright" ? "\uf185" : (shell.osdMuted ? "\uf026" : (shell.osdValue > 0.5 ? "\uf028" : "\uf027"))
                         font.family: "Maple Mono NF"
                         font.pixelSize: 20
-                        color: shell.osdMuted ? Colors.muted : Colors.accent
+                        color: shell.osdKind === "bright" ? Colors.accent : (shell.osdMuted ? Colors.muted : Colors.accent)
                     }
 
                     Column {
@@ -3035,7 +3273,7 @@ ShellRoot {
                                 width: Math.round(parent.width * (shell.osdMuted ? 0 : shell.osdValue))
                                 height: parent.height
                                 radius: 3
-                                color: shell.osdMuted ? Colors.muted : Colors.accent
+                                color: shell.osdKind === "bright" || !shell.osdMuted ? Colors.accent : Colors.muted
 
                                 Behavior on width {
                                     NumberAnimation {
@@ -3050,6 +3288,220 @@ ShellRoot {
                             font.pixelSize: 11
                             font.weight: Font.DemiBold
                             color: shell.osdMuted ? Colors.muted : Colors.fg
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens.filter(s => s === shell.mainScreen)
+
+        PanelWindow {
+            id: hotkeyWin
+            required property var modelData
+            screen: modelData
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+            exclusiveZone: -1
+            color: "transparent"
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: shell.hotkeysVisible ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            mask: Region {
+                item: shell.hotkeysVisible ? hotkeyDim : hotkeyHidden
+            }
+
+            Item {
+                id: hotkeyHidden
+                width: 0
+                height: 0
+            }
+
+            Rectangle {
+                id: hotkeyDim
+                anchors.fill: parent
+                color: Colors.alpha(Colors.bg, "d9")
+                opacity: shell.hotkeysVisible ? 1 : 0
+                visible: opacity > 0.01
+                focus: shell.hotkeysVisible
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 140
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: hideHotkeys.running = true
+                }
+
+                Keys.onPressed: hideHotkeys.running = true
+
+                Rectangle {
+                    id: hotkeyCard
+                    anchors.centerIn: parent
+                    width: Math.min(modelData.width - 80, Math.max(hotkeyRow.implicitWidth, hotkeyHeader.implicitWidth) + 48)
+                    height: Math.min(modelData.height - 120, hotkeyContent.implicitHeight + 48)
+                    radius: 22
+                    color: Colors.bg
+                    border.width: 1
+                    border.color: Colors.alpha(Colors.accent, "3d")
+
+                    property string tab: "apps"
+                    readonly property var tabs: [
+                        { "id": "apps", "label": "Apps" },
+                        { "id": "windows", "label": "Windows" },
+                        { "id": "workspaces", "label": "Workspaces" },
+                        { "id": "system", "label": "System" }
+                    ]
+                    readonly property int tabIndex: {
+                        for (let i = 0; i < tabs.length; i++)
+                            if (tabs[i].id === tab) return i;
+                        return 0;
+                    }
+
+                    Column {
+                        id: hotkeyContent
+                        x: 24
+                        y: 20
+                        width: parent.width - 48
+                        spacing: 16
+
+                        Row {
+                            id: hotkeyHeader
+                            spacing: 16
+
+                            Text {
+                                text: "HOTKEYS"
+                                font.family: "Maple Mono NF"
+                                font.pixelSize: 15
+                                font.weight: Font.Bold
+                                font.letterSpacing: 3
+                                color: Colors.accent
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            Rectangle {
+                                id: hkTabBar
+                                width: hkTabRow.implicitWidth + 6
+                                height: 26
+                                radius: 9
+                                color: Colors.alpha(Colors.fg, "08")
+                                border.width: 1
+                                border.color: Colors.alpha(Colors.fg, "1f")
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Rectangle {
+                                    id: hkTabPill
+                                    height: 20
+                                    radius: 7
+                                    y: 3
+                                    width: hkTabRepeater.itemAt(hotkeyCard.tabIndex) ? hkTabRepeater.itemAt(hotkeyCard.tabIndex).width : 0
+                                    x: hkTabRepeater.itemAt(hotkeyCard.tabIndex) ? hkTabRepeater.itemAt(hotkeyCard.tabIndex).x + 3 : 0
+                                    color: Colors.alpha(Colors.accent, "2e")
+                                    Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                    Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                }
+
+                                Row {
+                                    id: hkTabRow
+                                    anchors.centerIn: parent
+                                    spacing: 0
+
+                                    Repeater {
+                                        id: hkTabRepeater
+                                        model: hotkeyCard.tabs
+
+                                        Item {
+                                            required property var modelData
+                                            required property int index
+                                            width: tabLabel.implicitWidth + 24
+                                            height: 20
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: hotkeyCard.tab = modelData.id
+                                            }
+
+                                            Text {
+                                                id: tabLabel
+                                                anchors.centerIn: parent
+                                                text: modelData.label
+                                                font.pixelSize: 10
+                                                font.weight: Font.DemiBold
+                                                font.letterSpacing: 2
+                                                font.capitalization: Font.AllUppercase
+                                                color: hotkeyCard.tab === modelData.id ? Colors.accent : Colors.muted
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Row {
+                            id: hotkeyRow
+                            spacing: 32
+
+                            Repeater {
+                                model: shell.hotkeyGroups.filter(function(g) { return g.name === hotkeyCard.tab; })
+
+                                Column {
+                                    required property var modelData
+                                    spacing: 12
+
+                                    Text {
+                                        text: modelData.name
+                                        font.pixelSize: 10
+                                        font.weight: Font.DemiBold
+                                        font.letterSpacing: 2
+                                        font.capitalization: Font.AllUppercase
+                                        color: Colors.muted
+                                    }
+
+                                    Repeater {
+                                        model: modelData.items
+
+                                        Row {
+                                            required property var modelData
+                                            spacing: 10
+
+                                            Rectangle {
+                                                radius: 7
+                                                color: Colors.alpha(Colors.fg, "14")
+                                                border.width: 1
+                                                border.color: Colors.alpha(Colors.fg, "26")
+                                                width: keyText.implicitWidth + 18
+                                                height: 24
+                                                anchors.verticalCenter: parent.verticalCenter
+
+                                                Text {
+                                                    id: keyText
+                                                    anchors.centerIn: parent
+                                                    text: modelData.key
+                                                    font.family: "Maple Mono NF"
+                                                    font.pixelSize: 11
+                                                    color: Colors.fg
+                                                }
+                                            }
+
+                                            Text {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: modelData.label
+                                                font.pixelSize: 13
+                                                color: Colors.fg
+                                                opacity: 0.85
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

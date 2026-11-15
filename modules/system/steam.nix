@@ -1,37 +1,49 @@
 {
-  inputs,
+  config,
+  lib,
   pkgs,
   ...
 }:
+let
+  cfg = config.frogix.steam;
+in
 {
-  hardware.steam-hardware.enable = true;
-  programs = {
-    steam = {
-      enable = true;
-      remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
-      dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
-      gamescopeSession.enable = true;
-      extest.enable = true;
-    };
+  options.frogix.steam.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = config.frogix.enable;
+    description = "steam, steam hardware, gamescope session and the steam chroot libs";
   };
-  nixpkgs = {
-    config = {
-      allowUnfree = true;
-      packageOverrides = pkgs: {
-        steam = pkgs.steam.override {
-          extraPkgs =
-            pkgs: with pkgs; [
-              libXcursor
-              libXi
-              libXinerama
-              libXScrnSaver
-              libpng
-              libpulseaudio
-              libvorbis
-              stdenv.cc.cc.lib
-              libkrb5
-              keyutils
-            ];
+
+  config = lib.mkIf cfg.enable {
+    hardware.steam-hardware.enable = true;
+    programs = {
+      steam = {
+        enable = true;
+        remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
+        dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
+        gamescopeSession.enable = true;
+        extest.enable = true;
+      };
+    };
+    nixpkgs = {
+      config = {
+        allowUnfree = true;
+        packageOverrides = pkgs: {
+          steam = pkgs.steam.override {
+            extraPkgs =
+              pkgs: with pkgs; [
+                libXcursor
+                libXi
+                libXinerama
+                libXScrnSaver
+                libpng
+                libpulseaudio
+                libvorbis
+                stdenv.cc.cc.lib
+                libkrb5
+                keyutils
+              ];
+          };
         };
       };
     };

@@ -5,11 +5,12 @@
   ...
 }:
 let
-  musicDir = "/storage/Music";
+  cfg = config.frogix."torbox-music-sync";
+  musicDir = cfg.musicDir;
   inboxDir = "${musicDir}/_inbox";
   stateDir = "/var/lib/torbox-music-sync";
   rcloneConf = "/run/rclone-torbox/rclone.conf";
-  torboxPath = "nebula";
+  torboxPath = cfg.remotePath;
 
   # Nebula (eclipse's TorBox addon) caches FULL ALBUMS, one folder each, and
   # the files carry no embedded tags either. Metadata lives in the shape:
@@ -67,7 +68,7 @@ let
   # Only pulls genuinely NEW files each week: lists the torbox nebula remote
   # (audio only — the .nfo sidecars are dropped), diffs against a seen-list,
   # downloads only the diff, derives tags from the folder/filename shape,
-  # imports via beets using theo's own config in ALBUM mode (so the same
+  # imports via beets using the host user's beets config in ALBUM mode (so the same
   # plugins — fetchart, lastgenre, lyrics — fire and the path format matches
   # the rest of the library), then marks the batch seen.
   # `--quiet-fallback asis` overrides his config's default `skip` so albums
@@ -119,7 +120,7 @@ let
     echo "=== tagging from folder/filename shape ==="
     ${tagger} "$inbox"
 
-    echo "=== beets import (theo's config, album mode, autotag, asis fallback) ==="
+    echo "=== beets import (user config, album mode, autotag, asis fallback) ==="
     ${pkgs.beets}/bin/beet import -q --quiet-fallback asis "$inbox"
 
     cat "$tmp_new" >> "$seen"
@@ -129,37 +130,57 @@ let
   '';
 in
 {
-  systemd.services.torbox-music-sync = {
-    description = "TorBox -> beets weekly music sync";
-    after = [
-      "torbox-webdav.service"
-      "network-online.target"
-    ];
-    wants = [
-      "torbox-webdav.service"
-      "network-online.target"
-    ];
-    serviceConfig = {
-      Type = "oneshot";
-      User = "theo";
-      Group = "users";
-      ExecStart = syncScript;
-      StateDirectory = "torbox-music-sync";
-      # autotagging + lastgenre + lyrics are network-bound and rate-limited,
-      # so a big batch can outrun the default start timeout — give it room.
-      TimeoutStartSec = "30min";
-      Nice = 10;
-      IOSchedulingClass = "idle";
+  options.frogix."torbox-music-sync" = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "weekly TorBox -> beets music sync";
+    };
+    musicDir = lib.mkOption {
+      type = lib.types.str;
+      default = "/home/${config.frogix.user}/Music";
+      description = "beets library root the sync imports into";
+    };
+    remotePath = lib.mkOption {
+      type = lib.types.str;
+      default = "nebula";
+      description = "path inside the torbox remote to sync from";
     };
   };
 
-  systemd.timers.torbox-music-sync = {
-    description = "Weekly TorBox music sync (Mon 04:00)";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "Mon 04:00";
-      Persistent = true;
-      RandomizedDelaySec = "5m";
+  config = lib.mkIf cfg.enable {
+    systemd.services.torbox-music-sync = {
+      description = "TorBox -> beets weekly music sync";
+      after = [
+        "torbox-webdav.service"
+        "network-online.target"
+      ];
+      wants = [
+        "torbox-webdav.service"
+        "network-online.target"
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = config.frogix.user;
+        Group = "users";
+        ExecStart = syncScript;
+        StateDirectory = "torbox-music-sync";
+        # autotagging + lastgenre + lyrics are network-bound and rate-limited,
+        # so a big batch can outrun the default start timeout — give it room.
+        TimeoutStartSec = "30min";
+        Nice = 10;
+        IOSchedulingClass = "idle";
+      };
+    };
+
+    systemd.timers.torbox-music-sync = {
+      description = "Weekly TorBox music sync (Mon 04:00)";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "Mon 04:00";
+        Persistent = true;
+        RandomizedDelaySec = "5m";
+      };
     };
   };
 }

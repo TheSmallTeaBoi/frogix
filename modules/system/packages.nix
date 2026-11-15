@@ -1,157 +1,170 @@
 {
+  config,
+  lib,
   pkgs,
   inputs,
   ...
 }:
+let
+  cfg = config.frogix.packages;
+in
 {
-  nixpkgs.config.allowUnfree = true;
-  environment.systemPackages = with pkgs; [
-    # Ricing stuff
-    pywal16
-    psmisc
-    waybar-mpris
-    mako
-    rofi
+  options.frogix.packages.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = config.frogix.enable;
+    description = "the frogix package set";
+  };
 
-    # Terminal tools
-    clipse
-    wl-clipboard
-    wtype
-    fzf
-    ripgrep
-    # neofetch # They deprecated my boy
-    fastfetch
-    wget
-    git
-    pulsemixer
-    bottom
-    eza
-    micro
-    file
-    ranger # Mostly for qutebrowser to be honest.
-    beets
-    yt-dlp
-    rclone
-    ffmpeg
-    qmk
-    qmk-udev-rules
-    playerctl
-    picotts
-    mp3val
-    flac
-    bubblewrap
+  config = lib.mkIf cfg.enable {
+    nixpkgs.config.allowUnfree = true;
+    environment.systemPackages = with pkgs; [
+      # Ricing stuff
+      pywal16
+      psmisc
+      mako
+      rofi
 
-    vial
+      # Terminal tools
+      clipse
+      wl-clipboard
+      wtype
+      fzf
+      ripgrep
+      # neofetch # They deprecated my boy
+      fastfetch
+      wget
+      git
+      pulsemixer
+      bottom
+      eza
+      micro
+      file
+      ranger # Mostly for qutebrowser to be honest.
+      beets
+      yt-dlp
+      rclone
+      ffmpeg
+      qmk
+      qmk-udev-rules
+      brightnessctl
+      playerctl
+      picotts
+      mp3val
+      flac
+      bubblewrap
 
-    # Coding, I guess
-    inputs.nix-alien.packages.x86_64-linux.nix-alien
+      vial
 
-    devenv
-    gnome-keyring
-    sops
+      # Coding, I guess
+      inputs.nix-alien.packages.x86_64-linux.nix-alien
 
-    (tic-80.override { withPro = true; }) # :3
+      devenv
+      gnome-keyring
+      sops
 
-    # Random GUI stuff
-    feh
-    obsidian # Moving to org, keeping it for older notes, just for some time.
-    pandoc
-    warpinator
-    grimblast
-    appimage-run
-    nemo
-    calibre
+      (tic-80.override { withPro = true; }) # :3
 
-    xwayland-satellite
+      # Random GUI stuff
+      feh
+      obsidian # Moving to org, keeping it for older notes, just for some time.
+      pandoc
+      warpinator
+      grimblast
+      appimage-run
+      nemo
+      calibre
 
-    heroic-unwrapped
+      xwayland-satellite
 
-    # Art?
-    obs-studio
+      heroic-unwrapped
 
-    # compressed stuff
-    unar
-    p7zip
+      # Art?
+      obs-studio
 
-    # Game stuff
+      # compressed stuff
+      unar
+      p7zip
 
-    inputs.lsfg-vk-nix.packages.${pkgs.stdenv.hostPlatform.system}.lsfg-vk
-    inputs.lsfg-vk-nix.packages.${pkgs.stdenv.hostPlatform.system}.lsfg-vk-ui
-    steamtinkerlaunch
-    gpu-screen-recorder-gtk
+      # Game stuff
 
-    (prismlauncher.override {
-      jdks = with pkgs; [
-        jdk21
-      ];
-    })
+      inputs.lsfg-vk-nix.packages.${pkgs.stdenv.hostPlatform.system}.lsfg-vk
+      inputs.lsfg-vk-nix.packages.${pkgs.stdenv.hostPlatform.system}.lsfg-vk-ui
+      steamtinkerlaunch
+      gpu-screen-recorder-gtk
 
-    beammp-launcher
+      (prismlauncher.override {
+        jdks = with pkgs; [
+          jdk21
+        ];
+      })
 
-    # Emulation {
-    # retroarch-full
-    pcsx2
-    # torzu # I will not forget you.
-    # }
+      beammp-launcher
 
-    logmein-hamachi # my beloved
-    parsec-bin # actual black magic.
-    protontricks
-    mangohud
+      # Emulation {
+      # retroarch-full
+      pcsx2
+      # torzu # I will not forget you.
+      # }
 
-    # Piracy stuff :)
-    aria2
-    stremio-linux-shell
+      logmein-hamachi # my beloved
+      parsec-bin # actual black magic.
+      protontricks
+      mangohud
 
-    # Music stuff
-    nicotine-plus
-    picard
-    mpv
-    feishin
+      # Piracy stuff :)
+      aria2
+      stremio-linux-shell
 
-    # Music making
-    AMB-plugins
-    aether-lv2
-    airwindows
-    autotalent
-    bchoppr
-    calf
-    caps
-    carla
-    chow-centaur
-    chow-kick
-    chow-phaser
-    chow-tape-model
-    cmt
-    dexed
-    distrho-ports
-    dragonfly-reverb
-    drumkv1
-    geonkick
-    guitarix
-    helm
-    infamousPlugins
-    lsp-plugins
-    mod-distortion
-    ninjas2
-    noise-repellent
-    oxefmsynth
-    quadrafuzz
-    rubberband
-    samplv1
-    sfizz
-    sorcer
-    synthv1
-    tap-plugins
-    vital
-    wolf-shaper
-    x42-plugins
-    zam-plugins
-    zita-at1
-    zynaddsubfx
+      # Music stuff
+      nicotine-plus
+      picard
+      mpv
+      feishin
 
-    # Misc
-    btrfs-progs # btrfs my beloved
-    rofi-power-menu
-  ];
+      # Music making
+      AMB-plugins
+      aether-lv2
+      airwindows
+      autotalent
+      bchoppr
+      calf
+      caps
+      carla
+      chow-centaur
+      chow-kick
+      chow-phaser
+      chow-tape-model
+      cmt
+      dexed
+      distrho-ports
+      dragonfly-reverb
+      drumkv1
+      geonkick
+      guitarix
+      helm
+      infamousPlugins
+      lsp-plugins
+      mod-distortion
+      ninjas2
+      noise-repellent
+      oxefmsynth
+      quadrafuzz
+      rubberband
+      samplv1
+      sfizz
+      sorcer
+      synthv1
+      tap-plugins
+      vital
+      wolf-shaper
+      x42-plugins
+      zam-plugins
+      zita-at1
+      zynaddsubfx
+
+      # Misc
+      btrfs-progs # btrfs my beloved
+    ];
+
+  };
 }

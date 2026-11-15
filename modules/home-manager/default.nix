@@ -1,6 +1,7 @@
 { inputs, ... }:
 {
   imports = [
+    ./frogix.nix
     inputs.niri-nix.homeModules.default
     inputs.hermes-agent.homeManagerModules.default
 

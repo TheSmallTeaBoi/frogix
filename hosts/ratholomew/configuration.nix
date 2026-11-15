@@ -1,0 +1,182 @@
+{ pkgs, ... }:
+{
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
+
+  nixpkgs.hostPlatform = "x86_64-linux";
+
+  networking.hostName = "ratholomew"; # Define your hostname.
+
+  system.stateVersion = "23.11"; # Did you read the comment?
+
+  # the frogix module suite. module defaults are universal; this block is
+  # where ratholomew differs from them.
+  frogix = {
+    enable = true;
+    user = "theo";
+
+    core = {
+      timeZone = "America/Buenos_Aires";
+      fonts = with pkgs; [
+        maple-mono.NF
+        noto-fonts
+        noto-fonts-lgc-plus
+        google-fonts
+      ];
+      iconPackages = with pkgs; [
+        numix-icon-theme-circle
+        colloid-icon-theme
+      ];
+      java.enable = true;
+    };
+
+    nix = {
+      caches."https://cache.nixos-cuda.org" =
+        "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=";
+      permittedInsecurePackages = [
+        "pnpm-10.29.2"
+        "qutebrowser-3.7.0"
+        "quickjs-2025-09-13-2"
+      ];
+      documentation = false;
+    };
+
+    networkd = {
+      interfaces = [ "enp38s0" ];
+      firewall = false;
+    };
+
+    services = {
+      vialSerial = "vial:f64c2b3c";
+      navidrome.musicFolder = "/storage/Music/";
+      navidrome.address = "0.0.0.0";
+      syncthing.devices = {
+        Phone = "WCFUTSH-VU6QZOM-SJEHLLF-OFRDX3T-PWPHBX6-XNRV3VZ-AQZWC6X-36A5OAV";
+        JTB = "MHKUJWR-YK2YZ2X-2C6AJRB-HEG6YBJ-FTL6PEA-ZGDLMOF-NL43P2P-6RDXKAY";
+        "Jin's Phone" = "JHQQYZL-7WPU4G4-2XAPPAP-273XKST-DFG463C-4IWV6WH-BN6Y7VO-2XJ7VAW";
+        Manage = "LK5X5SY-RRTT6BP-MSDUACH-YX24N6H-4QRXMZC-WWTB7TF-7VPISRE-AY45UAH";
+      };
+      syncthing.folders = {
+        Obsidian = "/storage/Personal/obsidian";
+        Org = "/storage/Personal/Org";
+        "z7ezp-ya3ym" = "/storage/musik/02 Projects/collab/";
+        "wargame-lore" = "/storage/Personal/wargame/";
+      };
+    };
+
+    romm = {
+      libraryDir = "/storage/Roms";
+      biosDir = "/storage/Bios";
+      resourcesDir = "/storage/RommResources/resources";
+      useTosec = true;
+    };
+
+    torbox.enable = true;
+    "torbox-music-sync".enable = true;
+    "torbox-music-sync".musicDir = "/storage/Music";
+
+    "GUI-nvidia".autoLogin = true;
+  };
+
+  programs.nano.enable = false;
+
+  home-manager.users.theo = {
+    frogix.home.stateVersion = "23.11";
+    frogix.screens = {
+      main = "DP-4";
+      left = "HDMI-A-1";
+      right = "HDMI-A-3";
+      outputs = [
+        {
+          _args = [ "DP-4" ];
+          mode = "1920x1080@180";
+          scale = 1.0;
+          position._props = {
+            x = 768;
+            y = 0;
+          };
+          focus-at-startup = { };
+          # variable-refresh-rate = { };
+        }
+        {
+          _args = [ "HDMI-A-1" ];
+          # mode = "1366x768@60";
+          scale = 1.0;
+          position._props = {
+            x = 0;
+            y = -50;
+          };
+          transform = "270";
+
+          # Niri works like shit with vertical screens 🥀
+          layout = {
+            default-column-width.proportion = 1.0;
+            preset-column-widths.proportion = 1.0;
+            always-center-single-column = { };
+          };
+        }
+        {
+          _args = [ "HDMI-A-3" ];
+          # mode = "1366x768@60";
+          scale = 1.0;
+          position._props = {
+            x = 2688;
+            y = 312;
+          };
+        }
+      ];
+    };
+    frogix.wallpapersDir = "/storage/Walls";
+    frogix.audio.mixerElement = "Emotiva Little Ego";
+    frogix.beets.libraryDir = "/storage/Music/";
+    frogix.beets.convertDest = "/storage/music-lossier/";
+    frogix.easyeffects.preset = "Voice Moondrop";
+    frogix.git.email = "theoiturri@tutanota.com";
+    frogix.git.name = "TheSmallTeaBoi";
+    frogix.iamb.matrixId = "@thesmallteaboi:matrix.org";
+    frogix.sunshine.output = "DP-3";
+    frogix.emacs.orgDirectory = "/storage/Personal/Org/";
+
+    programs.qutebrowser.quickmarks = {
+      # Social
+      whatsapp = "https://web.whatsapp.com/";
+      element = "https://app.element.io";
+      telegram = "https://web.telegram.org";
+      reddit = "https://reddit.com";
+
+      # Entertainment
+      youtube = "https://youtube.com";
+      ytm = "https://music.youtube.com";
+      twitch = "https://twitch.tv";
+      netflix = "https://netflix.com";
+
+      # Piracy & media
+      torbox = "https://torbox.app";
+      archive = "https://archive.org";
+      annas = "https://shadowlibraries.github.io/DirectDownloads/AnnasArchive";
+      fmhy = "fmhy.net";
+      bunkr = "https://balbums.st";
+
+      # Development
+      github = "https://github.com";
+      gitlab = "https://gitlab.com";
+
+      # AI
+      aistudio = "https://aistudio.google.com";
+      claude = "https://claude.ai";
+      chatgpt = "https://chatgpt.com";
+      deepseek = "https://chat.deepseek.com";
+
+      # Productivity
+      gmail = "https://mail.google.com";
+      drive = "https://drive.google.com";
+      translate = "https://translate.google.com";
+      linguee = "https://www.linguee.com";
+
+      # Others
+      marketplace = "https://www.facebook.com/marketplace";
+    };
+  };
+}

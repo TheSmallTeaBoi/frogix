@@ -66,23 +66,28 @@
       ...
     }@inputs:
     let
-      ratholomewConfig = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./configuration.nix
-          ./modules
-          home-manager.nixosModules.home-manager
-          inputs.musnix.nixosModules.musnix
-          nix-index-database.nixosModules.nix-index
-          sops-nix.nixosModules.sops
-          inputs.niri-nix.nixosModules.default
-          inputs.infract.nixosModules.default
-        ];
-      };
+      # Every directory under hosts/ becomes a nixosConfigurations entry.
+      # Add your own machine: hosts/<name>/default.nix importing ../../modules
+      # plus your hardware-configuration.nix (hosts/ratholomew is the example),
+      # then `git add` and rebuild with --flake .#<name>.
+      mkHost =
+        name:
+        nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs; };
+          modules = [
+            (./hosts + "/${name}")
+            home-manager.nixosModules.home-manager
+            inputs.musnix.nixosModules.musnix
+            nix-index-database.nixosModules.nix-index
+            sops-nix.nixosModules.sops
+            inputs.niri-nix.nixosModules.default
+            inputs.infract.nixosModules.default
+          ];
+        };
+      hosts = nixpkgs.lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./hosts);
     in
     {
-      nixosConfigurations.ratholomew = ratholomewConfig;
+      nixosConfigurations = builtins.mapAttrs (name: _: mkHost name) hosts;
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
     };
 }

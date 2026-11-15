@@ -1,38 +1,56 @@
+{
+  config,
+  lib,
+  ...
+}:
 let
-  fontName = "Maple Mono NF";
+  cfg = config.frogix.kitty;
 in
 {
-  programs.kitty = {
-    enable = true;
-    shellIntegration.enableFishIntegration = true;
-    settings = {
-      shell_integration = "no-cursor";
-      cursor_blink_interval = "0.5 ease-in-out";
-      cursor_trail = 1;
-      cursor_trail_decay = "0.1 0.4";
-
-      italic_font = "${fontName} Italic";
-      bold_italic_font = "${fontName} Bold Italic";
-      bold_font = "${fontName} Bold";
-
-      # flat look: fully opaque terminal
-      background_opacity = "1.0";
-
-      enable_audio_bell = false;
-      confirm_os_window_close = 0;
-      window_padding_width = 18;
-      tab_bar_min_tabs = 2;
-      tab_bar_edge = "top";
-      tab_bar_style = "powerline";
-      tab_powerline_style = "angled";
-      tab_title_template = "{title}{' :{}:'.format(num_windows) if num_windows > 1 else ''}";
-    };
-    extraConfig = ''
-      allow_remote_control yes
-      include ~/.cache/wal/colors-kitty.conf
-    '';
-    # some sort of race condition with kitty and starship
-    # https://github.com/kovidgoyal/kitty/issues/4476#issuecomment-1013617251
-    shellIntegration.enableBashIntegration = false;
+  options.frogix."kitty".enable = lib.mkOption {
+    type = lib.types.bool;
+    default = config.frogix.enable;
+    description = "kitty terminal wired to the pywal palette";
   };
+
+  config = lib.mkIf cfg.enable (
+    let
+      fontName = "Maple Mono NF";
+    in
+    {
+      programs.kitty = {
+        enable = true;
+        shellIntegration.enableFishIntegration = true;
+        settings = {
+          shell_integration = "no-cursor";
+          cursor_blink_interval = "0.5 ease-in-out";
+          cursor_trail = 1;
+          cursor_trail_decay = "0.1 0.4";
+
+          italic_font = "${fontName} Italic";
+          bold_italic_font = "${fontName} Bold Italic";
+          bold_font = "${fontName} Bold";
+
+          # flat look: fully opaque terminal
+          background_opacity = "1.0";
+
+          enable_audio_bell = false;
+          confirm_os_window_close = 0;
+          window_padding_width = 18;
+          tab_bar_min_tabs = 2;
+          tab_bar_edge = "top";
+          tab_bar_style = "powerline";
+          tab_powerline_style = "angled";
+          tab_title_template = "{title}{' :{}:'.format(num_windows) if num_windows > 1 else ''}";
+        };
+        extraConfig = ''
+          allow_remote_control yes
+          include ~/.cache/wal/colors-kitty.conf
+        '';
+        # some sort of race condition with kitty and starship
+        # https://github.com/kovidgoyal/kitty/issues/4476#issuecomment-1013617251
+        shellIntegration.enableBashIntegration = false;
+      };
+    }
+  );
 }

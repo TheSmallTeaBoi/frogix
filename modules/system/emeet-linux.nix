@@ -125,6 +125,12 @@ let
   usbId = lib.splitString ":" cfg.applyPreset.usbId;
 in
 {
+  options.frogix."emeet-linux".enable = lib.mkOption {
+    type = lib.types.bool;
+    default = config.frogix.enable;
+    description = "emeet-linux webcam control panel with hotplug preset replay";
+  };
+
   options.services.emeet-linux = {
     applyPreset = {
       enable = lib.mkOption {
@@ -150,7 +156,7 @@ in
 
       user = lib.mkOption {
         type = lib.types.str;
-        default = "theo";
+        default = config.frogix.user;
         description = "User whose emeet-linux presets are read.";
       };
 
@@ -163,7 +169,7 @@ in
     };
   };
 
-  config = {
+  config = lib.mkIf config.frogix."emeet-linux".enable {
     environment.systemPackages = [ emeet ];
 
     services.udev.extraRules = lib.mkIf cfg.applyPreset.enable ''

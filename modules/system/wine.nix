@@ -1,30 +1,43 @@
 {
+  config,
+  lib,
   pkgs,
   ...
 }:
+let
+  cfg = config.frogix.wine;
+in
 {
-  environment.systemPackages = with pkgs; [
-    # ...
+  options.frogix.wine.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = config.frogix.enable;
+    description = "the full wine family + winetricks";
+  };
 
-    # support both 32- and 64-bit applications
-    wineWow64Packages.stable
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = with pkgs; [
+      # ...
 
-    # support 32-bit only
-    wine
+      # support both 32- and 64-bit applications
+      wineWow64Packages.stable
 
-    # support 64-bit only
-    (wine.override { wineBuild = "wine64"; })
+      # support 32-bit only
+      wine
 
-    # support 64-bit only
-    wine64
+      # support 64-bit only
+      (wine.override { wineBuild = "wine64"; })
 
-    # wine-staging (version with experimental features)
-    wineWow64Packages.staging
+      # support 64-bit only
+      wine64
 
-    # winetricks (all versions)
-    winetricks
+      # wine-staging (version with experimental features)
+      wineWow64Packages.staging
 
-    # native wayland support (unstable)
-    wineWow64Packages.waylandFull
-  ];
+      # winetricks (all versions)
+      winetricks
+
+      # native wayland support (unstable)
+      wineWow64Packages.waylandFull
+    ];
+  };
 }

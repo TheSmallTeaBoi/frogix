@@ -1,2 +1,4 @@
 # Do not include my personal stuff
 modules/unfree
+*.qcow2
+result

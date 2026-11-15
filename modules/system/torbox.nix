@@ -5,7 +5,8 @@
   ...
 }:
 let
-  mountPoint = "/mnt/torbox";
+  cfg = config.frogix.torbox;
+  mountPoint = cfg.mountPoint;
   confDir = "/run/rclone-torbox";
   confFile = "${confDir}/rclone.conf";
   userSecret = config.sops.secrets.torbox_webdav_user.path;
@@ -27,40 +28,55 @@ let
   '';
 in
 {
-  environment.systemPackages = [ pkgs.rclone ];
+  options.frogix.torbox = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "TorBox WebDAV rclone mount";
+    };
+    mountPoint = lib.mkOption {
+      type = lib.types.str;
+      default = "/mnt/torbox";
+      description = "where the webdav remote is mounted";
+    };
+  };
 
-  systemd.services.torbox-webdav = {
-    description = "TorBox WebDAV mount (rclone)";
-    after = [
-      "network-online.target"
-      "sops-nix.service"
-    ];
-    wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ pkgs.rclone ];
 
-    serviceConfig = {
-      Type = "notify";
-      TimeoutStartSec = "30s";
-      Environment = [ "PATH=/run/wrappers/bin:/run/current-system/sw/bin" ];
-      ExecStartPre = [
-        "${pkgs.coreutils}/bin/mkdir -p ${mountPoint}"
-        genConf
+    systemd.services.torbox-webdav = {
+      description = "TorBox WebDAV mount (rclone)";
+      after = [
+        "network-online.target"
+        "sops-nix.service"
       ];
-      ExecStart =
-        "${pkgs.rclone}/bin/rclone mount torbox: ${mountPoint}"
-        + " --config ${confFile}"
-        + " --vfs-cache-mode full"
-        + " --dir-cache-time 15m"
-        + " --cache-dir /var/cache/rclone/torbox"
-        + " --allow-other"
-        + " --umask 022"
-        + " --file-perms 0644"
-        + " --dir-perms 0755";
-      ExecStopPost = "-/run/wrappers/bin/fusermount3 -uz ${mountPoint}";
-      Restart = "on-failure";
-      RestartSec = "10s";
-      RuntimeDirectory = "rclone-torbox";
-      CacheDirectory = "rclone/torbox";
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+
+      serviceConfig = {
+        Type = "notify";
+        TimeoutStartSec = "30s";
+        Environment = [ "PATH=/run/wrappers/bin:/run/current-system/sw/bin" ];
+        ExecStartPre = [
+          "${pkgs.coreutils}/bin/mkdir -p ${mountPoint}"
+          genConf
+        ];
+        ExecStart =
+          "${pkgs.rclone}/bin/rclone mount torbox: ${mountPoint}"
+          + " --config ${confFile}"
+          + " --vfs-cache-mode full"
+          + " --dir-cache-time 15m"
+          + " --cache-dir /var/cache/rclone/torbox"
+          + " --allow-other"
+          + " --umask 022"
+          + " --file-perms 0644"
+          + " --dir-perms 0755";
+        ExecStopPost = "-/run/wrappers/bin/fusermount3 -uz ${mountPoint}";
+        Restart = "on-failure";
+        RestartSec = "10s";
+        RuntimeDirectory = "rclone-torbox";
+        CacheDirectory = "rclone/torbox";
+      };
     };
   };
 }

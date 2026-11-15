@@ -16,9 +16,11 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }:
 let
+  cfg = config.frogix."xodus-nexus";
   xodusNexusVersion = "0.3.9";
 
   xodusNexusSrc = pkgs.fetchurl {
@@ -60,8 +62,16 @@ let
   };
 in
 {
-  environment.systemPackages = [
-    xodus-nexus
-    xodusNexusDesktop
-  ];
+  options.frogix."xodus-nexus".enable = lib.mkOption {
+    type = lib.types.bool;
+    default = config.frogix.enable;
+    description = "Xodus Nexus (PC Game Pass) AppImage wrapper";
+  };
+
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [
+      xodus-nexus
+      xodusNexusDesktop
+    ];
+  };
 }
