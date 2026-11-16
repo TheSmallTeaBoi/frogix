@@ -47,6 +47,44 @@ let
       fi
     '';
   };
+
+  # lock the session, idempotently, and only return once hyprlock is up.
+  # niri does not implement hyprland-lock-notify-v1, so hypridle cannot wait
+  # for the locker before sleep; this is used as its before_sleep_cmd and by
+  # the island's suspend action.
+  vitrina-lock = pkgs.writeShellApplication {
+    name = "vitrina-lock";
+    runtimeInputs = with pkgs; [
+      hyprlock
+      procps
+      coreutils
+    ];
+    text = ''
+      if ! pidof hyprlock >/dev/null 2>&1; then
+        hyprlock --no-fade-in >/dev/null 2>&1 &
+      fi
+      for _ in $(seq 1 150); do
+        pidof hyprlock >/dev/null 2>&1 && break
+        sleep 0.02
+      done
+      # let hyprlock paint the lock surface before we report success
+      sleep 0.5
+    '';
+  };
+
+  # lock first, then suspend. Deterministic on niri where hypridle's sleep
+  # inhibitor can't guarantee the lock is drawn before the machine sleeps.
+  vitrina-lock-suspend = pkgs.writeShellApplication {
+    name = "vitrina-lock-suspend";
+    runtimeInputs = [
+      vitrina-lock
+      pkgs.systemd
+    ];
+    text = ''
+      vitrina-lock
+      systemctl suspend
+    '';
+  };
 in
 {
   options.frogix."vitrina".enable = lib.mkOption {
@@ -65,6 +103,8 @@ in
       pkgs.wlsunset
       vitrina-bright
       vitrina-nightlight
+      vitrina-lock
+      vitrina-lock-suspend
     ];
 
     # night light: unit exists but never autostarts — the island toggle

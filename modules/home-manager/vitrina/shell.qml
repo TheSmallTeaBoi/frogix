@@ -3887,7 +3887,7 @@ ShellRoot {
                     model: [
                         { icon: "\uf023", label: "Lock", cmd: ["hyprlock", "--grace", "0"] },
                         { icon: "\uf2f5", label: "Logout", cmd: ["niri", "msg", "action", "quit", "--skip-confirmation"] },
-                        { icon: "\uf186", label: "Suspend", cmd: ["systemctl", "suspend"] },
+                        { icon: "\uf186", label: "Suspend", cmd: ["vitrina-lock-suspend"] },
                         { icon: "\uf021", label: "Reboot", cmd: ["systemctl", "reboot"] },
                         { icon: "\uf011", label: "Shutdown", cmd: ["systemctl", "poweroff"] }
                     ]

@@ -73,7 +73,11 @@ in
 
     security.pam.services.sddm.enableGnomeKeyring = true;
     security.pam.services.login.enableGnomeKeyring = true;
-    security.pam.services.hyprlock = { };
+    # unlocking hyprlock also unlocks the login keyring (autologin skips the
+    # greeter PAM pass, so the wallet would otherwise stay locked all session)
+    security.pam.services.hyprlock = {
+      enableGnomeKeyring = true;
+    };
 
     services = {
       infract = {

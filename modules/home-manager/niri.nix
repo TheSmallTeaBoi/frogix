@@ -179,7 +179,11 @@ in
               "until ${pkgs.awww}/bin/awww query >/dev/null 2>&1 && [ -S /run/user/$(id -u)/emacs/server ]; do sleep 0.2; done && set-wal \"$(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)\""
             ];
           }
-          { _args = [ "hyprlock --grace 0" ]; }
+          # spawn-at-startup does not run through a shell: each list entry is one
+          # argv token, so this must be split into real arguments (the old
+          # single "hyprlock --grace 0" string was exec'd as one binary name and
+          # silently never launched).
+          { _args = [ "${pkgs.hyprlock}/bin/hyprlock" "--grace" "0" ]; }
           {
             _args = [
               "${pkgs.bash}/bin/bash"
@@ -617,6 +621,16 @@ in
     services.hypridle = {
       enable = true;
       settings = {
+        # niri has no hyprland-lock-notify-v1, so hypridle cannot wait for the
+        # locker to be up. lock_cmd/before_sleep_cmd still fire on the logind
+        # lock/before-sleep signals as a best-effort safety net; the island's
+        # suspend action uses vitrina-lock-suspend, which is deterministic.
+        general = {
+          lock_cmd = "pidof hyprlock || hyprlock --no-fade-in";
+          before_sleep_cmd = "vitrina-lock";
+          after_sleep_cmd = "niri msg action power-on-monitors";
+          inhibit_sleep = 1;
+        };
         listener = [
           {
             timeout = 500;
