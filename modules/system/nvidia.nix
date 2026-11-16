@@ -5,24 +5,17 @@
   ...
 }:
 let
-  cfg = config.frogix."GUI-nvidia";
+  cfg = config.frogix.nvidia;
 in
 {
-  options.frogix."GUI-nvidia".enable = lib.mkOption {
+  options.frogix.nvidia.enable = lib.mkOption {
     type = lib.types.bool;
     default = config.frogix.enable;
-    description = "nvidia graphics stack, sddm autologin and niri session defaults";
-  };
-  options.frogix."GUI-nvidia".autoLogin = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-    description = "autologin the frogix user on the sddm niri session (off by default)";
+    description = "nvidia graphics stack: driver, vaapi env and firefox hw accel";
   };
 
   config = lib.mkIf cfg.enable {
-    # Enable Theme
     environment.variables = {
-      NIXOS_OZONE_WL = "1";
       LIBVA_DRIVER_NAME = "nvidia";
       NVD_BACKEND = "direct";
       MOZ_DISABLE_RDD_SANDBOX = "1";
@@ -69,32 +62,5 @@ in
         # the environment variable.
         "media.av1.enabled" = true;
       };
-
-    programs.niri = {
-      enable = true;
-    };
-
-    services.libinput = {
-      enable = true;
-
-      # all my homies love mouse acceleration
-      # but the libinput one is useless, doesn't get recognized by
-      # games that use raw input, which KINDA makes sense but isn't what
-      # a gamer wants.
-      mouse = {
-        accelProfile = "flat";
-        middleEmulation = false;
-      };
-    };
-
-    services.displayManager = {
-      sddm.enable = true;
-      sddm.wayland.enable = true;
-      defaultSession = "niri";
-      autoLogin = {
-        enable = cfg.autoLogin;
-        user = config.frogix.user;
-      };
-    };
   };
 }

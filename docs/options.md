@@ -114,18 +114,21 @@ realtime tweaks + the plugin rack), `steam` (with the steam chroot libs),
 `~/.config/sops/age/keys.txt`, generated), `torbox` (webdav mount,
 `mountPoint` knob, default **off**), `"torbox-music-sync"` (`musicDir`,
 `remotePath` knobs, default **off**),
-`"xodus-nexus"`, `"emeet-linux"` (webcam preset replay), `"GUI-nvidia"`
-(nvidia stack + sddm + niri session defaults — on with the suite; the
-`autoLogin` knob defaults off).
+`"xodus-nexus"`, `"emeet-linux"` (webcam preset replay), `nvidia`
+(driver stack + vaapi env + firefox hw accel — AMD boxes just leave it off), `display` (sddm + the niri
+session + the session plumbing nemo/feh/xwayland-satellite/grimblast; the
+`autoLogin` knob defaults off), `input` (libinput with flat mouse accel).
 
 ### `frogix.packages` — opt-out packs
 `packages.enable` is the master switch; each pack below follows it until
 toggled off: `terminal` (core CLI), `rice` (pywal/mako/rofi), `coding`
-(nix-alien/devenv/sops), `keyboard` (qmk/vial), `gui` (file manager,
-screenshots, e-books, capture), `music` (listening/library tools — the
-*production* plugin rack lives in `musicMaking`), `piracy` (aria2, stremio).
-game packages ship with `frogix.gaming` (gamemode + gpu-screen-recorder +
-the game rack) rather than a pack.
+(nix-alien/devenv/sops), `keyboard` (qmk/vial), `gui` (personal apps:
+obsidian/calibre/warpinator/obs/pandoc), `music` (listening/library tools —
+the *production* plugin rack lives in `musicMaking`), `piracy` (aria2,
+stremio). game packages ship with `frogix.gaming` (gamemode +
+gpu-screen-recorder + the game rack) rather than a pack. session plumbing
+(nemo, feh, xwayland-satellite, grimblast) ships with `frogix.display` —
+the niri bind and xdg defaults hard-reference it, so it must always exist.
 
 ## home-manager modules (set under `home-manager.users.<user>.frogix.*`)
 
@@ -143,6 +146,7 @@ the release the machine was first installed on. **never bump it.**
 | `frogix.screens.main` | str | **required** — the primary monitor; niri/pywal/vitrina reference it directly |
 | `frogix.screens.left` / `.right` | nullOr str | null (niri/pywal use them; rules referencing an unset screen are omitted) |
 | `frogix.screens.outputs` | list of attrs | `[]` (optional) — niri monitor rules (mode/scale/position/transform); host hardware layout. empty = niri defaults: preferred mode, auto position |
+| `frogix.screens.autoLayout.widths` | attrsOf int | null (optional) — logical width per role; x offsets are computed left -> main -> right (niri sorts unpositioned outputs by name, so arrangement must be explicit); host positions still win |
 | `frogix.wallpapersDir` | str | `~/Pictures/Wallpapers` — seeded with the bundled `wallpaper.png` while it holds no files |
 
 ### identity knobs (null = feature writes nothing)
@@ -165,7 +169,9 @@ the release the machine was first installed on. **never bump it.**
 entries), `emacs` (doom), `gtk`, `hermes` (desktop client), `home` (hm
 identity), `iamb`, `kitty`, `lazygit`, `mako` (daemon stays off), `niri`
 (full rice: hypridle/hyprlock, binds), `pywal` (set-wal engine + every
-consumer template), `rofi`, `shell` (fish + starship + tmux autostart),
+consumer template; `cycleInterval` knob = minutes between wallpaper
+shuffles, 0 = pick one at login and stay on it), `rofi`, `shell` (fish +
+starship + tmux autostart),
 `sunshine` (gamescope launcher on PATH; conf + apps.json are
 sunshine-owned, not managed), `tmux`, `vesktop`, `vitrina` (quickshell),
 `xdg` (mime defaults), `zoxide`.

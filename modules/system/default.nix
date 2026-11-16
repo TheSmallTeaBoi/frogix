@@ -6,7 +6,9 @@
     ./user.nix
     ./virt.nix
     ./frogix.nix
-    ./GUI-nvidia.nix
+    ./nvidia.nix
+    ./display.nix
+    ./input.nix
     ./boot.nix
     ./droidcam.nix
     ./emeet-linux.nix

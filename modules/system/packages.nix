@@ -29,7 +29,7 @@ in
     rice = pack "ricing CLI (pywal, mako, rofi)";
     coding = pack "dev tooling (nix-alien, devenv, secret/keyring CLIs)";
     keyboard = pack "QMK firmware + vial tooling";
-    gui = pack "desktop GUI helpers (file manager, screenshots, e-books, capture)";
+    gui = pack "personal GUI apps (obsidian, calibre, warpinator, obs, pandoc)";
     music = pack "music listening/library tools (production plugins live in frogix.musicMaking)";
     piracy = pack "aria2 + stremio :)";
   };
@@ -104,16 +104,11 @@ in
 
     (lib.mkIf cfg.gui {
       environment.systemPackages = with pkgs; [
-        feh
         obsidian # Moving to org, keeping it for older notes, just for some time.
         pandoc
         warpinator
-        grimblast
         appimage-run
-        nemo
         calibre
-
-        xwayland-satellite
 
         # Art?
         obs-studio

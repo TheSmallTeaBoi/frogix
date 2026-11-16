@@ -1,6 +1,6 @@
 { ... }:
-# realistic desktop starting point: universal defaults are ON (nvidia + sddm +
-# niri session, the full rice, gaming, packages). copy this folder to
+# realistic desktop starting point: universal defaults are ON (gpu + display,
+# the full rice, gaming, packages). copy this folder to
 # hosts/<name>, replace hardware-configuration.nix with your
 # nixos-generate-config output, fill in the TODOs, `git add`, rebuild.
 {
@@ -27,6 +27,9 @@
 
     # defaults are opt-out: uncomment what this machine does NOT have.
     # disabling `gaming` also drops "gamemode" from users.extraGroups.
+    # nvidia.enable = false;          # non-nvidia machine (AMD = default drivers)
+    # display.enable = false;         # headless (also drops the session plumbing)
+    # input.enable = false;           # stock libinput behavior
     # steam.enable = false;
     # wine.enable = false;
     # gaming.enable = false;

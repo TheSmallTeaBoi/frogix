@@ -78,7 +78,7 @@
     "torbox-music-sync".enable = true;
     "torbox-music-sync".musicDir = "/storage/Music";
 
-    "GUI-nvidia".autoLogin = true;
+    display.autoLogin = true;
   };
 
   programs.nano.enable = false;
@@ -89,15 +89,20 @@
       main = "DP-4";
       left = "HDMI-A-1";
       right = "HDMI-A-3";
+
+      # logical (post-transform) widths; niri.nix computes the x offsets in
+      # left -> main -> right order — no more hand-added pixel math
+      autoLayout.widths = {
+        left = 768;   # 1366x768 rotated 270
+        main = 1920;  # 1920x1080
+        right = 1366; # 1366x768
+      };
+
       outputs = [
         {
           _args = [ "DP-4" ];
           mode = "1920x1080@180";
           scale = 1.0;
-          position._props = {
-            x = 768;
-            y = 0;
-          };
           focus-at-startup = { };
           # variable-refresh-rate = { };
         }
@@ -105,10 +110,7 @@
           _args = [ "HDMI-A-1" ];
           # mode = "1366x768@60";
           scale = 1.0;
-          position._props = {
-            x = 0;
-            y = -50;
-          };
+          position._props.y = -50; # taller than main: poke above the top edge
           transform = "270";
 
           # Niri works like shit with vertical screens 🥀
@@ -122,10 +124,7 @@
           _args = [ "HDMI-A-3" ];
           # mode = "1366x768@60";
           scale = 1.0;
-          position._props = {
-            x = 2688;
-            y = 312;
-          };
+          position._props.y = 312; # ride the bottom edge
         }
       ];
     };

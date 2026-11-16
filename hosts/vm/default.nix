@@ -10,6 +10,8 @@
 
   nixpkgs.hostPlatform = "x86_64-linux";
 
+  system.stateVersion = "26.11";
+
   networking.hostName = "frogix-vm";
 
   frogix = {
@@ -26,7 +28,9 @@
 
     services.enable = false;
     packages.enable = false;
-    "GUI-nvidia".enable = false;
+    nvidia.enable = false;
+    display.enable = false;
+    input.enable = false;
     steam.enable = false;
     wine.enable = false;
     gaming.enable = false;

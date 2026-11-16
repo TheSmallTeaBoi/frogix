@@ -296,6 +296,12 @@ in
     description = "pywal16 rice engine: set-wal, light mode and every consumer template";
   };
 
+  options.frogix.pywal.cycleInterval = lib.mkOption {
+    type = lib.types.int;
+    default = 15;
+    description = "minutes between wallpaper shuffles (0 = pick one at login and stay on it)";
+  };
+
   config = lib.mkIf cfg.enable {
 
     home.packages = [
@@ -303,7 +309,9 @@ in
       rice-mode
     ];
 
-    systemd.user.services.wal-cycle = {
+    # periodic wallpaper shuffle — the knob is the interval; 0 means the
+    # timer (and service) are never installed and the login shuffle is it
+    systemd.user.services.wal-cycle = lib.mkIf (cfg.cycleInterval > 0) {
       Service = {
         Type = "oneshot";
         ExecStart = "${pkgs.writeShellScript "wal-cycle" ''
@@ -312,10 +320,10 @@ in
       };
     };
 
-    systemd.user.timers.wal-cycle = {
+    systemd.user.timers.wal-cycle = lib.mkIf (cfg.cycleInterval > 0) {
       Timer = {
-        OnBootSec = "15min";
-        OnUnitActiveSec = "15min";
+        OnBootSec = "${toString cfg.cycleInterval}min";
+        OnUnitActiveSec = "${toString cfg.cycleInterval}min";
         Persistent = true;
       };
       Install = {

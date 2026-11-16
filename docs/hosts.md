@@ -74,7 +74,7 @@ frogix = {
 
   romm = { libraryDir = "/storage/Roms"; biosDir = "/storage/Bios" };
   "torbox-music-sync".musicDir = "/storage/Music";
-  "GUI-nvidia".autoLogin = true;               # universal default is off
+  display.autoLogin = true;                    # universal default is off
 };
 
 home-manager.users.theo = {

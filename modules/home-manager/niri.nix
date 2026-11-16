@@ -69,11 +69,81 @@ in
           __GLX_VENDOR_LIBRARY_NAME = "nvidia";
         };
 
-        # NOTE: niri-nix's toKDL renders an empty list as a bare node with no
-        # arguments, and niri requires a `name` argument on `output` — so an
-        # empty rule list must omit the key entirely (build-time `niri validate`
-        # would fail otherwise).
-        output = lib.mkIf (screens.outputs != [ ]) screens.outputs;
+        # emit output nodes in left -> main -> right order (also the
+        # focus-at-startup priority), then any screens the host wrote beyond
+        # the three roles. a named screen without a host entry gets a bare
+        # placeholder node so it still lands in the arrangement.
+        #
+        # positions: niri's auto-placement sorts unpositioned outputs by NAME,
+        # which would put e.g. "DP-4" leftmost even when it is the main
+        # screen — so the arrangement must be explicit. when the host declares
+        # autoLayout.widths (logical, post-scale/transform), x offsets are
+        # computed cumulatively in role order and y defaults to 0 (top
+        # aligned); anything the host wrote under position wins.
+        output =
+          let
+            roleOrder = builtins.filter (s: s != null) [
+              left_screen
+              main_screen
+              right_screen
+            ];
+            entryFor =
+              n:
+              lib.findFirst (o: builtins.head (o._args or [ "" ]) == n) null screens.outputs;
+            withRoles = map (
+              n:
+              let
+                host = entryFor n;
+              in
+              if host != null then host else { _args = [ n ]; }
+            ) roleOrder;
+            others = builtins.filter (
+              o: !builtins.elem (builtins.head (o._args or [ "" ])) roleOrder
+            ) screens.outputs;
+
+            autoX = lib.optionalAttrs (screens.autoLayout != null) (
+              builtins.foldl'
+                (acc: role:
+                  if screens ? ${role} && screens.${role} != null && screens.autoLayout.widths ? ${role} then
+                    acc
+                    // {
+                      ${screens.${role}} = acc.prev;
+                      prev = acc.prev + screens.autoLayout.widths.${role};
+                    }
+                  else
+                    acc
+                )
+                {
+                  prev = 0;
+                }
+                [
+                  "left"
+                  "main"
+                  "right"
+                ]
+            );
+            injectPosition = o:
+              let
+                name = builtins.head (o._args or [ "" ]);
+                computed = lib.optionalAttrs (autoX ? ${name}) {
+                  x = autoX.${name};
+                  y = 0;
+                };
+              in
+              if computed == { } then
+                o
+              else if o ? position then
+                o
+                // {
+                  position = o.position // {
+                    _props = computed // (o.position._props or { });
+                  };
+                }
+              else
+                o // { position._props = computed; };
+          in
+          lib.mkIf (screens.outputs != [ ] || left_screen != null || main_screen != null || right_screen != null)
+            (map injectPosition (withRoles ++ others));
 
         input = {
           keyboard = {
