@@ -55,6 +55,13 @@
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # pi coding agent (earendil-works/pi), packaged by lukasl-dev. nixpkgs
+    # follows ours per its README; the intel-darwin pin stays upstream's.
+    pi = {
+      url = "github:lukasl-dev/pi.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
     {
@@ -88,7 +95,8 @@
           specialArgs = { inherit inputs; };
           modules = [
             (./hosts + "/${name}")
-          ] ++ hostModules;
+          ]
+          ++ hostModules;
         };
       hosts = nixpkgs.lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./hosts);
     in
@@ -122,33 +130,39 @@
             home.stateVersion = "26.11";
           };
 
-          nixosCommon = (pkgs.nixosOptionsDoc {
-            options = (lib.nixosSystem {
-              system = "x86_64-linux";
-              modules = [
-                ./modules
-                nixosDocModule
-              ] ++ hostModules;
-              specialArgs = { inherit inputs; };
-            }).options.frogix;
-          }).optionsCommonMark;
+          nixosCommon =
+            (pkgs.nixosOptionsDoc {
+              options =
+                (lib.nixosSystem {
+                  system = "x86_64-linux";
+                  modules = [
+                    ./modules
+                    nixosDocModule
+                  ]
+                  ++ hostModules;
+                  specialArgs = { inherit inputs; };
+                }).options.frogix;
+            }).optionsCommonMark;
 
-          hmCommon = (pkgs.nixosOptionsDoc {
-            options = (home-manager.lib.homeManagerConfiguration {
-              pkgs = nixpkgs.legacyPackages.x86_64-linux;
-              modules = [
-                ./modules/home-manager
-                hmDocModule
-              ];
-              extraSpecialArgs = { inherit inputs; };
-            }).options.frogix;
-          }).optionsCommonMark;
+          hmCommon =
+            (pkgs.nixosOptionsDoc {
+              options =
+                (home-manager.lib.homeManagerConfiguration {
+                  pkgs = nixpkgs.legacyPackages.x86_64-linux;
+                  modules = [
+                    ./modules/home-manager
+                    hmDocModule
+                  ];
+                  extraSpecialArgs = { inherit inputs; };
+                }).options.frogix;
+            }).optionsCommonMark;
 
           # cleanup: drop the declared-in blocks (file:/// store links, useless
           # in a rendered doc) and unescape the renderer's `\.` escapes so
           # headings and prose read naturally (safe: frogix option prose never
           # contains literal backslashes)
-          cleanOptionsMd = md:
+          cleanOptionsMd =
+            md:
             pkgs.runCommand "frogix-options-clean.md" { } ''
               awk '
                 /^\*Declared by:\*$/ { skip = 1; next }
