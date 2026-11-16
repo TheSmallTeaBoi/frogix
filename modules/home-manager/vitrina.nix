@@ -85,6 +85,103 @@ let
       systemctl suspend
     '';
   };
+
+  # screen recorder front-end around gpu-screen-recorder. Records the main
+  # monitor (FROGIX_MAIN_SCREEN, falling back to the first monitor) with
+  # desktop audio and an optional microphone, and keeps enough state in a
+  # runtime file for the island to show status + elapsed time.
+  vitrina-record = pkgs.writeShellApplication {
+    name = "vitrina-record";
+    runtimeInputs = with pkgs; [
+      gpu-screen-recorder
+      coreutils
+    ];
+    text = ''
+      state="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/vitrina-record"
+      outdir="''${XDG_VIDEOS_DIR:-$HOME/Videos}"
+      monitor="''${FROGIX_MAIN_SCREEN:-}"
+
+      recording() {
+        [ -s "$state" ] || return 1
+        read -r pid _ < "$state" || return 1
+        kill -0 "$pid" 2>/dev/null
+      }
+
+      start() {
+        if recording; then
+          echo "already-recording"
+          return 0
+        fi
+        mic=0
+        audio=1
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --monitor) shift; monitor="''${1:-$monitor}" ;;
+            --mic) mic=1 ;;
+            --no-audio) audio=0 ;;
+          esac
+          shift
+        done
+        if [ -z "$monitor" ]; then
+          monitor="$(gpu-screen-recorder --list-monitors 2>/dev/null | head -n1 | cut -d'|' -f1)"
+        fi
+        [ -n "$monitor" ] || { echo "no monitor found" >&2; exit 1; }
+        mkdir -p "$outdir"
+        file="$outdir/recording_$(date +%Y-%m-%d_%H-%M-%S).mp4"
+        args=(gpu-screen-recorder -w "$monitor" -f 60 -o "$file")
+        if [ "$audio" = 1 ]; then
+          args+=(-a default_output)
+          if [ "$mic" = 1 ]; then
+            args+=(-a default_input)
+          fi
+        fi
+        nohup "''${args[@]}" >"$state.log" 2>&1 &
+        printf '%s %s %s\n' "$!" "$(date +%s)" "$file" > "$state"
+        echo "started $file"
+      }
+
+      stop() {
+        if ! recording; then
+          rm -f "$state"
+          echo "idle"
+          return 0
+        fi
+        read -r pid _ _ < "$state"
+        kill -INT "$pid" 2>/dev/null || true
+        for _ in $(seq 1 60); do
+          kill -0 "$pid" 2>/dev/null || break
+          sleep 0.1
+        done
+        rm -f "$state"
+        echo "stopped"
+      }
+
+      status() {
+        if recording; then
+          read -r _ start file < "$state"
+          echo "recording $(( $(date +%s) - start )) $file"
+        else
+          rm -f "$state"
+          echo "idle"
+        fi
+      }
+
+      cmd="''${1:-status}"
+      shift 2>/dev/null || true
+      case "$cmd" in
+        start) start "$@" ;;
+        stop) stop ;;
+        toggle)
+          if recording; then stop; else start "$@"; fi
+          ;;
+        status) status ;;
+        *)
+          echo "usage: vitrina-record start|stop|toggle|status" >&2
+          exit 2
+          ;;
+      esac
+    '';
+  };
 in
 {
   options.frogix."vitrina".enable = lib.mkOption {
@@ -105,6 +202,7 @@ in
       vitrina-nightlight
       vitrina-lock
       vitrina-lock-suspend
+      vitrina-record
     ];
 
     # night light: unit exists but never autostarts — the island toggle

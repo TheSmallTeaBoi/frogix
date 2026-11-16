@@ -206,6 +206,66 @@ ShellRoot {
         }
     }
 
+    /* ---------------------------------------------------------------- recording */
+    property bool recording: false
+    property int recordSecs: 0
+    property string recordFile: ""
+    property bool recordMic: false
+
+    Process {
+        id: recordStatusProc
+        command: ["vitrina-record", "status"]
+
+        stdout: SplitParser {
+            onRead: (line) => {
+                const parts = line.trim().split(" ")
+                if (parts[0] === "recording") {
+                    shell.recording = true
+                    shell.recordSecs = parseInt(parts[1], 10) || 0
+                    shell.recordFile = parts.slice(2).join(" ")
+                } else if (parts[0] === "idle") {
+                    shell.recording = false
+                    shell.recordSecs = 0
+                    shell.recordFile = ""
+                }
+            }
+        }
+    }
+
+    Timer {
+        id: recordPoll
+        interval: shell.recording ? 1000 : 2500
+        running: true
+        repeat: true
+        onTriggered: recordStatusProc.running = true
+    }
+
+    Process {
+        id: recordCmd
+        onExited: {
+            recordStatusProc.running = false
+            recordStatusProc.running = true
+        }
+    }
+
+    function record(action) {
+        const args = ["vitrina-record", action]
+        if (action === "start" && shell.recordMic)
+            args.push("--mic")
+        recordCmd.command = args
+        recordCmd.running = true
+    }
+
+    function fmtDuration(sec) {
+        const s = Math.max(0, Math.floor(sec || 0))
+        const h = Math.floor(s / 3600)
+        const m = Math.floor((s % 3600) / 60)
+        const r = s % 60
+        const mm = (m < 10 && h > 0 ? "0" : "") + m
+        const ss = (r < 10 ? "0" : "") + r
+        return h > 0 ? h + ":" + mm + ":" + ss : m + ":" + ss
+    }
+
     /* ---------------------------------------------------------------- launcher */
     property var islandWindow: null
     property bool launcherOpen: false
@@ -1744,6 +1804,23 @@ ShellRoot {
                         }
                     }
                 }
+
+                Rectangle {
+                    width: 7
+                    height: 7
+                    radius: 3.5
+                    color: Colors.accent2
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: shell.recording
+                    scale: visible ? 1 : 0
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: Easing.OutBack
+                        }
+                    }
+                }
             }
 
                 Row {
@@ -2994,6 +3071,203 @@ ShellRoot {
                                                             anchors.fill: parent
                                                             onClicked: shell.setDnd(!shell.dnd)
                                                         }
+                                                    }
+                                                }
+                                                Row {
+                                                    width: parent.width
+                                                    visible: island.connView === ""
+
+                                                    Rectangle {
+                                                        width: parent.width
+                                                        height: 56
+                                                        radius: 16
+                                                        color: shell.recording ? Colors.alpha(Colors.accent2, "2e") : Colors.alpha(Colors.fg, "0a")
+                                                        border.width: 1
+                                                        border.color: shell.recording ? "transparent" : Colors.alpha(Colors.fg, "12")
+
+                                                        Text {
+                                                            id: recIcon
+                                                            x: 12
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            text: "\uf03d"
+                                                            font.family: "Maple Mono NF"
+                                                            font.pixelSize: 18
+                                                            color: shell.recording ? Colors.accent2 : Colors.muted
+                                                        }
+
+                                                        Column {
+                                                            anchors.left: recIcon.right
+                                                            anchors.leftMargin: 10
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            spacing: 1
+
+                                                            Text {
+                                                                text: "Screen Recording"
+                                                                font.pixelSize: 11
+                                                                font.weight: Font.DemiBold
+                                                                color: shell.recording ? Colors.fg : Colors.muted
+                                                            }
+
+                                                            Text {
+                                                                text: shell.recording ? "Recording \u00b7 " + shell.fmtDuration(shell.recordSecs) : "Idle"
+                                                                font.pixelSize: 10
+                                                                color: Colors.muted
+                                                            }
+                                                        }
+
+                                                        MouseArea {
+                                                            anchors.fill: parent
+                                                            onClicked: island.connView = "recording"
+                                                        }
+                                                    }
+                                                }
+                                                Item {
+                                                    visible: island.connView === "recording"
+                                                    width: parent.width
+                                                    height: 22
+
+                                                    Text {
+                                                        id: recBack
+                                                        anchors.left: parent.left
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        text: "\uf060"
+                                                        font.family: "Maple Mono NF"
+                                                        font.pixelSize: 11
+                                                        color: recBackHover.containsMouse ? Colors.accent : Colors.muted
+
+                                                        MouseArea {
+                                                            id: recBackHover
+                                                            anchors.fill: parent
+                                                            anchors.margins: -8
+                                                            hoverEnabled: true
+                                                            onClicked: island.connView = ""
+                                                        }
+                                                    }
+
+                                                    Text {
+                                                        anchors.left: recBack.right
+                                                        anchors.leftMargin: 12
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        text: "Screen Recording"
+                                                        font.pixelSize: 11
+                                                        font.weight: Font.DemiBold
+                                                        color: Colors.fg
+                                                    }
+                                                }
+                                                Rectangle {
+                                                    visible: island.connView === "recording"
+                                                    width: parent.width
+                                                    height: 72
+                                                    radius: 12
+                                                    color: Colors.alpha(Colors.fg, "0a")
+                                                    border.width: 1
+                                                    border.color: shell.recording ? Colors.alpha(Colors.accent2, "66") : Colors.alpha(Colors.fg, "14")
+
+                                                    Rectangle {
+                                                        id: recDot
+                                                        x: 12
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        width: 10
+                                                        height: 10
+                                                        radius: 5
+                                                        color: shell.recording ? Colors.accent2 : Colors.alpha(Colors.muted, "55")
+                                                    }
+
+                                                    Column {
+                                                        anchors.left: recDot.right
+                                                        anchors.leftMargin: 12
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        spacing: 2
+
+                                                        Text {
+                                                            text: shell.recording ? "Recording" : "Idle"
+                                                            font.pixelSize: 12
+                                                            font.weight: Font.DemiBold
+                                                            color: shell.recording ? Colors.accent2 : Colors.muted
+                                                        }
+
+                                                        Text {
+                                                            text: shell.fmtDuration(shell.recordSecs)
+                                                            font.family: "Maple Mono NF"
+                                                            font.pixelSize: 16
+                                                            color: shell.recording ? Colors.fg : Colors.muted
+                                                        }
+                                                    }
+
+                                                    Text {
+                                                        anchors.right: parent.right
+                                                        anchors.rightMargin: 12
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        width: parent.width - 90
+                                                        horizontalAlignment: Text.AlignRight
+                                                        text: shell.recordFile.length > 0 ? shell.recordFile.split("/").pop() : "Saves to ~/Videos"
+                                                        elide: Text.ElideMiddle
+                                                        font.pixelSize: 9
+                                                        color: Colors.muted
+                                                    }
+                                                }
+                                                Rectangle {
+                                                    visible: island.connView === "recording" && !shell.recording
+                                                    width: parent.width
+                                                    height: 36
+                                                    radius: 10
+                                                    color: shell.recordMic ? Colors.alpha(Colors.accent, "22") : Colors.alpha(Colors.fg, "08")
+                                                    border.width: 1
+                                                    border.color: shell.recordMic ? Colors.alpha(Colors.accent, "44") : Colors.alpha(Colors.fg, "12")
+
+                                                    Text {
+                                                        id: recMicIcon
+                                                        x: 12
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        text: "\uf130"
+                                                        font.family: "Maple Mono NF"
+                                                        font.pixelSize: 13
+                                                        color: shell.recordMic ? Colors.accent : Colors.muted
+                                                    }
+
+                                                    Text {
+                                                        anchors.left: recMicIcon.right
+                                                        anchors.leftMargin: 10
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        text: "Microphone"
+                                                        font.pixelSize: 11
+                                                        color: shell.recordMic ? Colors.fg : Colors.muted
+                                                    }
+
+                                                    Text {
+                                                        anchors.right: parent.right
+                                                        anchors.rightMargin: 12
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        text: shell.recordMic ? "On" : "Off"
+                                                        font.pixelSize: 10
+                                                        color: shell.recordMic ? Colors.accent : Colors.muted
+                                                    }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        onClicked: shell.recordMic = !shell.recordMic
+                                                    }
+                                                }
+                                                Rectangle {
+                                                    visible: island.connView === "recording"
+                                                    width: parent.width
+                                                    height: 40
+                                                    radius: 12
+                                                    color: shell.recording ? Colors.alpha(Colors.accent2, "33") : Colors.alpha(Colors.accent, "33")
+                                                    border.width: 1
+                                                    border.color: shell.recording ? Colors.alpha(Colors.accent2, "66") : Colors.alpha(Colors.accent, "66")
+
+                                                    Text {
+                                                        anchors.centerIn: parent
+                                                        text: shell.recording ? "\uf04d  Stop recording" : "\uf111  Start recording"
+                                                        font.family: "Maple Mono NF"
+                                                        font.pixelSize: 12
+                                                        color: shell.recording ? Colors.accent2 : Colors.accent
+                                                    }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        onClicked: shell.record(shell.recording ? "stop" : "start")
                                                     }
                                                 }
                                                 Item {
