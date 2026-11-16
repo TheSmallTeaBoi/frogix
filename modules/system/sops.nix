@@ -10,7 +10,7 @@ in
   options.frogix.sops.enable = lib.mkOption {
     type = lib.types.bool;
     default = config.frogix.enable;
-    description = "sops-nix with the frogix secret set";
+    description = "sops-nix with the frogix secret set (age key at ~/.config/sops/age/keys.txt, generated on demand)";
   };
 
   config = lib.mkIf cfg.enable {

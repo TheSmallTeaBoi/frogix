@@ -113,7 +113,7 @@ in
     enable = lib.mkOption {
       type = lib.types.bool;
       default = config.frogix.enable;
-      description = "sunshine game streaming with the gamescope launcher";
+      description = "sunshine game streaming with the gamescope launcher on PATH (sunshine owns conf + apps.json, not managed)";
     };
     output = lib.mkOption {
       type = lib.types.nullOr lib.types.str;

@@ -12,7 +12,11 @@ in
     enable = lib.mkOption {
       type = lib.types.bool;
       default = config.frogix.enable;
-      description = "core service stack (navidrome, syncthing, pipewire, sunshine, dbus)";
+      description = ''
+        desktop service stack: navidrome, syncthing, pipewire, sunshine,
+        tailscale, dbus, sshd, udev rules, gnome-keyring, gvfs, fstrim,
+        earlyoom, input-remapper, mysql
+      '';
     };
     vialSerial = lib.mkOption {
       type = lib.types.nullOr lib.types.str;

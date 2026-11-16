@@ -91,10 +91,10 @@
       right = "HDMI-A-3";
 
       # logical (post-transform) widths; niri.nix computes the x offsets in
-      # left -> main -> right order — no more hand-added pixel math
+      # left -> main -> right order
       autoLayout.widths = {
-        left = 768;   # 1366x768 rotated 270
-        main = 1920;  # 1920x1080
+        left = 768; # 1366x768 rotated 270
+        main = 1920; # 1920x1080
         right = 1366; # 1366x768
       };
 

@@ -12,7 +12,12 @@ in
     enable = lib.mkOption {
       type = lib.types.bool;
       default = config.frogix.enable;
-      description = "desktop machine defaults: timezone, zram, fonts, qt, peripheral hardware";
+      description = ''
+        desktop machine defaults: timezone, zram, fonts, qt, peripheral
+        hardware (uinput/bluetooth/opentabletdriver), and the hm-backup-sweep
+        that clears stale home-manager .back files before activation so
+        app-rewritten configs can't wedge the switch
+      '';
     };
     timeZone = lib.mkOption {
       type = lib.types.str;

@@ -80,7 +80,14 @@ frogix = {
 home-manager.users.theo = {
   frogix.home.stateVersion = "23.11";          # 23.11 = the release ratholomew was installed on;
                                                # a NEW host uses the current release — never bump afterwards
-  frogix.screens = { main = "DP-4"; left = "HDMI-A-1"; right = "HDMI-A-3"; };
+  frogix.screens.main = "DP-4";
+  frogix.screens.left = "HDMI-A-1";
+  frogix.screens.right = "HDMI-A-3";
+  # logical widths per role: niri.nix computes the x offsets in
+  # left -> main -> right order (niri sorts unpositioned outputs by name, so
+  # the arrangement must be explicit); per-output mode/transform/position
+  # overrides live under frogix.screens.outputs
+  frogix.screens.autoLayout.widths = { left = 768; main = 1920; right = 1366; };
   frogix.wallpapersDir = "/storage/Walls";
   frogix.audio.mixerElement = "Emotiva Little Ego";
   frogix.beets = { libraryDir = "/storage/Music/"; convertDest = "/storage/music-lossier/"; };

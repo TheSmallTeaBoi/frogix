@@ -11,7 +11,10 @@
     wallpapersDir = lib.mkOption {
       type = lib.types.str;
       default = "${config.home.homeDirectory}/Pictures/Wallpapers";
-      description = "directory wallpapers are shuffled from";
+      description = ''
+        directory wallpapers are shuffled from; seeded with the bundled
+        wallpaper.png while it holds no files
+      '';
     };
 
     screens = lib.mkOption {
@@ -24,10 +27,12 @@
           left = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
+            description = "the left monitor — niri/pywal use it; rules referencing an unset screen are omitted";
           };
           right = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
+            description = "the right monitor — niri/pywal use it; rules referencing an unset screen are omitted";
           };
           outputs = lib.mkOption {
             type = lib.types.listOf lib.types.attrs;

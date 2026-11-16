@@ -5,12 +5,12 @@
 # nixos-generate-config output, fill in the TODOs, `git add`, rebuild.
 {
   imports = [
-    ./hardware-configuration.nix   # TODO: replace with your nixos-generate-config output
+    ./hardware-configuration.nix # TODO: replace with your nixos-generate-config output
     ../../modules
   ];
 
   nixpkgs.hostPlatform = "x86_64-linux";
-  networking.hostName = "template";  # TODO: your hostname
+  networking.hostName = "template"; # TODO: your hostname
 
   # the release this machine was FIRST installed on — never bump it afterwards.
   # ratholomew says 23.11 because that is when it was installed; new installs
@@ -19,7 +19,7 @@
 
   frogix = {
     enable = true;
-    user = "you";  # TODO: your username
+    user = "you"; # TODO: your username
 
     # nixpkgs currently marks the pinned qutebrowser insecure; drop the entry
     # once your channel moves past it
@@ -54,12 +54,12 @@
   users.users.you.initialPassword = "changeme";
 
   home-manager.users.you = {
-    frogix.home.stateVersion = "26.11";  # same rule as system.stateVersion
+    frogix.home.stateVersion = "26.11"; # same rule as system.stateVersion
 
     # niri/pywal/hypridle need at least the main monitor name (`niri msg
     # outputs` lists them); rules referencing an unset screen are omitted.
     # hosts/ratholomew/configuration.nix has a full three-screen example.
-    frogix.screens.main = "DP-1";  # TODO: your main monitor (required — see /sys/class/drm/*/status for names)
+    frogix.screens.main = "DP-1"; # TODO: your main monitor (required - `ls /sys/class/drm/*/status` for names)
     # frogix.screens.left = "HDMI-A-1";
     # frogix.screens.right = "HDMI-A-3";
 

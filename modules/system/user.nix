@@ -23,7 +23,11 @@ in
         "gamemode"
         "bluetooth"
       ];
-      description = "groups the primary user is a member of";
+      description = ''
+        groups the primary user is a member of. the groups must exist —
+        disabling a module that owns one (e.g. gaming and "gamemode") means
+        removing it here too
+      '';
     };
   };
 

@@ -41,7 +41,7 @@ in
   options.frogix."niri".enable = lib.mkOption {
     type = lib.types.bool;
     default = config.frogix.enable;
-    description = "niri compositor and keybinds";
+    description = "the full niri rice: compositor config, keybinds, hypridle/hyprlock";
   };
 
   config = lib.mkIf cfg.enable {

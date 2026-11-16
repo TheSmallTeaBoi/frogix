@@ -15,7 +15,10 @@ in
     };
     stateVersion = lib.mkOption {
       type = lib.types.str;
-      description = "home-manager stateVersion: the NixOS release this machine was FIRST installed on";
+      description = ''
+        home-manager stateVersion: the NixOS release this machine was FIRST
+        installed on. never bump it afterwards
+      '';
     };
   };
 

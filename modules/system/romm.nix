@@ -12,7 +12,7 @@ in
     enable = lib.mkOption {
       type = lib.types.bool;
       default = config.frogix.enable;
-      description = "RomM game library + nginx vhost";
+      description = "RomM game library + nginx vhost, with its postgres/redis backing services";
     };
     libraryDir = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
@@ -37,14 +37,17 @@ in
     listenAddress = lib.mkOption {
       type = lib.types.str;
       default = "0.0.0.0";
+      description = "address the RomM API binds";
     };
     port = lib.mkOption {
       type = lib.types.port;
       default = 8080;
+      description = "port the RomM API listens on";
     };
     virtualHost = lib.mkOption {
       type = lib.types.str;
       default = "romm.localhost";
+      description = "nginx vhost serving RomM";
     };
   };
 

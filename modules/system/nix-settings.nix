@@ -12,7 +12,7 @@ in
     enable = lib.mkOption {
       type = lib.types.bool;
       default = config.frogix.enable;
-      description = "nix daemon settings, caches and nix tooling defaults";
+      description = "nix daemon settings, caches and nix tooling defaults (also sets nixpkgs.config.allowUnfree)";
     };
     gc = {
       automatic = lib.mkOption {

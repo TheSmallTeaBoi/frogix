@@ -43,7 +43,11 @@ niri/pywal/vitrina reference it directly — forgetting it fails at eval time
 instead of producing a broken config. the rest of `screens` stays optional:
 `left`/`right` default to `null` (rules referencing an unset screen are
 omitted) and `outputs` defaults to `[]` (niri runs every monitor at its
-preferred mode, auto-positioned).
+preferred mode, auto-positioned). niri's auto-placement sorts unpositioned
+outputs by *name*, which has nothing to do with left/right roles — so
+`screens.autoLayout.widths` lets a host declare each role's logical width and
+the niri module computes the x offsets in left → main → right order (any
+explicit `position` a host wrote still wins).
 
 ## module contract
 
@@ -78,3 +82,17 @@ rules:
   not knobs
 - personal identity values are knobs with `null`/empty defaults
 - files must be tracked by git: flakes only see tracked files
+
+## docs
+
+`docs/options.md` is **generated from the live option trees** — the flake
+evaluates bare system + home-manager module sets and renders `frogix.*` with
+nixpkgs' `nixosOptionsDoc` (the NixOS manual machinery), strict about missing
+descriptions. module prose belongs in option `description`s; after touching a
+module's options regenerate:
+
+```bash
+nix eval --raw .#docs.optionsMd > docs/options.md
+```
+
+the header prose lives in `docs/options.header.md`.

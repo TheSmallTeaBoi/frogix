@@ -66,28 +66,113 @@
       ...
     }@inputs:
     let
-      # Every directory under hosts/ becomes a nixosConfigurations entry.
+      # every directory under hosts/ becomes a nixosConfigurations entry.
       # Add your own machine: hosts/<name>/default.nix importing ../../modules
       # plus your hardware-configuration.nix (hosts/ratholomew is the example),
       # then `git add` and rebuild with --flake .#<name>.
+      #
+      # the flake-input module wiring lives here (not in ./modules) so it stays
+      # at flake scope — which also means the docs eval below can reuse it and
+      # see the exact same option universe as a real host.
+      hostModules = [
+        home-manager.nixosModules.home-manager
+        inputs.musnix.nixosModules.musnix
+        nix-index-database.nixosModules.nix-index
+        sops-nix.nixosModules.sops
+        inputs.niri-nix.nixosModules.default
+        inputs.infract.nixosModules.default
+      ];
       mkHost =
         name:
         nixpkgs.lib.nixosSystem {
           specialArgs = { inherit inputs; };
           modules = [
             (./hosts + "/${name}")
-            home-manager.nixosModules.home-manager
-            inputs.musnix.nixosModules.musnix
-            nix-index-database.nixosModules.nix-index
-            sops-nix.nixosModules.sops
-            inputs.niri-nix.nixosModules.default
-            inputs.infract.nixosModules.default
-          ];
+          ] ++ hostModules;
         };
       hosts = nixpkgs.lib.filterAttrs (_: type: type == "directory") (builtins.readDir ./hosts);
     in
     {
       nixosConfigurations = builtins.mapAttrs (name: _: mkHost name) hosts;
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
+
+      # docs/options.md, rendered from the live option trees so it cannot
+      # drift from the code. regenerate with:
+      #   nix eval --raw .#docs.optionsMd > docs/options.md
+      docs.optionsMd =
+        let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          inherit (nixpkgs) lib;
+
+          # bare evals: declarations only, config bodies stay lazy (frogix.enable
+          # defaults off). options without universal defaults (hosts must set
+          # them) get placeholders so defaults derived from them render — and
+          # so home-manager's assertion pass (which homeManagerConfiguration
+          # forces even when only options are read) can evaluate.
+          nixosDocModule = {
+            frogix.user = "user";
+          };
+          hmDocModule = {
+            frogix.user = "user";
+            frogix.home.stateVersion = "26.11";
+            home.username = "user";
+            home.homeDirectory = "/home/user";
+            # home-manager's pkgsPath module argument reads this during its
+            # config assertion pass, which homeManagerConfiguration forces
+            home.stateVersion = "26.11";
+          };
+
+          nixosCommon = (pkgs.nixosOptionsDoc {
+            options = (lib.nixosSystem {
+              system = "x86_64-linux";
+              modules = [
+                ./modules
+                nixosDocModule
+              ] ++ hostModules;
+              specialArgs = { inherit inputs; };
+            }).options.frogix;
+          }).optionsCommonMark;
+
+          hmCommon = (pkgs.nixosOptionsDoc {
+            options = (home-manager.lib.homeManagerConfiguration {
+              pkgs = nixpkgs.legacyPackages.x86_64-linux;
+              modules = [
+                ./modules/home-manager
+                hmDocModule
+              ];
+              extraSpecialArgs = { inherit inputs; };
+            }).options.frogix;
+          }).optionsCommonMark;
+
+          # cleanup: drop the declared-in blocks (file:/// store links, useless
+          # in a rendered doc) and unescape the renderer's `\.` escapes so
+          # headings and prose read naturally (safe: frogix option prose never
+          # contains literal backslashes)
+          cleanOptionsMd = md:
+            pkgs.runCommand "frogix-options-clean.md" { } ''
+              awk '
+                /^\*Declared by:\*$/ { skip = 1; next }
+                skip == 1 && /^ - / { next }
+                skip == 1 { skip = 0 }
+                { print }
+              ' ${md} | sed 's/\\././g' > $out
+            '';
+
+          nixosMd = cleanOptionsMd nixosCommon;
+          hmMd = cleanOptionsMd hmCommon;
+          # a derivation so `nix eval` builds it, readFile so the regen one-liner
+          # can dump the content directly:
+          #   nix eval --raw .#docs.optionsMd > docs/options.md
+          assembled = pkgs.runCommand "frogix-options.md" { } ''
+            {
+              cat ${./docs/options.header.md}
+              printf '\n# system modules (nixos side)\n\n'
+              cat ${nixosMd}
+              printf '\n# home-manager modules (set under home-manager.users.<user>.frogix.*)\n\n'
+              cat ${hmMd}
+            } > $out
+          '';
+        in
+        builtins.readFile assembled;
     };
 }

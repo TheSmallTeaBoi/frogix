@@ -11,7 +11,7 @@ in
   options.frogix.boot.enable = lib.mkOption {
     type = lib.types.bool;
     default = config.frogix.enable;
-    description = "frogix boot: latest kernel, ntsync, quiet splash and systemd-boot";
+    description = "frogix boot: latest kernel, ntsync, quiet splash, systemd-boot, memlock ulimit and performance governor";
   };
 
   config = lib.mkIf cfg.enable {
