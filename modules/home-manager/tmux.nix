@@ -17,14 +17,20 @@ in
   config = lib.mkIf cfg.enable {
     programs.tmux = {
       enable = true;
+      # Wheel scroll enters copy-mode instead of being forwarded to the
+      # application as arrow keys.
+      mouse = true;
 
       extraConfig =
         #tmux
         ''
           set -s escape-time 0
 
-          # Let kitty graphics escape sequences through (walltui image previews)
-          set -s allow-passthrough on
+          # Let kitty graphics escape sequences through.
+          # allow-passthrough is a window/pane option, so it must be set
+          # globally; `set -s` has no current window during startup and
+          # prints "no current window" on the first terminal after a reboot.
+          set -g allow-passthrough on
           set -g prefix M-a
           set -g status-position bottom
 
@@ -38,6 +44,8 @@ in
 
           # Me when this piece of software is still stuck in 1996
           set-option -g default-terminal "tmux-256color"
+          set-option -g extended-keys on
+          set-option -g extended-keys-format csi-u
 
           # Set the modules
           set -g status-left ""
