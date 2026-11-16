@@ -38,6 +38,79 @@ let
     }
   '';
 
+  # pi reads its theme from ~/.pi/agent/themes/pywal.json, which is a symlink
+  # into the wal cache. if wal never rendered (headless/foreign-terminal
+  # activation) pi would warn about a missing theme on every start, so seed a
+  # neutral one — the first set-wal overwrites it. role map mirrors the emacs
+  # template below (keyword=color5, function=color4, string=color2, ...) so the
+  # editor and the agent agree on what a keyword looks like.
+  piThemeFallback = pkgs.writeText "pi-theme-fallback.json" ''
+    {
+      "$schema": "https://pi.dev/schemas/theme.schema.json",
+      "name": "pywal",
+      "appearance": "dark",
+      "vars": {
+        "text": "#c6c5c2",
+        "muted": "#6f6f5b",
+        "accent": "#aea536",
+        "surface": "#10121a"
+      },
+      "colors": {
+        "accent": "accent",
+        "border": "muted",
+        "borderAccent": "accent",
+        "borderMuted": "surface",
+        "success": "#3aab41",
+        "error": "#aea536",
+        "warning": "#66ab8c",
+        "muted": "muted",
+        "dim": "muted",
+        "text": "text",
+        "thinkingText": "#a98b69",
+        "selectedBg": "surface",
+        "userMessageBg": "surface",
+        "userMessageText": "text",
+        "customMessageBg": "surface",
+        "customMessageText": "muted",
+        "customMessageLabel": "accent",
+        "toolPendingBg": "surface",
+        "toolSuccessBg": "surface",
+        "toolErrorBg": "surface",
+        "toolTitle": "text",
+        "toolOutput": "#a3a999",
+        "mdHeading": "#66ab8c",
+        "mdLink": "#8fa7a3",
+        "mdLinkUrl": "muted",
+        "mdCode": "#a87d94",
+        "mdCodeBlock": "#3aab41",
+        "mdCodeBlockBorder": "muted",
+        "mdQuote": "muted",
+        "mdQuoteBorder": "muted",
+        "mdHr": "muted",
+        "mdListBullet": "accent",
+        "toolDiffAdded": "#3aab41",
+        "toolDiffRemoved": "#aea536",
+        "toolDiffContext": "muted",
+        "syntaxComment": "muted",
+        "syntaxKeyword": "accent",
+        "syntaxFunction": "#6f8fbf",
+        "syntaxVariable": "accent",
+        "syntaxString": "#3aab41",
+        "syntaxNumber": "#a87d94",
+        "syntaxType": "#66ab8c",
+        "syntaxOperator": "muted",
+        "syntaxPunctuation": "muted",
+        "thinkingOff": "muted",
+        "thinkingMinimal": "#8fa7a3",
+        "thinkingLow": "#a3a999",
+        "thinkingMedium": "#a99e81",
+        "thinkingHigh": "#a87d94",
+        "thinkingXhigh": "#ac5b29",
+        "bashMode": "#66ab8c"
+      }
+    }
+  '';
+
   # One file decides the rice's mode. Every consumer reads it:
   #   set-wal        -> pywal palette (light = `wal -l` + a contrast fix)
   #   qutebrowser    -> config.py sets colors.webpage.preferred_color_scheme
@@ -533,6 +606,77 @@ in
         }
       '';
 
+      # pi coding agent theme — wal renders this into ~/.cache/wal/pi-theme.json
+      # on every set-wal, and ~/.pi/agent/themes/pywal.json symlinks at it, so
+      # the TUI follows the wallpaper. pi exposes "terminal default" as "" and
+      # 256-color indices as numbers, but truecolor hex from wal is exact.
+      # appearance is omitted: pi derives it from the background.
+      "wal/templates/pi-theme.json".text = ''
+        {
+          "$schema": "https://pi.dev/schemas/theme.schema.json",
+          "name": "pywal",
+          "vars": {
+            "text": "{foreground}",
+            "muted": "{color8}",
+            "accent": "{color1}",
+            "surface": "{color0}"
+          },
+          "colors": {
+            "accent": "accent",
+            "border": "muted",
+            "borderAccent": "accent",
+            "borderMuted": "surface",
+            "success": "{color2}",
+            "error": "{color1}",
+            "warning": "{color3}",
+            "muted": "muted",
+            "dim": "muted",
+            "text": "text",
+            "thinkingText": "{color2}",
+            "selectedBg": "surface",
+            "userMessageBg": "surface",
+            "userMessageText": "text",
+            "customMessageBg": "surface",
+            "customMessageText": "muted",
+            "customMessageLabel": "{color5}",
+            "toolPendingBg": "surface",
+            "toolSuccessBg": "surface",
+            "toolErrorBg": "surface",
+            "toolTitle": "text",
+            "toolOutput": "{color4}",
+            "mdHeading": "{color3}",
+            "mdLink": "{color5}",
+            "mdLinkUrl": "muted",
+            "mdCode": "{color6}",
+            "mdCodeBlock": "{color2}",
+            "mdCodeBlockBorder": "muted",
+            "mdQuote": "muted",
+            "mdQuoteBorder": "muted",
+            "mdHr": "muted",
+            "mdListBullet": "{color5}",
+            "toolDiffAdded": "{color2}",
+            "toolDiffRemoved": "{color1}",
+            "toolDiffContext": "muted",
+            "syntaxComment": "muted",
+            "syntaxKeyword": "{color5}",
+            "syntaxFunction": "{color4}",
+            "syntaxVariable": "{color1}",
+            "syntaxString": "{color2}",
+            "syntaxNumber": "{color6}",
+            "syntaxType": "{color3}",
+            "syntaxOperator": "muted",
+            "syntaxPunctuation": "muted",
+            "thinkingOff": "muted",
+            "thinkingMinimal": "{color5}",
+            "thinkingLow": "{color4}",
+            "thinkingMedium": "{color3}",
+            "thinkingHigh": "{color6}",
+            "thinkingXhigh": "{color1}",
+            "bashMode": "{color6}"
+          }
+        }
+      '';
+
       "wal/templates/mako-colors".text = ''
         background-color={background}
         text-color={foreground}
@@ -941,6 +1085,12 @@ in
       '';
     };
 
+    # pi discovers themes in its agent dir (~/.pi/agent/themes/*.json, NOT under
+    # XDG) and hot-reloads the active one — so this symlink makes set-wal recolor
+    # a running TUI. the theme name ("pywal") is selected in frogix.pi.settings.
+    home.file.".pi/agent/themes/pywal.json".source =
+      config.lib.file.mkOutOfStoreSymlink "${walCache}/pi-theme.json";
+
     home.activation.seedPywal = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       run mkdir -p "${walCache}"
       if [ ! -e "${walCache}/colors.sh" ]; then
@@ -956,6 +1106,11 @@ in
       if [ ! -e "${walCache}/niri-colors.kdl" ]; then
         verboseEcho "Writing neutral niri colors fallback"
         run cp ${niriColorsFallback} "${walCache}/niri-colors.kdl"
+      fi
+      # same for pi: a dangling theme symlink makes pi warn at every start
+      if [ ! -e "${walCache}/pi-theme.json" ]; then
+        verboseEcho "Writing neutral pi theme fallback"
+        run cp ${piThemeFallback} "${walCache}/pi-theme.json"
       fi
     '';
 
