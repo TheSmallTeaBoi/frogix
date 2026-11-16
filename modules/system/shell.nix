@@ -39,7 +39,12 @@ in
     programs.ssh.askPassword = ""; # I have absolutely no idea why this isn't default.
     users.users.${config.frogix.user}.shell = pkgs.fish;
     environment = {
-      systemPackages = [ pkgs.nix-your-shell ];
+      # eza backs the ls-family aliases in the home shell config — they must
+      # exist even when frogix.packages is off (VM, minimal hosts)
+      systemPackages = [
+        pkgs.nix-your-shell
+        pkgs.eza
+      ];
       variables = {
         EDITOR = cfg.editor;
         VISUAL = cfg.editor;

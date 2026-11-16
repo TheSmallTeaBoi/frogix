@@ -8,6 +8,36 @@ let
   cfg = config.frogix.pywal;
   walCache = "${config.home.homeDirectory}/.cache/wal";
 
+  pywal16-full = pkgs.pywal16.override {
+    withColorthief = true;
+    withColorz = true;
+    withFastColorthief = true;
+    withHaishoku = true;
+    withModernColorthief = true;
+  };
+
+  # niri exits on a missing `include` — this lands in ${walCache}/niri-colors.kdl
+  # whenever wal could not render (headless/foreign-terminal activation) so the
+  # first niri session always starts. the first successful set-wal overwrites it.
+  niriColorsFallback = pkgs.writeText "niri-colors-fallback.kdl" ''
+    layout {
+        background-color "#10121a"
+        gaps 9
+        focus-ring {
+            active-color "#39424e"
+            inactive-color "#00000000"
+            urgent-color "#c75d5d"
+            width 3
+        }
+        border {
+            width 0
+        }
+        shadow {
+            color "#00000050"
+        }
+    }
+  '';
+
   # One file decides the rice's mode. Every consumer reads it:
   #   set-wal        -> pywal palette (light = `wal -l` + a contrast fix)
   #   qutebrowser    -> config.py sets colors.webpage.preferred_color_scheme
@@ -81,15 +111,6 @@ let
   '';
 
   set-wal = (
-    let
-      pywal16-full = pkgs.pywal16.override {
-        withColorthief = true;
-        withColorz = true;
-        withFastColorthief = true;
-        withHaishoku = true;
-        withModernColorthief = true;
-      };
-    in
     pkgs.writeShellApplication {
       name = "set-wal";
       runtimeInputs = with pkgs; [
@@ -915,11 +936,18 @@ in
     home.activation.seedPywal = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       run mkdir -p "${walCache}"
       if [ ! -e "${walCache}/colors.sh" ]; then
-        verboseEcho "Seeding pywal cache with base16-da-one-sea"
-        ${pkgs.pywal16}/bin/wal --theme base16-da-one-sea -n -q
+        verboseEcho "Seeding pywal cache from the bundled wallpaper"
+        run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal --backend colorz -i ${./wallpaper.png} -n -q || true
       else
         verboseEcho "Refreshing pywal templates from the existing cache"
-        ${pkgs.pywal16}/bin/wal -R -n -q || true
+        run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal -R -n -q || true
+      fi
+      # niri refuses to start if its included file is missing — wal can fail
+      # here (rebuild from a foreign terminal, headless switch), so land a
+      # neutral fallback before the first session ever runs.
+      if [ ! -e "${walCache}/niri-colors.kdl" ]; then
+        verboseEcho "Writing neutral niri colors fallback"
+        run cp ${niriColorsFallback} "${walCache}/niri-colors.kdl"
       fi
     '';
 
