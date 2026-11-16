@@ -2,3 +2,6 @@
 modules/unfree
 *.qcow2
 result
+
+# agent state
+.pi/
