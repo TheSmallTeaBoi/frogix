@@ -207,6 +207,15 @@ in
               "-listen"
             ];
           }
+          { _args = [ "vesktop" ]; }
+          {
+            _args = [
+              "${pkgs.easyeffects}/bin/easyeffects"
+              "--gapplication-service"
+            ];
+          }
+        ]
+        ++ lib.optionals config.frogix.qutebrowser.enable [
           # QTWEBENGINE_REMOTE_DEBUGGING: loopback-only devtools port; ricecdp.py
           # uses it to flip prefers-color-scheme on live pages without a restart.
           {
@@ -214,13 +223,6 @@ in
               "${pkgs.bash}/bin/bash"
               "-c"
               "QTWEBENGINE_REMOTE_DEBUGGING=9222 exec ${pkgs.qutebrowser}/bin/qutebrowser"
-            ];
-          }
-          { _args = [ "vesktop" ]; }
-          {
-            _args = [
-              "${pkgs.easyeffects}/bin/easyeffects"
-              "--gapplication-service"
             ];
           }
         ];
@@ -262,12 +264,6 @@ in
             open-focused = false;
           }
           {
-            match._props.app-id = "qute";
-            open-on-workspace = "󰖟"; # browser
-            open-focused = false;
-            open-maximized = true;
-          }
-          {
             match._props.app-id = "feishin";
             open-floating = true;
             default-column-width = {
@@ -290,6 +286,14 @@ in
           {
             match._props.app-id = "floating";
             open-floating = true;
+          }
+        ]
+        ++ lib.optionals config.frogix.qutebrowser.enable [
+          {
+            match._props.app-id = "qute";
+            open-on-workspace = "󰖟"; # browser
+            open-focused = false;
+            open-maximized = true;
           }
         ]
         ++ lib.optionals (right_screen != null) [

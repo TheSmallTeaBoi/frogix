@@ -8,6 +8,21 @@ let
   cfg = config.frogix.pywal;
   walCache = "${config.home.homeDirectory}/.cache/wal";
 
+  quteConfigSource = lib.optionalString config.frogix.qutebrowser.enable ''
+    if pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
+      qutebrowser --target auto ":config-source" || true
+    fi
+  '';
+
+  quteRestart = lib.optionalString config.frogix.qutebrowser.enable ''
+    cdp_port="''${RICE_CDP_PORT:-9222}"
+    if [ "$restart_qute" = 1 ] && pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
+      if ! curl -sf --max-time 1 "http://127.0.0.1:$cdp_port/json/version" >/dev/null 2>&1; then
+        qutebrowser --target auto ":restart" || true
+      fi
+    fi
+  '';
+
   pywal16-full = pkgs.pywal16.override {
     withColorthief = true;
     withColorz = true;
@@ -189,7 +204,6 @@ let
       runtimeInputs = with pkgs; [
         pywal16-full
         awww
-        qutebrowser
         procps
         mako
         pywalfox-native
@@ -199,7 +213,7 @@ let
         niri
         coreutils
         gnused
-      ];
+      ] ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ];
       text = ''
         set -euo pipefail
         set -x
@@ -250,9 +264,7 @@ let
         # qutebrowser re-reads config.py (chrome colors live). only poke an
         # instance that is already running: a CLI call with no IPC peer opens a
         # whole browser window.
-        if pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
-          qutebrowser --target auto ":config-source" || true
-        fi
+        ${quteConfigSource}
 
         makoctl reload 2>/dev/null || true
         pkill -USR1 kitty 2>/dev/null || true
@@ -298,10 +310,9 @@ let
       gnused
       gnugrep
       procps
-      qutebrowser
       curl
       set-wal
-    ];
+    ] ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ];
     text = ''
       set -euo pipefail
 
@@ -351,12 +362,7 @@ let
       # already sent. Restart only when that port is missing, i.e. qute was
       # started without QTWEBENGINE_REMOTE_DEBUGGING (blink flag is the only
       # lever then, and that one is startup-only).
-      cdp_port="''${RICE_CDP_PORT:-9222}"
-      if [ "$restart_qute" = 1 ] && pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
-        if ! curl -sf --max-time 1 "http://127.0.0.1:$cdp_port/json/version" >/dev/null 2>&1; then
-          qutebrowser --target auto ":restart" || true
-        fi
-      fi
+      ${quteRestart}
 
       echo "rice mode: $want"
     '';
