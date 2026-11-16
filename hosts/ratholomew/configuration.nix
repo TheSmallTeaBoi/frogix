@@ -6,10 +6,10 @@
   ];
 
   nixpkgs.hostPlatform = "x86_64-linux";
-
   networking.hostName = "ratholomew"; # Define your hostname.
-
   system.stateVersion = "23.11"; # Did you read the comment?
+
+  programs.firefox.enable = true;
 
   # the frogix module suite. module defaults are universal; this block is
   # where ratholomew differs from them.
@@ -48,6 +48,8 @@
       interfaces = [ "enp38s0" ];
       firewall = false;
     };
+
+    pi.enable = true;
 
     services = {
       navidrome.musicFolder = "/storage/Music/";
