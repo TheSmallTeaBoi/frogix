@@ -13,6 +13,7 @@
     ./music-making.nix
     ./networkd.nix
     ./packages.nix
+    ./pi.nix
     ./romm.nix
     ./services.nix
     ./shell.nix
