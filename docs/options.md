@@ -108,15 +108,24 @@ into romm's library paths; `resourcesDir` keeps multi-GB scraped media off the
 root fs; `useTosec` deploys the TOSEC folder -> slug mapping.
 
 ### toggles with only `enable`
-`frogix.boot`-style single-knob modules: `droidcam`, `musnix`, `steam` (with
-the steam chroot libs), `wine`, `packages` (the big package set), `virt`
-(virt-manager/libvirtd), `gaming` (gamemode + gpu-screen-recorder), `sops`
-(age key at `~/.config/sops/age/keys.txt`, generated), `torbox` (webdav mount,
+`frogix.boot`-style single-knob modules: `droidcam`, `musicMaking` (musnix
+realtime tweaks + the plugin rack), `steam` (with the steam chroot libs),
+`wine`, `virt` (virt-manager/libvirtd), `sops` (age key at
+`~/.config/sops/age/keys.txt`, generated), `torbox` (webdav mount,
 `mountPoint` knob, default **off**), `"torbox-music-sync"` (`musicDir`,
 `remotePath` knobs, default **off**),
 `"xodus-nexus"`, `"emeet-linux"` (webcam preset replay), `"GUI-nvidia"`
 (nvidia stack + sddm + niri session defaults — on with the suite; the
 `autoLogin` knob defaults off).
+
+### `frogix.packages` — opt-out packs
+`packages.enable` is the master switch; each pack below follows it until
+toggled off: `terminal` (core CLI), `rice` (pywal/mako/rofi), `coding`
+(nix-alien/devenv/sops), `keyboard` (qmk/vial), `gui` (file manager,
+screenshots, e-books, capture), `music` (listening/library tools — the
+*production* plugin rack lives in `musicMaking`), `piracy` (aria2, stremio).
+game packages ship with `frogix.gaming` (gamemode + gpu-screen-recorder +
+the game rack) rather than a pack.
 
 ## home-manager modules (set under `home-manager.users.<user>.frogix.*`)
 

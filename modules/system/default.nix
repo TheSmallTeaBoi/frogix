@@ -10,7 +10,7 @@
     ./boot.nix
     ./droidcam.nix
     ./emeet-linux.nix
-    ./musnix.nix
+    ./music-making.nix
     ./networkd.nix
     ./packages.nix
     ./romm.nix

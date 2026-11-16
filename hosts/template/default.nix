@@ -32,7 +32,7 @@
     # gaming.enable = false;
     # virt.enable = false;
     # droidcam.enable = false;
-    # musnix.enable = false;
+    # musicMaking.enable = false;    # realtime audio tweaks + the plugin rack
     # "emeet-linux".enable = false;
     # "xodus-nexus".enable = false;
     # (torbox / "torbox-music-sync" are default-off opt-ins; they need sops

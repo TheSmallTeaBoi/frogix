@@ -31,7 +31,7 @@
     wine.enable = false;
     gaming.enable = false;
     droidcam.enable = false;
-    musnix.enable = false;
+    musicMaking.enable = false;
     virt.enable = false;
     romm.enable = false;
     sops.enable = false;
