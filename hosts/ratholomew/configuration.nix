@@ -140,6 +140,7 @@
       ];
     };
     frogix.wallpapersDir = "/storage/Walls";
+    frogix.vitrina.searchRoots = [ "/storage/Personal" ];
     frogix.audio.mixerElement = "Emotiva Little Ego";
     frogix.beets.libraryDir = "/storage/Music/";
     frogix.beets.convertDest = "/storage/music-lossier/";

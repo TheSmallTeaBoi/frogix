@@ -190,8 +190,22 @@ in
     description = "quickshell shell packages + config";
   };
 
+  options.frogix."vitrina".searchRoots = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [ ];
+    example = [ "/storage/Personal" ];
+    description = ''
+      extra directories the launcher's file search scans, in addition to
+      $HOME. host-specific, so it has no default.
+    '';
+  };
+
   config = lib.mkIf cfg.enable {
-    home.sessionVariables.FROGIX_MAIN_SCREEN = config.frogix.screens.main;
+    home.sessionVariables = {
+      FROGIX_MAIN_SCREEN = config.frogix.screens.main;
+      # colon-separated; read by vitrina's file-search process
+      FROGIX_SEARCH_ROOTS = lib.concatStringsSep ":" cfg.searchRoots;
+    };
     home.packages = [
       pkgs.quickshell
       pkgs.playerctl

@@ -339,8 +339,9 @@ ShellRoot {
         interval: 180
         onTriggered: {
             const home = Quickshell.env("HOME")
+            const extra = (Quickshell.env("FROGIX_SEARCH_ROOTS") || "").split(":").filter(r => r.trim().length > 0)
             const base = ["fd", "--color=never", "-t", "f", "-t", "d", "-E", ".git", "-E", "node_modules", "--max-results", "12", "-a", "--", shell.launcherQuery.trim()]
-            fileProc.command = base.concat([home, "/storage/Personal"])
+            fileProc.command = base.concat([home]).concat(extra)
             fileProc.running = false
             fileProc.running = true
         }
