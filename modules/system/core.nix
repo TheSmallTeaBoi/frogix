@@ -37,7 +37,7 @@ in
         noto-fonts
         noto-fonts-color-emoji
       ];
-      description = "system font packages";
+      description = "extra system font packages (the rice's Maple Mono NF ships regardless — kitty/vitrina/emacs/qt hard-code it)";
     };
     iconPackages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
@@ -63,7 +63,11 @@ in
 
     programs.java.enable = cfg.java.enable;
 
-    fonts.packages = cfg.fonts;
+    fonts.packages = cfg.fonts ++ [
+      # the rice font — every consumer (kitty, vitrina, emacs/doom, hyprlock,
+      # qt5/6ct) hard-codes "Maple Mono NF", so it must exist on every host
+      pkgs.maple-mono.NF
+    ];
 
     qt.enable = true;
 

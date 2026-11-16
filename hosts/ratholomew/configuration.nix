@@ -20,7 +20,8 @@
     core = {
       timeZone = "America/Buenos_Aires";
       fonts = with pkgs; [
-        maple-mono.NF
+        # maple-mono.NF ships with core (rice font) — only extra fonts go here
+
         noto-fonts
         noto-fonts-lgc-plus
         google-fonts

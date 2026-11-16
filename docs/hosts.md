@@ -51,7 +51,7 @@ frogix = {
 
   core = {
     timeZone = "America/Buenos_Aires";         # universal default is UTC
-    fonts = with pkgs; [ maple-mono.NF noto-fonts noto-fonts-lgc-plus google-fonts ];
+    fonts = with pkgs; [ noto-fonts noto-fonts-lgc-plus google-fonts ];  # maple-mono.NF (the rice font) ships with core
     iconPackages = with pkgs; [ numix-icon-theme-circle colloid-icon-theme ];
     java.enable = true;                        # universal default is off
   };
