@@ -18,8 +18,8 @@
       type = lib.types.submodule {
         options = {
           main = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
+            type = lib.types.str;
+            description = "the main monitor — mandatory; niri/pywal/vitrina reference it directly";
           };
           left = lib.mkOption {
             type = lib.types.nullOr lib.types.str;

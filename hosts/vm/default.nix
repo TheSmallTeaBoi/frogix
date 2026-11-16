@@ -53,7 +53,7 @@
 
   home-manager.users.demo = {
     frogix.home.stateVersion = "26.11";
-    frogix.screens.main = lib.mkForce null; # not needed: desktop HM modules are off
+    frogix.screens.main = "none"; # mandatory option; unused since desktop HM modules are off
 
     frogix.niri.enable = false;
     frogix.pywal.enable = false;

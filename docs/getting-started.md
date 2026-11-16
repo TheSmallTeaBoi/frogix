@@ -23,42 +23,19 @@ git clone <your fork or this repo> frogix && cd frogix
 
 ## 2. Create a host directory
 
+copy the template host and drop in your hardware scan:
+
 ```bash
-mkdir -p hosts/mymachine
-nixos-generate-config --no-modify   # writes ./hardware-configuration.nix here
-mv hardware-configuration.nix hosts/mymachine/
+cp -r hosts/template hosts/mymachine
+nixos-generate-config --show-hardware-config > hosts/mymachine/hardware-configuration.nix
 ```
 
-then write `hosts/mymachine/default.nix`:
-
-```nix
-{ pkgs, ... }:
-{
-  imports = [
-    ./hardware-configuration.nix
-    ../../modules
-  ];
-
-  nixpkgs.hostPlatform = "x86_64-linux";   # match your cpu
-  networking.hostName = "mymachine";
-  system.stateVersion = "26.11";           # the release you are installing
-
-  frogix = {
-    enable = true;
-    user = "you";
-  };
-
-  # first login needs a password; change it after booting
-  users.users.you.initialPassword = "changeme";
-
-  # minimal first build: turn the desktop stack off until you know it boots
-  frogix."GUI-nvidia".enable = false;
-  frogix.services.enable = false;
-  frogix.niri = { enable = false; };  # hm-side, see docs/hosts.md for hm knobs
-  frogix.romm.enable = false;
-  frogix.sops.enable = false;
-}
-```
+then edit `hosts/mymachine/default.nix`: hostname, username, and every TODO in
+there. the template is a realistic desktop starting point — niri rice, nvidia +
+sddm, gaming on by default, with the secrets-backed modules (`services` /
+`romm` / `sops`) off until your age key is in place. the file comments explain
+which knobs must travel together, and [`hosts/vm/`](../hosts/vm/) remains the
+console-minimal extreme if you want a first build with the desktop off.
 
 `nixos-generate-config` output can also be read straight into
 `configuration.nix`-style files — anything host-specific belongs in the host

@@ -81,7 +81,6 @@ in
       # but the libinput one is useless, doesn't get recognized by
       # games that use raw input, which KINDA makes sense but isn't what
       # a gamer wants.
-      # for the actual config, chech `./yeetmouse.nix`
       mouse = {
         accelProfile = "flat";
         middleEmulation = false;

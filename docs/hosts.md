@@ -21,7 +21,10 @@ hosts/ratholomew/
 ```
 
 `hosts/vm/` is the minimal example: console-only, universal defaults, a dozen
-opt-outs.
+opt-outs. `hosts/template/` is the realistic desktop starting point new hosts
+are copied from: universal defaults on, TODOs where the personal facts go (see
+[getting-started.md](getting-started.md)); the placeholder hardware file lets
+you smoke-test the build with `nixos-rebuild build-vm --flake .#template`.
 
 ## the two option trees
 
@@ -75,7 +78,8 @@ frogix = {
 };
 
 home-manager.users.theo = {
-  frogix.home.stateVersion = "23.11";          # install-time release, never bump casually
+  frogix.home.stateVersion = "23.11";          # 23.11 = the release ratholomew was installed on;
+                                               # a NEW host uses the current release — never bump afterwards
   frogix.screens = { main = "DP-4"; left = "HDMI-A-1"; right = "HDMI-A-3"; };
   frogix.wallpapersDir = "/storage/Walls";
   frogix.audio.mixerElement = "Emotiva Little Ego";

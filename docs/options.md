@@ -115,7 +115,8 @@ the steam chroot libs), `wine`, `packages` (the big package set), `virt`
 `mountPoint` knob, default **off**), `"torbox-music-sync"` (`musicDir`,
 `remotePath` knobs, default **off**),
 `"xodus-nexus"`, `"emeet-linux"` (webcam preset replay), `"GUI-nvidia"`
-(nvidia stack + sddm + niri session defaults, `autoLogin` knob, default off).
+(nvidia stack + sddm + niri session defaults — on with the suite; the
+`autoLogin` knob defaults off).
 
 ## home-manager modules (set under `home-manager.users.<user>.frogix.*`)
 
@@ -130,7 +131,8 @@ the release the machine was first installed on. **never bump it.**
 ### shared hardware facts
 | option | type | default |
 |---|---|---|
-| `frogix.screens.main` / `.left` / `.right` | nullOr str | null (niri/pywal use them; rules referencing an unset screen are omitted) |
+| `frogix.screens.main` | str | **required** — the primary monitor; niri/pywal/vitrina reference it directly |
+| `frogix.screens.left` / `.right` | nullOr str | null (niri/pywal use them; rules referencing an unset screen are omitted) |
 | `frogix.screens.outputs` | list of attrs | `[]` — niri monitor rules (mode/scale/position/transform); host hardware layout |
 | `frogix.wallpapersDir` | str | `~/Pictures/Wallpapers` |
 

@@ -56,9 +56,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.sessionVariables = lib.mkIf (config.frogix.screens.main != null) {
-      FROGIX_MAIN_SCREEN = config.frogix.screens.main;
-    };
+    home.sessionVariables.FROGIX_MAIN_SCREEN = config.frogix.screens.main;
     home.packages = [
       pkgs.quickshell
       pkgs.playerctl

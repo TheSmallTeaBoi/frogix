@@ -81,8 +81,10 @@ let
       done
 
       if [ -n "$WIN_ID" ]; then
-          # Land it fullscreen on DP-3's currently active workspace.
-          # focus-monitor first so the workspace index resolves against DP-3.
+      ${
+        if cfg.output != null then ''
+          # Land it fullscreen on ${cfg.output}'s currently active workspace.
+          # focus-monitor first so the workspace index resolves against it.
           WS_IDX="$(niri msg --json workspaces 2>/dev/null \
               | jq -r '[.[] | select(.output == "${cfg.output}" and .is_active)] | first | .idx // empty' \
               || true)"
@@ -92,6 +94,11 @@ let
               niri msg action move-window-to-workspace "$WS_IDX" || true
               niri msg action focus-workspace "$WS_IDX" || true
           fi
+        '' else ''
+          # frogix.sunshine.output is null: leave the window where it spawned
+          # (sunshine auto-detects the capture either way)
+        ''
+      }
           niri msg action fullscreen-window --id "$WIN_ID" || true
       else
           echo "gamescope window never showed up, leaving it where it spawned" >&2
