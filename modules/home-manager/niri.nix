@@ -328,13 +328,27 @@ in
             toggle-window-floating = { };
           };
           "Mod+C" = {
-            spawn-sh._args = [ "rofi -show calc -modi calc -no-show-match -no-sort | wl-copy" ];
+            spawn._args = [
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
+              "calc"
+            ];
           };
           "Mod+D" = {
             spawn._args = [
-              "rofi"
-              "-show"
-              "drun"
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
+              "apps"
             ];
           };
           "Mod+E" = {
@@ -379,11 +393,14 @@ in
           };
           "Mod+R" = {
             spawn._args = [
-              "kitty"
-              "--class"
-              "clipse"
-              "-e"
-              "${pkgs.clipse}/bin/clipse"
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
+              "clipboard"
             ];
           };
           "Mod+T" = {
@@ -391,10 +408,13 @@ in
           };
           "Mod+Period" = {
             spawn._args = [
-              "rofi"
-              "-modi"
-              "emoji"
-              "-show"
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
               "emoji"
             ];
           };
@@ -545,11 +565,14 @@ in
 
           "Mod+W" = {
             spawn._args = [
-              "rofi"
-              "-show"
-              "window"
-              "-modes"
-              "window"
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
+              "windows"
             ];
           };
 

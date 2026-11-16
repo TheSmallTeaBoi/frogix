@@ -131,7 +131,9 @@ ShellRoot {
         onNotification: (n) => {
             n.tracked = true
             shell.hasUnread = true
-            if (!island.expanded) {
+            if (shell.dnd)
+                return
+            if (!shell.islandExpanded) {
                 shell.flashNotif = n
                 notifFlashTimer.restart()
             }
@@ -139,6 +141,36 @@ ShellRoot {
     }
 
     property var flashNotif: null
+    /* mirrors island.expanded; the notification server lives outside the
+       panel component, so it can't reach the island's id directly */
+    property bool islandExpanded: false
+    property bool dnd: false
+
+    onDndChanged: {
+        if (dnd) {
+            flashNotif = null
+            notifFlashTimer.stop()
+        }
+    }
+
+    /* do not disturb is a shell setting, so persist it outside the nix store */
+    FileView {
+        id: dndState
+        path: `${Quickshell.env("HOME")}/.local/state/vitrina-dnd`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: shell.dnd = String(text()).trim() === "on"
+        onLoadFailed: shell.dnd = false
+    }
+
+    function setDnd(on) {
+        if (dnd === on)
+            return
+        dnd = on
+        dndState.setText(on ? "on\n" : "off\n")
+    }
+
     property bool nightLight: false
 
     /* night light switch state, mirrored by the vitrina-nightlight script */
@@ -157,6 +189,735 @@ ShellRoot {
     Process {
         id: nightLightToggle
         command: ["vitrina-nightlight"]
+    }
+
+    /* ---------------------------------------------------------------- launcher */
+    property var islandWindow: null
+    property bool launcherOpen: false
+    property bool launcherClosing: false
+    property bool launcherReady: false
+    property var launcherScreen: null
+    property string launcherMode: "apps"
+    property string launcherQuery: ""
+    property int launcherIndex: 0
+    property var launcherItems: []
+    property string launcherHint: ""
+    property bool launcherLoading: false
+    property var windowData: []
+    property string emojiRaw: ""
+    property var emojiData: []
+    property bool emojiLoaded: false
+
+    property var clipboardHist: []
+
+    readonly property var launcherModes: [
+        { "id": "apps", "label": "Apps", "icon": "", "placeholder": "Search" },
+        { "id": "windows", "label": "Windows", "icon": "", "placeholder": "Search" },
+        { "id": "calc", "label": "Calc", "icon": "󰪚", "placeholder": "Enter an expression…" },
+        { "id": "emoji", "label": "Emoji", "icon": "󰞅", "placeholder": "Search" },
+        { "id": "clipboard", "label": "Clipboard", "icon": "󰱿", "placeholder": "Search clipboard" }
+    ]
+    readonly property var launcherModeInfo: {
+        const found = launcherModes.find(m => m.id === launcherMode)
+        return found ? found : launcherModes[0]
+    }
+
+    IpcHandler {
+        target: "vitrina"
+
+        function launcher(mode: string): void {
+            shell.openLauncher(mode)
+        }
+
+        function close(): void {
+            shell.closeLauncher()
+        }
+    }
+
+    function openLauncher(mode) {
+        const target = launcherModes.some(m => m.id === mode) ? mode : "apps"
+        if (launcherOpen && launcherMode === target) {
+            if (launcherClosing) {
+                /* mid-close-animation: the toggle acts as a cancel */
+                launcherClosing = false
+                launcherCloseTimer.stop()
+            } else {
+                closeLauncher()
+            }
+            return
+        }
+        launcherClosing = false
+        launcherCloseTimer.stop()
+        launcherMode = target
+        launcherQuery = ""
+        launcherIndex = 0
+        launcherOpen = true
+        launcherReady = false
+        launcherScreen = null
+        /* niri only gives exclusive keyboard focus to layer surfaces on the
+           active output, so the overlay must map on the focused screen */
+        launcherScreenProc.running = false
+        launcherScreenProc.running = true
+        if (islandWindow) {
+            islandWindow.powerOpen = false
+            islandWindow.trayOpen = false
+        }
+        if (target === "windows")
+            windowProc.running = true
+        else if (target === "emoji")
+            ensureEmoji()
+        else if (target === "clipboard")
+            clipboardFile.reload()
+        refreshLauncher()
+    }
+
+    function closeLauncher() {
+        if (!launcherOpen || launcherClosing)
+            return
+        /* keep the overlay alive briefly so the panel can shrink back to
+           pill size before its window is destroyed */
+        launcherClosing = true
+        launcherCloseTimer.restart()
+    }
+
+    function setLauncherMode(mode) {
+        if (mode === launcherMode)
+            return
+        launcherMode = mode
+        launcherQuery = ""
+        launcherIndex = 0
+        if (mode === "windows")
+            windowProc.running = true
+        else if (mode === "emoji")
+            ensureEmoji()
+        else if (mode === "clipboard")
+            clipboardFile.reload()
+        refreshLauncher()
+    }
+
+    function setLauncherQuery(query) {
+        const next = String(query)
+        if (next === launcherQuery)
+            return
+        launcherQuery = next
+        launcherIndex = 0
+        refreshLauncher()
+    }
+
+    function cycleLauncherMode(step) {
+        const at = launcherModes.findIndex(m => m.id === launcherMode)
+        const next = (at + (step < 0 ? -1 : 1) + launcherModes.length) % launcherModes.length
+        setLauncherMode(launcherModes[next].id)
+    }
+
+    function launcherMove(step) {
+        const count = launcherItems.length
+        if (count === 0)
+            return
+        launcherIndex = (launcherIndex + step + count) % count
+    }
+
+    function launcherActivate(index) {
+        if (index < 0 || index >= launcherItems.length)
+            return
+        const item = launcherItems[index]
+        if (item.kind === "app") {
+            const entry = DesktopEntries.byId(item.entryId)
+            if (entry)
+                entry.execute()
+        } else if (item.kind === "window") {
+            /* let the overlay drop keyboard focus first, otherwise niri
+               restores focus to the previously focused window */
+            const id = item.windowId
+            closeLauncher()
+            launcherFocusTimer.windowId = id
+            launcherFocusTimer.restart()
+            return
+        } else if (item.kind === "clipboard") {
+            /* copy value back to clipboard and re-store to move to top */
+            shell.closeLauncher()
+            clipboardCopyTimer.value = item.copyText
+            clipboardCopyTimer.restart()
+            return
+        } else if (item.copyText && item.copyText.length > 0) {
+            Quickshell.clipboardText = item.copyText
+        } else {
+            return
+        }
+        closeLauncher()
+    }
+
+    function launcherNorm(text) {
+        return String(text || "").toLowerCase()
+    }
+
+    function launcherTerms() {
+        const q = launcherNorm(launcherQuery).trim()
+        return q.length === 0 ? [] : q.split(/\s+/)
+    }
+
+    function launcherMatches(haystack, terms) {
+        for (let i = 0; i < terms.length; i++) {
+            if (!haystack.includes(terms[i]))
+                return false
+        }
+        return true
+    }
+
+    function refreshLauncher() {
+        if (!launcherOpen)
+            return
+        launcherLoading = false
+        if (launcherMode === "apps") {
+            launcherItems = appLauncherItems()
+            launcherHint = "No applications match."
+        } else if (launcherMode === "windows") {
+            launcherLoading = windowProc.running
+            launcherItems = windowLauncherItems()
+            launcherHint = launcherLoading ? "Loading windows…" : "No windows match."
+        } else if (launcherMode === "calc") {
+            launcherItems = calcLauncherItems()
+            launcherHint = "Type an expression — e.g. (12 + 3) * 4 or sqrt(2). Enter copies the result."
+        } else if (launcherMode === "emoji") {
+            ensureEmoji()
+            launcherItems = emojiLauncherItems()
+            launcherHint = emojiLoaded ? "No emoji match." : "Emoji dataset is not installed yet."
+        } else if (launcherMode === "clipboard") {
+            launcherItems = clipboardLauncherItems()
+            launcherHint = "No clipboard history entries match."
+        }
+        if (launcherIndex >= launcherItems.length)
+            launcherIndex = Math.max(0, launcherItems.length - 1)
+    }
+
+    function appLauncherItems() {
+        const terms = launcherTerms()
+        const query = launcherNorm(launcherQuery).trim()
+        const out = []
+        const apps = DesktopEntries.applications.values
+        for (let i = 0; i < apps.length; i++) {
+            const entry = apps[i]
+            if (entry.noDisplay)
+                continue
+            const haystack = launcherNorm([entry.name, entry.genericName, entry.comment, entry.id, entry.keywords.join(" "), entry.categories.join(" ")].join(" "))
+            if (!launcherMatches(haystack, terms))
+                continue
+            const name = launcherNorm(entry.name)
+            const score = query.length === 0 ? 0 : (name.startsWith(query) ? 0 : (name.includes(query) ? 1 : 2))
+            out.push({
+                score: score,
+                name: entry.name,
+                item: {
+                    kind: "app",
+                    entryId: entry.id,
+                    title: entry.name,
+                    subtitle: entry.genericName.length > 0 ? entry.genericName : entry.comment,
+                    icon: entry.icon.length > 0 ? Quickshell.iconPath(entry.icon, true) : ""
+                }
+            })
+        }
+        out.sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
+        return out.slice(0, 200).map(x => x.item)
+    }
+
+    function windowLauncherItems() {
+        const terms = launcherTerms()
+        const out = []
+        for (let i = 0; i < windowData.length; i++) {
+            const win = windowData[i]
+            const title = win.title && win.title.length > 0 ? win.title : (win.app_id || "Untitled")
+            const app = win.app_id || ""
+            if (!launcherMatches(launcherNorm(title + " " + app), terms))
+                continue
+            let icon = ""
+            if (app.length > 0) {
+                const entry = DesktopEntries.heuristicLookup(app)
+                if (entry && entry.icon.length > 0)
+                    icon = Quickshell.iconPath(entry.icon, true)
+                if (icon.length === 0)
+                    icon = Quickshell.iconPath(app, true)
+            }
+            out.push({
+                kind: "window",
+                windowId: win.id,
+                title: title,
+                subtitle: app + (win.is_focused ? "  ·  focused" : ""),
+                icon: icon
+            })
+        }
+        out.sort((a, b) => (a.subtitle.endsWith("focused") ? 0 : 1) - (b.subtitle.endsWith("focused") ? 0 : 1) || a.title.localeCompare(b.title))
+        return out
+    }
+
+    function ensureEmoji() {
+        if (emojiLoaded || emojiRaw.length === 0)
+            return
+        const lines = emojiRaw.split("\n")
+        const out = []
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i]
+            if (line.length === 0)
+                continue
+            const parts = line.split("\t")
+            if (parts.length < 2)
+                continue
+            const category = parts[1] || ""
+            const subcategory = parts[2] || ""
+            const name = parts[3] || ""
+            const keywords = parts[4] || ""
+            out.push({
+                char: parts[0],
+                name: name,
+                category: category,
+                haystack: launcherNorm([category, subcategory, name, keywords].join(" "))
+            })
+        }
+        emojiData = out
+        emojiLoaded = true
+    }
+
+    function emojiLauncherItems() {
+        if (!emojiLoaded)
+            return []
+        const terms = launcherTerms()
+        const query = launcherNorm(launcherQuery).trim()
+        const out = []
+        for (let i = 0; i < emojiData.length; i++) {
+            const emoji = emojiData[i]
+            if (!launcherMatches(emoji.haystack, terms))
+                continue
+            const name = launcherNorm(emoji.name)
+            const score = query.length === 0 ? 0 : (name.startsWith(query) ? 0 : (name.includes(query) ? 1 : 2))
+            out.push({ score: score, emoji: emoji })
+        }
+        out.sort((a, b) => a.score - b.score || a.emoji.name.localeCompare(b.emoji.name))
+        return out.slice(0, 200).map(x => ({
+            kind: "emoji",
+            char: x.emoji.char,
+            title: x.emoji.name,
+            subtitle: x.emoji.category,
+            icon: "",
+            copyText: x.emoji.char
+        }))
+    }
+
+    function clipboardLauncherItems() {
+        const terms = launcherTerms()
+        const query = launcherNorm(launcherQuery).trim()
+        const out = []
+        for (let i = 0; i < clipboardHist.length; i++) {
+            const entry = clipboardHist[i]
+            const haystack = launcherNorm(entry.value)
+            if (!launcherMatches(haystack, terms))
+                continue
+            /* score by recency when idle, alphabetically when searching */
+            const score = query.length === 0 ? i : 0
+            const display = entry.value.replace(/\n/g, " ").trim()
+            out.push({
+                score: score,
+                display: display,
+                value: entry.value
+            })
+        }
+        out.sort((a, b) => query.length === 0 ? a.score - b.score : (a.score - b.score || a.display.localeCompare(b.display)))
+        return out.slice(0, 100).map(x => ({
+            kind: "clipboard",
+            title: x.display.length > 80 ? x.display.slice(0, 80) + "…" : x.display,
+            subtitle: "clipse entry",
+            icon: "",
+            copyText: x.value
+        }))
+    }
+
+    function calcLauncherItems() {
+        const expression = launcherQuery.trim()
+        if (expression.length === 0)
+            return []
+        const value = evalExpression(expression)
+        if (value === null || !isFinite(value)) {
+            return [{
+                kind: "calc-error",
+                title: "Invalid expression",
+                subtitle: "Try something like (12 + 3) * 4 or sqrt(2)",
+                icon: "",
+                copyText: ""
+            }]
+        }
+        const result = fmtNumber(value)
+        return [{
+            kind: "calc",
+            title: result,
+            subtitle: expression + "  ·  Enter copies",
+            icon: "",
+            copyText: result
+        }]
+    }
+
+    function fmtNumber(value) {
+        const abs = Math.abs(value)
+        if (abs !== 0 && (abs >= 1e12 || abs < 1e-9))
+            return value.toExponential(8).replace(/\.?0+e/, "e")
+        const rounded = Math.round(value * 1e10) / 1e10
+        return String(rounded)
+    }
+
+    /* small recursive-descent evaluator: + - * / ^, parentheses, implicit
+       multiplication, postfix %, constants and the usual math functions */
+    function evalExpression(input) {
+        const src = String(input)
+            .replace(/×/g, "*")
+            .replace(/÷/g, "/")
+            .replace(/−/g, "-")
+            .replace(/π/g, "pi")
+            .toLowerCase()
+        let pos = 0
+
+        function fail() {
+            throw new Error("invalid expression")
+        }
+
+        function skip() {
+            while (pos < src.length && /\s/.test(src.charAt(pos)))
+                pos++
+        }
+
+        function peek() {
+            skip()
+            return src.charAt(pos)
+        }
+
+        function consume(ch) {
+            skip()
+            if (src.charAt(pos) !== ch)
+                return false
+            pos++
+            return true
+        }
+
+        function parseNumber() {
+            skip()
+            const start = pos
+            while (pos < src.length && /[0-9.]/.test(src.charAt(pos)))
+                pos++
+            if (start === pos)
+                fail()
+            const number = parseFloat(src.slice(start, pos))
+            if (!isFinite(number))
+                fail()
+            return number
+        }
+
+        function parseIdentifier() {
+            skip()
+            const start = pos
+            while (pos < src.length && /[a-z0-9_]/i.test(src.charAt(pos)))
+                pos++
+            return src.slice(start, pos).toLowerCase()
+        }
+
+        function callFunction(name, args) {
+            const first = args.length > 0 ? args[0] : 0
+            switch (name) {
+            case "sqrt":
+                return Math.sqrt(first)
+            case "cbrt":
+                return Math.cbrt(first)
+            case "abs":
+                return Math.abs(first)
+            case "floor":
+                return Math.floor(first)
+            case "ceil":
+                return Math.ceil(first)
+            case "round":
+                return Math.round(first)
+            case "sin":
+                return Math.sin(first)
+            case "cos":
+                return Math.cos(first)
+            case "tan":
+                return Math.tan(first)
+            case "asin":
+                return Math.asin(first)
+            case "acos":
+                return Math.acos(first)
+            case "atan":
+                return Math.atan(first)
+            case "log":
+                return args.length > 1 ? Math.log(args[1]) / Math.log(first) : Math.log10(first)
+            case "ln":
+                return Math.log(first)
+            case "exp":
+                return Math.exp(first)
+            case "pow":
+                return Math.pow(first, args.length > 1 ? args[1] : 2)
+            case "min":
+                return Math.min.apply(null, args)
+            case "max":
+                return Math.max.apply(null, args)
+            case "hypot":
+                return Math.hypot.apply(null, args)
+            default:
+                fail()
+            }
+        }
+
+        function parsePrimary() {
+            skip()
+            const ch = src.charAt(pos)
+            if (ch === "(") {
+                pos++
+                const value = parseExpr()
+                if (!consume(")"))
+                    fail()
+                return value
+            }
+            if (/[0-9.]/.test(ch)) {
+                let value = parseNumber()
+                if (peek() === "%") {
+                    pos++
+                    value /= 100
+                }
+                return value
+            }
+            const ident = parseIdentifier()
+            if (ident.length === 0)
+                fail()
+            if (ident === "pi")
+                return Math.PI
+            if (ident === "e")
+                return Math.E
+            if (ident === "tau")
+                return Math.PI * 2
+            if (peek() === "(") {
+                pos++
+                const args = []
+                if (peek() !== ")") {
+                    args.push(parseExpr())
+                    while (consume(","))
+                        args.push(parseExpr())
+                }
+                if (!consume(")"))
+                    fail()
+                return callFunction(ident, args)
+            }
+            fail()
+        }
+
+        function startsPrimary() {
+            const ch = peek()
+            return ch === "(" || /[0-9.]/.test(ch) || /[a-z]/i.test(ch)
+        }
+
+        function parsePower() {
+            const base = parsePrimary()
+            if (consume("^"))
+                return Math.pow(base, parseUnary())
+            return base
+        }
+
+        function parseUnary() {
+            skip()
+            if (consume("-"))
+                return -parseUnary()
+            if (consume("+"))
+                return parseUnary()
+            return parsePower()
+        }
+
+        function parseTerm() {
+            let value = parseUnary()
+            while (true) {
+                const ch = peek()
+                if (ch === "*") {
+                    pos++
+                    value *= parseUnary()
+                } else if (ch === "/") {
+                    pos++
+                    const divisor = parseUnary()
+                    if (divisor === 0)
+                        fail()
+                    value /= divisor
+                } else if (startsPrimary()) {
+                    value *= parseUnary()
+                } else {
+                    break
+                }
+            }
+            return value
+        }
+
+        function parseExpr() {
+            let value = parseTerm()
+            while (true) {
+                const ch = peek()
+                if (ch === "+") {
+                    pos++
+                    value += parseTerm()
+                } else if (ch === "-") {
+                    pos++
+                    value -= parseTerm()
+                } else {
+                    break
+                }
+            }
+            return value
+        }
+
+        try {
+            if (src.trim().length === 0)
+                return null
+            const value = parseExpr()
+            skip()
+            if (pos !== src.length || !isFinite(value))
+                return null
+            return value
+        } catch (e) {
+            return null
+        }
+    }
+
+    function launcherFinishClose() {
+        /* drop the window first — resetting closing while the panel still
+           exists would flip it back to "shown" before destruction */
+        launcherOpen = false
+        launcherReady = false
+        launcherClosing = false
+        launcherQuery = ""
+        launcherIndex = 0
+        launcherItems = []
+        launcherHint = ""
+    }
+
+    Timer {
+        id: launcherCloseTimer
+        /* the panel shrink animation runs 240ms */
+        interval: 260
+        onTriggered: shell.launcherFinishClose()
+    }
+
+    Timer {
+        id: launcherFocusTimer
+        property int windowId: 0
+        /* must outlast the close animation — the overlay holds keyboard
+           focus until its window is destroyed */
+        interval: 340
+        onTriggered: {
+            if (windowId > 0)
+                Quickshell.execDetached(["sh", "-c", `NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg action focus-window --id ${windowId}`])
+        }
+    }
+
+    Connections {
+        target: DesktopEntries
+        function onApplicationsChanged() {
+            if (shell.launcherOpen && shell.launcherMode === "apps")
+                shell.refreshLauncher()
+        }
+    }
+
+    Process {
+        id: launcherScreenProc
+        command: ["sh", "-c", "NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg --json focused-output"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let name = ""
+                try {
+                    name = JSON.parse(this.text).name || ""
+                } catch (e) {
+                    name = ""
+                }
+                shell.launcherScreen = Quickshell.screens.find(s => s.name === name) || shell.mainScreen
+                shell.launcherReady = true
+            }
+        }
+    }
+
+    Process {
+        id: windowProc
+        command: ["sh", "-c", "NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg --json windows"]
+        running: false
+        onRunningChanged: {
+            if (shell.launcherOpen && shell.launcherMode === "windows")
+                shell.refreshLauncher()
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let list = []
+                try {
+                    list = JSON.parse(this.text)
+                } catch (e) {
+                    list = []
+                }
+                shell.windowData = Array.isArray(list) ? list : []
+                if (shell.launcherOpen && shell.launcherMode === "windows")
+                    shell.refreshLauncher()
+            }
+        }
+    }
+
+    FileView {
+        id: emojiFile
+        path: `${Quickshell.env("HOME")}/.local/share/vitrina/emojis.txt`
+        printErrors: false
+        onLoaded: {
+            shell.emojiRaw = text()
+            if (shell.launcherOpen && shell.launcherMode === "emoji")
+                shell.ensureEmoji()
+        }
+        onLoadFailed: shell.emojiRaw = ""
+    }
+
+    /* clipboard history is served by clipse (https://github.com/savedra1/clipse),
+       which stores entries as JSON in ~/.config/clipse/clipboard_history.json.
+       The FileView below watches that file so entries are always current. */
+    FileView {
+        id: clipboardFile
+        path: `${Quickshell.env("HOME")}/.config/clipse/clipboard_history.json`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            const out = []
+            try {
+                const data = JSON.parse(this.text)
+                const entries = data.clipboardHistory
+                if (Array.isArray(entries)) {
+                    for (let i = 0; i < entries.length; i++) {
+                        const entry = entries[i]
+                        if (entry.value && entry.value.length > 0) {
+                            out.push({
+                                value: entry.value,
+                                pinned: entry.pinned === true,
+                                recorded: entry.recorded || ""
+                            })
+                        }
+                    }
+                }
+            } catch (e) {
+                /* JSON parse may fail while clipse is writing; keep old data */
+            }
+            shell.clipboardHist = out
+            if (shell.launcherOpen && shell.launcherMode === "clipboard")
+                shell.refreshLauncher()
+        }
+        onLoadFailed: {
+            shell.clipboardHist = []
+            if (shell.launcherOpen && shell.launcherMode === "clipboard")
+                shell.refreshLauncher()
+        }
+    }
+
+    Timer {
+        id: clipboardCopyTimer
+        property string value: ""
+        interval: 260 /* must outlast the close animation — drop keyboard focus first */
+        onTriggered: {
+            if (value.length > 0)
+                /* write the historic value back to the clipboard and
+                   re-store via clipse so it surfaces to the top of history */
+                Quickshell.execDetached(["sh", "-c", `printf '%s' "$1" | wl-copy; printf '%s' "$1" | clipse -wl-store`, "--", value])
+        }
     }
 
     Timer {
@@ -702,6 +1463,7 @@ ShellRoot {
                     island.trayMenuStack = []
                     island.trayOpen = false
                     island.expanded = false
+                    shell.closeLauncher()
                 }
             }
 
@@ -718,6 +1480,18 @@ ShellRoot {
             }
 
             property bool expanded: false
+            onExpandedChanged: {
+                shell.islandExpanded = expanded
+                if (expanded)
+                    shell.flashNotif = null
+                else
+                    shell.closeLauncher()
+            }
+            Component.onCompleted: shell.islandWindow = island
+            Component.onDestruction: {
+                if (shell.islandWindow === island)
+                    shell.islandWindow = null
+            }
             property bool outOpen: false
             property bool inOpen: false
             property bool powerOpen: false
@@ -991,6 +1765,18 @@ ShellRoot {
                     }
                 }
 
+                MouseArea {
+                    /* clicking the toast opens the island on the notifications */
+                    x: 0
+                    y: 0
+                    width: notifRow.width + 24
+                    height: 26
+                    enabled: notifRow.active
+                    visible: notifRow.active
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: island.toggleExpand()
+                }
+
             MouseArea {
                 x: island.expanded ? (morph.width - headRow.width) / 2 : 0
                 y: 0
@@ -1063,11 +1849,11 @@ ShellRoot {
                         model: [{
                             "id": "music",
                             "label": "music",
-                            "icon": "\uf001"
+                            "icon": ""
                         }, {
                             "id": "settings",
                             "label": "settings",
-                            "icon": "\uf013"
+                            "icon": ""
                         }]
 
                         delegate: Item {
@@ -2133,6 +2919,50 @@ ShellRoot {
                                                         MouseArea {
                                                             anchors.fill: parent
                                                             onClicked: nightLightToggle.running = true
+                                                        }
+                                                    }
+
+                                                    Rectangle {
+                                                        width: (parent.width - 8) / 2
+                                                        height: 56
+                                                        radius: 16
+                                                        color: shell.dnd ? Colors.alpha(Colors.accent, "2e") : Colors.alpha(Colors.fg, "0a")
+                                                        border.width: 1
+                                                        border.color: shell.dnd ? "transparent" : Colors.alpha(Colors.fg, "12")
+
+                                                        Text {
+                                                            id: dndIcon
+                                                            x: 12
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            text: "\uf1f6"
+                                                            font.family: "Maple Mono NF"
+                                                            font.pixelSize: 18
+                                                            color: shell.dnd ? Colors.accent : Colors.muted
+                                                        }
+
+                                                        Column {
+                                                            anchors.left: dndIcon.right
+                                                            anchors.leftMargin: 10
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            spacing: 1
+
+                                                            Text {
+                                                                text: "Do Not Disturb"
+                                                                font.pixelSize: 11
+                                                                font.weight: Font.DemiBold
+                                                                color: shell.dnd ? Colors.fg : Colors.muted
+                                                            }
+
+                                                            Text {
+                                                                text: shell.dnd ? "On" : "Off"
+                                                                font.pixelSize: 10
+                                                                color: Colors.muted
+                                                            }
+                                                        }
+
+                                                        MouseArea {
+                                                            anchors.fill: parent
+                                                            onClicked: shell.setDnd(!shell.dnd)
                                                         }
                                                     }
                                                 }
@@ -3504,6 +4334,98 @@ ShellRoot {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    Variants {
+        /* fresh layer surface on every open — niri only grants keyboard
+           focus to newly mapped layer surfaces, so the launcher must live
+           in its own short-lived overlay window rather than the island */
+        model: shell.launcherOpen && shell.launcherReady && shell.launcherScreen ? [shell.launcherScreen] : []
+
+        PanelWindow {
+            id: launcherWin
+            required property var modelData
+            screen: modelData
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+            exclusiveZone: -1
+            color: "transparent"
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            mask: Region {
+                item: outsideArea
+            }
+
+            /* click anywhere outside the panel to dismiss */
+            MouseArea {
+                id: outsideArea
+                anchors.fill: parent
+                onClicked: shell.closeLauncher()
+            }
+
+            Rectangle {
+                id: launcherPanel
+                property bool shown: false
+                property bool closing: shell.launcherClosing
+
+                onClosingChanged: launcherPanel.shown = !launcherPanel.closing
+
+                x: (launcherWin.width - launcherPanel.width) / 2
+                y: 2
+                width: shown ? 740 : 220
+                height: shown ? Math.min(500, launcherWin.height - 80) : 26
+                radius: shown ? 22 : 13
+                color: Colors.bg
+                border.width: 1
+                border.color: Colors.alpha(Colors.accent, "3d")
+
+                Component.onCompleted: openTimer.restart()
+
+                Timer {
+                    id: openTimer
+                    interval: 16
+                    onTriggered: launcherPanel.shown = true
+                }
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 240
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 240
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Behavior on radius {
+                    NumberAnimation {
+                        duration: 200
+                    }
+                }
+
+                /* swallow clicks inside the panel so they don't fall
+                   through to the dismiss handler */
+                MouseArea {
+                    anchors.fill: parent
+                }
+
+                Launcher {
+                    x: 13
+                    y: 34
+                    width: launcherPanel.width - 26
+                    height: launcherPanel.height - 46
+                    host: shell
                 }
             }
         }

@@ -81,5 +81,8 @@ in
       source = ./vitrina;
       recursive = true;
     };
+
+    # emoji search dataset, shared with rofi-emoji so both stay in sync
+    xdg.dataFile."vitrina/emojis.txt".source = "${pkgs.rofi-emoji}/share/rofi-emoji/all_emojis.txt";
   };
 }
