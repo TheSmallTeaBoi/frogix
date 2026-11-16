@@ -33,6 +33,7 @@
     # steam.enable = false;
     # wine.enable = false;
     # gaming.enable = false;
+    # vial.enable = false;          # no Vial GUI / hidraw rule on this machine
     # musicMaking.enable = false;    # realtime audio tweaks + the plugin rack
     # "emeet-linux".enable = false;
     # "xodus-nexus".enable = false;

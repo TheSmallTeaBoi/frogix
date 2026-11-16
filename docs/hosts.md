@@ -65,7 +65,6 @@ frogix = {
 
   networkd = { interfaces = [ "enp38s0" ]; firewall = false; };  # firewall default is on
   services = {
-    vialSerial = "vial:f64c2b3c";
     navidrome.musicFolder = "/storage/Music/";
     navidrome.address = "0.0.0.0";             # universal default is 127.0.0.1
     syncthing.devices = { Phone = "..."; JTB = "..."; /* ... */ };

@@ -20,6 +20,7 @@
     ./steam.nix
     ./torbox.nix
     ./torbox-music-sync.nix
+    ./vial.nix
     ./wine.nix
     ./xodus-nexus.nix
   ];

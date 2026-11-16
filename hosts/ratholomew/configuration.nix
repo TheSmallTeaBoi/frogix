@@ -50,7 +50,6 @@
     };
 
     services = {
-      vialSerial = "vial:f64c2b3c";
       navidrome.musicFolder = "/storage/Music/";
       navidrome.address = "0.0.0.0";
       syncthing.devices = {

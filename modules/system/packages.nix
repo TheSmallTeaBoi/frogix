@@ -28,7 +28,7 @@ in
     terminal = pack "core CLI tools (fetch, browse, clipboard, av wrangling, compression)";
     rice = pack "ricing CLI (pywal, mako, rofi)";
     coding = pack "dev tooling (nix-alien, devenv, secret/keyring CLIs)";
-    keyboard = pack "QMK firmware + vial tooling";
+    keyboard = pack "QMK firmware tooling (the Vial GUI lives in frogix.vial)";
     gui = pack "personal GUI apps (obsidian, calibre, warpinator, obs, pandoc)";
     music = pack "music listening/library tools (production plugins live in frogix.musicMaking)";
     piracy = pack "aria2 + stremio :)";
@@ -98,7 +98,6 @@ in
       environment.systemPackages = with pkgs; [
         qmk
         qmk-udev-rules
-        vial
       ];
     })
 

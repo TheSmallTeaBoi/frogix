@@ -18,11 +18,6 @@ in
         earlyoom, input-remapper, mysql
       '';
     };
-    vialSerial = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "serial fragment matched by the Vial udev rule (null = no vial rule)";
-    };
     navidrome = {
       musicFolder = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
@@ -91,10 +86,6 @@ in
       udev.extraRules =
         # Udev
         ''
-          # This is needed for Vial and plover
-          ${lib.optionalString (cfg.vialSerial != null)
-            "KERNEL==\"hidraw*\", SUBSYSTEM==\"hidraw\", ATTRS{serial}==\"*${cfg.vialSerial}*\", MODE=\"0660\", GROUP=\"users\", TAG+=\"uaccess\", TAG+=\"udev-acl\""
-          }
           KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
 
           # Allows Sunshine to access /dev/uinput

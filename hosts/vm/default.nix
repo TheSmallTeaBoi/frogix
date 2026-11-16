@@ -28,6 +28,7 @@
 
     services.enable = false;
     packages.enable = false;
+    vial.enable = false;
     nvidia.enable = false;
     display.enable = false;
     input.enable = false;
