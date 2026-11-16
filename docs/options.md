@@ -133,8 +133,8 @@ the release the machine was first installed on. **never bump it.**
 |---|---|---|
 | `frogix.screens.main` | str | **required** — the primary monitor; niri/pywal/vitrina reference it directly |
 | `frogix.screens.left` / `.right` | nullOr str | null (niri/pywal use them; rules referencing an unset screen are omitted) |
-| `frogix.screens.outputs` | list of attrs | `[]` — niri monitor rules (mode/scale/position/transform); host hardware layout |
-| `frogix.wallpapersDir` | str | `~/Pictures/Wallpapers` |
+| `frogix.screens.outputs` | list of attrs | `[]` (optional) — niri monitor rules (mode/scale/position/transform); host hardware layout. empty = niri defaults: preferred mode, auto position |
+| `frogix.wallpapersDir` | str | `~/Pictures/Wallpapers` — seeded with the bundled `wallpaper.png` while it holds no files |
 
 ### identity knobs (null = feature writes nothing)
 | option | type | default |

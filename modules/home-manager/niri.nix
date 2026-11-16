@@ -69,7 +69,11 @@ in
           __GLX_VENDOR_LIBRARY_NAME = "nvidia";
         };
 
-        output = screens.outputs;
+        # NOTE: niri-nix's toKDL renders an empty list as a bare node with no
+        # arguments, and niri requires a `name` argument on `output` — so an
+        # empty rule list must omit the key entirely (build-time `niri validate`
+        # would fail otherwise).
+        output = lib.mkIf (screens.outputs != [ ]) screens.outputs;
 
         input = {
           keyboard = {
@@ -102,7 +106,7 @@ in
             _args = [
               "${pkgs.bash}/bin/bash"
               "-c"
-              "until ${pkgs.awww}/bin/awww query >/dev/null 2>&1 && [ -S /run/user/$(id -u)/emacs/server ]; do sleep 0.2; done && set-wal \"$(find /storage/Walls/ | shuf -n 1)\""
+              "until ${pkgs.awww}/bin/awww query >/dev/null 2>&1 && [ -S /run/user/$(id -u)/emacs/server ]; do sleep 0.2; done && set-wal \"$(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)\""
             ];
           }
           { _args = [ "hyprlock --grace 0" ]; }
@@ -151,9 +155,7 @@ in
           }
         ];
 
-        workspace = [
-        ]
-        ++ lib.optionals (left_screen != null) [
+        workspace = lib.mkIf (left_screen != null) [
           {
             _args = [ "󰖟" ]; # browser
             open-on-output = main_screen;

@@ -56,7 +56,7 @@
     # niri/pywal/hypridle need at least the main monitor name (`niri msg
     # outputs` lists them); rules referencing an unset screen are omitted.
     # hosts/ratholomew/configuration.nix has a full three-screen example.
-    frogix.screens.main = "DP-1";  # TODO: your main monitor
+    frogix.screens.main = "DP-1";  # TODO: your main monitor (required — see /sys/class/drm/*/status for names)
     # frogix.screens.left = "HDMI-A-1";
     # frogix.screens.right = "HDMI-A-3";
 

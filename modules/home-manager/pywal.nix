@@ -923,5 +923,17 @@ in
       fi
     '';
 
+    # an empty wallpapers dir means set-wal has nothing to pick and vitrina
+    # waits on colors.json forever. copy the bundled wallpaper in while the
+    # dir holds no files — hosts with a real collection (ratholomew's
+    # /storage/Walls) or a deliberately deleted wallpaper.png stay untouched.
+    home.activation.seedWallpaper = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run mkdir -p "${config.frogix.wallpapersDir}"
+      if [ -z "$(find "${config.frogix.wallpapersDir}" -type f -print -quit)" ]; then
+        verboseEcho "Seeding wallpapers dir with the bundled wallpaper"
+        run cp "${./wallpaper.png}" "${config.frogix.wallpapersDir}/wallpaper.png"
+      fi
+    '';
+
   };
 }
