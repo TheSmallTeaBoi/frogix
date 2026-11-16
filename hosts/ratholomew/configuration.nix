@@ -81,6 +81,16 @@
     display.autoLogin = true;
   };
 
+  # host service choices — plain NixOS options, deliberately NOT frogix.*
+  # toggles (services with no frogix-specific value are enabled directly;
+  # see docs/architecture.md "module contract")
+  programs.droidcam.enable = true;
+  programs.dconf.enable = true;
+  programs.virt-manager.enable = true;
+  users.extraGroups.libvirtd.members = [ "theo" ];
+  virtualisation.libvirtd.enable = true;
+  virtualisation.spiceUSBRedirection.enable = true;
+
   programs.nano.enable = false;
 
   home-manager.users.theo = {
@@ -132,7 +142,16 @@
     frogix.audio.mixerElement = "Emotiva Little Ego";
     frogix.beets.libraryDir = "/storage/Music/";
     frogix.beets.convertDest = "/storage/music-lossier/";
-    frogix.easyeffects.preset = "Voice Moondrop";
+    # host service choices, hm side (not frogix.* toggles):
+    services.easyeffects = {
+      enable = true;
+      preset = "Voice Moondrop";
+    };
+    programs.lazygit.enable = true;
+    programs.zoxide = {
+      enable = true;
+      options = [ "--cmd cd" ];
+    };
     frogix.git.email = "theoiturri@tutanota.com";
     frogix.git.name = "TheSmallTeaBoi";
     frogix.iamb.matrixId = "@thesmallteaboi:matrix.org";

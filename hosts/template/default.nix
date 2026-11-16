@@ -33,8 +33,6 @@
     # steam.enable = false;
     # wine.enable = false;
     # gaming.enable = false;
-    # virt.enable = false;
-    # droidcam.enable = false;
     # musicMaking.enable = false;    # realtime audio tweaks + the plugin rack
     # "emeet-linux".enable = false;
     # "xodus-nexus".enable = false;
@@ -53,8 +51,30 @@
   # first login needs a password; `passwd` after booting, then delete this line
   users.users.you.initialPassword = "changeme";
 
+  # host service choices — plain NixOS options, deliberately NOT frogix.*
+  # toggles (services with no frogix-specific value are enabled directly;
+  # see docs/architecture.md "module contract"). delete what you don't want:
+  programs.droidcam.enable = true;
+  programs.dconf.enable = true;
+  programs.virt-manager.enable = true;
+  users.extraGroups.libvirtd.members = [ "you" ];
+  virtualisation.libvirtd.enable = true;
+  virtualisation.spiceUSBRedirection.enable = true;
+
+  # firefox is NOT a frogix area — qutebrowser is the rice browser. if you want
+  # firefox too, it's a plain host choice:
+  # programs.firefox.enable = true;
+
   home-manager.users.you = {
     frogix.home.stateVersion = "26.11"; # same rule as system.stateVersion
+
+    # host service choices, hm side (not frogix.* toggles):
+    services.easyeffects.enable = true;
+    programs.lazygit.enable = true;
+    programs.zoxide = {
+      enable = true;
+      options = [ "--cmd cd" ];
+    };
 
     # niri/pywal/hypridle need at least the main monitor name (`niri msg
     # outputs` lists them); rules referencing an unset screen are omitted.

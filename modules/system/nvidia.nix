@@ -11,7 +11,7 @@ in
   options.frogix.nvidia.enable = lib.mkOption {
     type = lib.types.bool;
     default = config.frogix.enable;
-    description = "nvidia graphics stack: driver, vaapi env and firefox hw accel";
+    description = "nvidia graphics stack: driver + vaapi env (firefox hw-accel prefs apply if a host enables firefox)";
   };
 
   config = lib.mkIf cfg.enable {
@@ -43,6 +43,10 @@ in
       package = config.boot.kernelPackages.nvidiaPackages.stable;
     };
 
+    # firefox hw-accel prefs for the nvidia stack. firefox itself is a host
+    # choice now (add programs.firefox.enable to the host, HM or NixOS side) —
+    # these only take effect when the NixOS-side firefox is enabled, since
+    # `preferences` writes into the wrapped system package
     programs.firefox.preferences =
       let
         ffVersion = config.programs.firefox.package.version;

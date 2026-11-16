@@ -34,9 +34,7 @@
     steam.enable = false;
     wine.enable = false;
     gaming.enable = false;
-    droidcam.enable = false;
     musicMaking.enable = false;
-    virt.enable = false;
     romm.enable = false;
     sops.enable = false;
     torbox.enable = false;
@@ -63,10 +61,9 @@
     frogix.pywal.enable = false;
     frogix.vitrina.enable = false;
     frogix.sunshine.enable = false;
-    frogix.easyeffects.enable = false;
     frogix.audio.enable = false;
     frogix.emacs.enable = false;
-    frogix.browser.enable = false;
+    frogix.qutebrowser.enable = false;
     frogix.hermes.enable = false;
     frogix.iamb.enable = false;
     frogix.mako.enable = false;

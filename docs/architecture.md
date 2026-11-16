@@ -81,6 +81,11 @@ rules:
   `config.home.homeDirectory` (hm) or `config.frogix.user` (nixos), they are
   not knobs
 - personal identity values are knobs with `null`/empty defaults
+- **no enable passthroughs**: a module that would only set some other
+  module's/service's `enable` (droidcam, virt-manager/libvirtd, lazygit,
+  zoxide, easyeffects, firefox — things with no frogix-specific value) does
+  not exist as a frogix area; hosts enable those directly with plain
+  `programs.*.enable` / `services.*.enable` options
 - files must be tracked by git: flakes only see tracked files
 
 ## docs

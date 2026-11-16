@@ -4,13 +4,11 @@
     ./gaming.nix
     ./nix-settings.nix
     ./user.nix
-    ./virt.nix
     ./frogix.nix
     ./nvidia.nix
     ./display.nix
     ./input.nix
     ./boot.nix
-    ./droidcam.nix
     ./emeet-linux.nix
     ./music-making.nix
     ./networkd.nix

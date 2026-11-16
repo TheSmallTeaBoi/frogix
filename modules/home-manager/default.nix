@@ -10,9 +10,8 @@
     ./beets.nix
     ./bottom.nix
     ./desktop.nix
-    ./easyeffects.nix
     ./emacs.nix
-    ./browser.nix
+    ./qutebrowser.nix
     ./git.nix
     ./gtk.nix
     ./hermes.nix
@@ -20,7 +19,6 @@
     # ./hyprland.nix
     ./iamb.nix
     ./kitty.nix
-    ./lazygit.nix
     ./mako.nix
     ./niri.nix
     ./rofi.nix
@@ -32,7 +30,6 @@
     ./vesktop.nix
     ./vitrina.nix
     ./xdg.nix
-    ./zoxide.nix
   ];
   programs.home-manager.enable = true;
 }

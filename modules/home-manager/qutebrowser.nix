@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = config.frogix.browser;
+  cfg = config.frogix.qutebrowser;
   pywalQute = pkgs.fetchFromGitHub {
     owner = "makman12";
     repo = "pywalQute";
@@ -26,10 +26,10 @@ let
   };
 in
 {
-  options.frogix.browser.enable = lib.mkOption {
+  options.frogix.qutebrowser.enable = lib.mkOption {
     type = lib.types.bool;
     default = config.frogix.enable;
-    description = "qutebrowser + firefox with the pywal rice";
+    description = "qutebrowser with the pywal rice: pywalQute colors, ricecdp live light/dark, containers, sponsorblock";
   };
 
   config = lib.mkIf cfg.enable {
@@ -244,79 +244,5 @@ in
 
         '';
     };
-
-    programs.firefox = {
-      enable = true;
-      nativeMessagingHosts = [
-        pkgs.tridactyl-native
-        pkgs.pywalfox-native
-      ];
-      configPath = "${config.home.homeDirectory}/.mozilla/firefox";
-      profiles.${config.frogix.user} = {
-        isDefault = true;
-        extensions.force = true;
-        settings = {
-          # Enable userChrome customizations
-          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-          # Disable translation popup
-          "browser.translations.automaticallyPopup" = false;
-          "browser.cache.disk.enable" = true;
-          "sidebar.verticalTabs" = true;
-          "sidebar.visibility" = "always-show";
-          "sidebar.revamp" = true;
-          "sidebar.animation.expand-on-hover.duration-ms" = 50;
-        };
-      };
-    };
-
-    # Tridactyl config
-    home.file.".config/tridactyl/tridactylrc" = {
-      enable = true;
-      text =
-        #vim
-        ''
-          " Make sure we start from a clean state
-          sanitise tridactyllocal
-
-          " Binds
-          bind g1 tab 1
-          bind g3 tab 3
-          bind g5 tab 5
-          bind g7 tab 7
-          bind g2 tab 2
-          bind g4 tab 4
-          bind g6 tab 6
-          bind g8 tab 8
-          bind g9 tab 9
-          bind gt fillcmdline tab
-
-
-          " Allow Ctrl-c to copy in the commandline
-          unbind --mode=ex <C-c>
-
-          " Open right click menu on links
-          bind ;C composite hint_focus; !s xdotool key Menu
-
-          " Binds for new reader mode
-          bind gr reader
-          bind gR reader --tab
-
-          " Misc settings
-
-          " Set colorscheme
-          colors shydactyl
-
-          " Sane hinting mode
-          set hintfiltermode vimperator-reflow
-          set hintnames short
-
-          set editorcmd kitty --class floating -e $EDITOR
-
-          " Defaults to 300ms but I'm a 'move fast and close the wrong tabs' kinda dude
-          set hintdelay 200
-          set hintchars srtnfgyeia
-        '';
-    };
-
   };
 }

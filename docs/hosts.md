@@ -77,6 +77,15 @@ frogix = {
   display.autoLogin = true;                    # universal default is off
 };
 
+# host service choices — plain NixOS options, NOT frogix.* toggles (services
+# with no frogix-specific value are enabled directly on each host):
+programs.droidcam.enable = true;
+programs.dconf.enable = true;
+programs.virt-manager.enable = true;
+users.extraGroups.libvirtd.members = [ "theo" ];
+virtualisation.libvirtd.enable = true;
+virtualisation.spiceUSBRedirection.enable = true;
+
 home-manager.users.theo = {
   frogix.home.stateVersion = "23.11";          # 23.11 = the release ratholomew was installed on;
                                                # a NEW host uses the current release — never bump afterwards
@@ -89,9 +98,12 @@ home-manager.users.theo = {
   # overrides live under frogix.screens.outputs
   frogix.screens.autoLayout.widths = { left = 768; main = 1920; right = 1366; };
   frogix.wallpapersDir = "/storage/Walls";
+  # host service choices, hm side (not frogix.* toggles):
+  services.easyeffects = { enable = true; preset = "Voice Moondrop"; };
+  programs.lazygit.enable = true;
+  programs.zoxide = { enable = true; options = [ "--cmd cd" ]; };
   frogix.audio.mixerElement = "Emotiva Little Ego";
   frogix.beets = { libraryDir = "/storage/Music/"; convertDest = "/storage/music-lossier/"; };
-  frogix.easyeffects.preset = "Voice Moondrop";
   frogix.git = { email = "theoiturri@tutanota.com"; name = "TheSmallTeaBoi"; };
   frogix.iamb.matrixId = "@thesmallteaboi:matrix.org";
   frogix.sunshine.output = "DP-3";

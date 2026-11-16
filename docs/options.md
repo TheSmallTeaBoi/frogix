@@ -452,28 +452,6 @@ false
 
 
 
-## frogix.droidcam.enable
-
-
-
-droidcam webcam + dconf
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-
-```nix
-false
-```
-
-
-
-
 ## frogix.emeet-linux.enable
 
 
@@ -926,7 +904,7 @@ list of string
 
 
 
-nvidia graphics stack: driver, vaapi env and firefox hw accel
+nvidia graphics stack: driver + vaapi env (firefox hw-accel prefs apply if a host enables firefox)
 
 
 
@@ -1585,28 +1563,6 @@ list of string
 
 
 
-## frogix.virt.enable
-
-
-
-virt-manager / libvirtd stack with spice usb redirection
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-
-```nix
-false
-```
-
-
-
-
 ## frogix.wine.enable
 
 
@@ -1813,28 +1769,6 @@ false
 
 
 
-## frogix.browser.enable
-
-
-
-qutebrowser + firefox with the pywal rice
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-
-```nix
-false
-```
-
-
-
-
 ## frogix.desktop.enable
 
 
@@ -1852,50 +1786,6 @@ boolean
 
 ```nix
 false
-```
-
-
-
-
-## frogix.easyeffects.enable
-
-
-
-easyeffects with a default preset
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-
-```nix
-false
-```
-
-
-
-
-## frogix.easyeffects.preset
-
-
-
-easyeffects preset applied on start (null = leave unset)
-
-
-
-*Type:*
-null or string
-
-
-
-*Default:*
-
-```nix
-null
 ```
 
 
@@ -2158,28 +2048,6 @@ false
 
 
 
-## frogix.lazygit.enable
-
-
-
-lazygit
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-
-```nix
-false
-```
-
-
-
-
 ## frogix.mako.enable
 
 
@@ -2263,6 +2131,28 @@ signed integer
 
 ```nix
 15
+```
+
+
+
+
+## frogix.qutebrowser.enable
+
+
+
+qutebrowser with the pywal rice: pywalQute colors, ricecdp live light/dark, containers, sponsorblock
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
 ```
 
 
@@ -2606,28 +2496,6 @@ string
 
 
 mime default applications
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-
-```nix
-false
-```
-
-
-
-
-## frogix.zoxide.enable
-
-
-
-zoxide with cd replacement
 
 
 
