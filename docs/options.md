@@ -1,13 +1,11 @@
 # `frogix.*` options
 
-The full option reference, **generated from the live option tree** — this is
-what the modules declare, not a hand-maintained copy, so it cannot drift from
-the code.
+The full option reference, generated from the live option tree — this is
+what the modules declare.
 
 Every `enable` defaults to `frogix.enable`, so a host that sets only
 `frogix.enable = true` gets the whole suite; everything below can be
-overridden per host. Values shown are the **universal defaults** —
-ratholomew overrides many of them (see [hosts.md](hosts.md)).
+overridden per host. Values shown are the universal defaults.
 
 Options are listed alphabetically and split by tree: system modules first,
 home-manager modules second (the latter are set under
@@ -122,7 +120,7 @@ false
 
 
 
-QMK firmware + vial tooling
+QMK firmware tooling (the Vial GUI lives in frogix.vial)
 
 
 
@@ -922,6 +920,328 @@ false
 
 
 
+## frogix.pi.enable
+
+
+
+pi coding agent with its shared setup and binary cache
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
+```
+
+
+
+
+## frogix.pi.cache.enable
+
+
+
+add pi.nix’s cachix substituters and signing keys to nix.settings.
+upstream ships them only as flake nixConfig, which nix ignores
+without --accept-flake-config — declared here the agent builds from
+the cache with no flags on any host that imports frogix
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+
+
+
+## frogix.pi.env
+
+
+
+extra literal environment variables exported before pi launches
+(merged with envFile/secrets). values land in the nix store, so only
+put non-secret settings here — secrets belong in the secrets knob or
+the envFile dotenv
+
+
+
+*Type:*
+attribute set of string
+
+
+
+*Default:*
+
+```nix
+{
+  PI_BG_HANDOFF_CONFIG = "/nix/store/46vjdw00lnqnmjkn1ymq9n1bhhbrkcab-pi-bg-handoff.json";
+}
+```
+
+
+
+
+## frogix.pi.envFile
+
+
+
+name of a sops secret holding a KEY=VALUE dotenv that is sourced
+(set -a) into pi’s environment on every launch. defaults to
+hermes_env, which carries SURPLUS_API_KEY — the key the surplus
+provider extension interpolates at request time — along with other
+now-retired hermes vars that pi simply ignores. the module declares
+the secret owned by frogix.user so the invoking user can read it;
+exclusive with the secrets knob
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+"hermes_env"
+```
+
+
+
+
+## frogix.pi.extensions
+
+
+
+shared extensions passed to pi via --extension on every invocation.
+the bundled default registers the surplus intelligence provider with
+live catalog discovery — refreshModels pulls /v1/models so new
+marketplace models and price changes need no repo edits; the
+fallback inside covers offline starts for glm-5.3-flash
+
+
+
+*Type:*
+list of (absolute path or string)
+
+
+
+*Default:*
+
+```nix
+[
+  /nix/store/k4izv449i9a19n6iyl9n4g4wkxz9f7fj-source/modules/system/pi/surplus-provider.ts
+]
+```
+
+
+
+
+## frogix.pi.models
+
+
+
+optional extra models.json installed into ~/.pi/agent/models.json
+(contents 0600; user-owned state wins once written — delete the file
+to re-seed). not needed for surplus: that provider and its live
+model/pricing discovery come from the bundled extension
+(frogix.pi.extensions), so catalogue entries never go stale here
+
+
+
+*Type:*
+null or absolute path
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+
+## frogix.pi.promptTemplates
+
+
+
+shared prompt templates passed to pi via --prompt-template on every invocation
+
+
+
+*Type:*
+list of absolute path
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+
+## frogix.pi.rules
+
+
+
+shared instructions appended to pi’s system prompt on every machine
+(upstream passes them via --append-system-prompt). edit here to
+change pi everywhere; a host may override with its own text or a
+path to a rules file
+
+
+
+*Type:*
+null or strings concatenated with “.n” or absolute path
+
+
+
+*Default:*
+
+```nix
+"Verify work before declaring it working or done."
+```
+
+
+
+
+## frogix.pi.secrets
+
+
+
+environment variable -> sops secret name. the module declares each
+secret (owned by frogix.user: the pi wrapper runs as the invoking
+user, root-owned 0400 secrets would be unreadable) and exports it
+into pi’s environment at launch — pi.nix cats the file at runtime,
+so nothing secret-shaped lands in the store. the keys must exist in
+the shared secrets.yaml; requires frogix.sops
+
+
+
+*Type:*
+attribute set of string
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+
+
+*Example:*
+
+```nix
+{ OPENAI_API_KEY = "openai_api_key"; }
+```
+
+
+
+
+## frogix.pi.settings
+
+
+
+shared contents of pi’s settings.json, recursively merged into
+~/.pi/agent/settings.json on each invocation. defaults to starting
+every machine on the surplus intelligence provider
+(api.surplusintelligence.ai) with glm-5.3-flash — the provider is
+registered by the bundled frogix.pi.extensions entry, which also
+discovers its live catalog, and its key arrives through
+frogix.pi.envFile
+
+
+
+*Type:*
+attribute set
+
+
+
+*Default:*
+
+```nix
+{
+  defaultModel = "deepseek-v4.1-flash";
+  defaultProvider = "surplus";
+  packages = [
+    "npm:pi-web-access"
+    "npm:pi-subagents"
+    "npm:@getpipher/vision"
+    "npm:@heyhuynhgiabuu/pi-pretty"
+    "npm:pi-bg-handoff"
+  ];
+  theme = "pywal";
+}
+```
+
+
+
+
+## frogix.pi.skills
+
+
+
+shared skill directories passed to pi via --skill on every
+invocation (paths into this repo, e.g. ./skills/nixpkgs)
+
+
+
+*Type:*
+list of absolute path
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+
+## frogix.pi.themes
+
+
+
+shared themes passed to pi via --theme on every invocation
+
+
+
+*Type:*
+list of absolute path
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+
 ## frogix.romm.enable
 
 
@@ -1254,28 +1574,6 @@ attribute set of string
 
 
 
-## frogix.services.vialSerial
-
-
-
-serial fragment matched by the Vial udev rule (null = no vial rule)
-
-
-
-*Type:*
-null or string
-
-
-
-*Default:*
-
-```nix
-null
-```
-
-
-
-
 ## frogix.shell.enable
 
 
@@ -1558,6 +1856,53 @@ list of string
   "gamemode"
   "bluetooth"
 ]
+```
+
+
+
+
+## frogix.vial.enable
+
+
+
+Vial keyboard configurator (GUI plus the hidraw rule that lets it reach the keyboard)
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
+```
+
+
+
+
+## frogix.vial.serial
+
+
+
+serial fragment matched by the Vial udev rule. The default is the magic
+serial stock Vial firmware advertises; override it only for a build that
+sets its own VIAL_SERIAL. Check yours with ` udevadm info /dev/hidraw* `
+or ` lsusb -v `.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"vial:f64c2b3c"
 ```
 
 
