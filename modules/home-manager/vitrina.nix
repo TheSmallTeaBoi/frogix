@@ -198,6 +198,7 @@ in
       pkgs.pulseaudio
       pkgs.ddcutil
       pkgs.wlsunset
+      pkgs.fd
       vitrina-bright
       vitrina-nightlight
       vitrina-lock

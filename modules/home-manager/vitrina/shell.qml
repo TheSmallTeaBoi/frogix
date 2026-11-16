@@ -282,11 +282,12 @@ ShellRoot {
     property string emojiRaw: ""
     property var emojiData: []
     property bool emojiLoaded: false
+    property var fileResults: []
 
     property var clipboardHist: []
 
     readonly property var launcherModes: [
-        { "id": "apps", "label": "Apps", "icon": "", "placeholder": "Search" },
+        { "id": "apps", "label": "All", "icon": "", "placeholder": "Search" },
         { "id": "windows", "label": "Windows", "icon": "", "placeholder": "Search" },
         { "id": "calc", "label": "Calc", "icon": "󰪚", "placeholder": "Enter an expression…" },
         { "id": "emoji", "label": "Emoji", "icon": "󰞅", "placeholder": "Search" },
@@ -311,6 +312,54 @@ ShellRoot {
         function calendar(): void {
             shell.toggleCalendar()
         }
+
+        function search(query: string): void {
+            if (!shell.launcherOpen || shell.launcherMode !== "apps")
+                shell.openLauncher("apps")
+            shell.setLauncherQuery(query)
+        }
+    }
+
+    /* file search for the "All" launcher mode — fd runs debounced off the
+       query and its results are merged with apps and the calculator */
+    Process {
+        id: fileProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = this.text.split("\n").filter(l => l.length > 0)
+                shell.fileResults = lines
+                if (shell.launcherOpen && shell.launcherMode === "apps")
+                    shell.refreshLauncher()
+            }
+        }
+    }
+
+    Timer {
+        id: fileSearchTimer
+        interval: 180
+        onTriggered: {
+            const home = Quickshell.env("HOME")
+            const base = ["fd", "--color=never", "-t", "f", "-t", "d", "-E", ".git", "-E", "node_modules", "--max-results", "12", "-a", "--", shell.launcherQuery.trim()]
+            fileProc.command = base.concat([home, "/storage/Personal"])
+            fileProc.running = false
+            fileProc.running = true
+        }
+    }
+
+    function scheduleFileSearch() {
+        if (!launcherOpen || launcherMode !== "apps") {
+            fileSearchTimer.stop()
+            return
+        }
+        if (launcherQuery.trim().length < 2) {
+            fileSearchTimer.stop()
+            if (fileResults.length > 0) {
+                fileResults = []
+                refreshLauncher()
+            }
+            return
+        }
+        fileSearchTimer.restart()
     }
 
     function openLauncher(mode) {
@@ -330,6 +379,7 @@ ShellRoot {
         launcherMode = target
         launcherQuery = ""
         launcherIndex = 0
+        fileResults = []
         launcherOpen = true
         launcherReady = false
         launcherScreen = null
@@ -349,6 +399,7 @@ ShellRoot {
         else if (target === "clipboard")
             clipboardFile.reload()
         refreshLauncher()
+        scheduleFileSearch()
     }
 
     function closeLauncher() {
@@ -372,7 +423,10 @@ ShellRoot {
             ensureEmoji()
         else if (mode === "clipboard")
             clipboardFile.reload()
+        if (mode !== "apps")
+            fileResults = []
         refreshLauncher()
+        scheduleFileSearch()
     }
 
     function setLauncherQuery(query) {
@@ -382,6 +436,7 @@ ShellRoot {
         launcherQuery = next
         launcherIndex = 0
         refreshLauncher()
+        scheduleFileSearch()
     }
 
     function cycleLauncherMode(step) {
@@ -413,6 +468,8 @@ ShellRoot {
             launcherFocusTimer.windowId = id
             launcherFocusTimer.restart()
             return
+        } else if (item.kind === "file") {
+            Quickshell.execDetached(["xdg-open", item.path])
         } else if (item.kind === "clipboard") {
             /* copy value back to clipboard and re-store to move to top */
             shell.closeLauncher()
@@ -449,8 +506,8 @@ ShellRoot {
             return
         launcherLoading = false
         if (launcherMode === "apps") {
-            launcherItems = appLauncherItems()
-            launcherHint = "No applications match."
+            launcherItems = everythingLauncherItems()
+            launcherHint = "No apps, files or math match."
         } else if (launcherMode === "windows") {
             launcherLoading = windowProc.running
             launcherItems = windowLauncherItems()
@@ -498,6 +555,36 @@ ShellRoot {
         }
         out.sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
         return out.slice(0, 200).map(x => x.item)
+    }
+
+    /* the "All" mode: calculator result (if any), apps, then files, all in
+       one ranked list — the Spotlight-like behaviour */
+    function everythingLauncherItems() {
+        const query = launcherNorm(launcherQuery).trim()
+        const out = []
+        const calc = calcValueItem()
+        if (calc)
+            out.push(calc)
+        const apps = appLauncherItems()
+        out.push.apply(out, query.length === 0 ? apps : apps.slice(0, 12))
+        out.push.apply(out, fileLauncherItems())
+        return out
+    }
+
+    function fileLauncherItems() {
+        const out = []
+        for (let i = 0; i < fileResults.length; i++) {
+            const path = fileResults[i]
+            const base = path.split("/").pop()
+            out.push({
+                kind: "file",
+                path: path,
+                title: base,
+                subtitle: path.slice(0, Math.max(0, path.length - base.length - 1)),
+                icon: Quickshell.iconPath("text-x-generic", true)
+            })
+        }
+        return out
     }
 
     function windowLauncherItems() {
@@ -609,27 +696,36 @@ ShellRoot {
         }))
     }
 
-    function calcLauncherItems() {
+    function calcValueItem() {
         const expression = launcherQuery.trim()
         if (expression.length === 0)
-            return []
+            return null
         const value = evalExpression(expression)
-        if (value === null || !isFinite(value)) {
-            return [{
-                kind: "calc-error",
-                title: "Invalid expression",
-                subtitle: "Try something like (12 + 3) * 4 or sqrt(2)",
-                icon: "",
-                copyText: ""
-            }]
-        }
+        if (value === null || !isFinite(value))
+            return null
         const result = fmtNumber(value)
-        return [{
+        return {
             kind: "calc",
             title: result,
             subtitle: expression + "  ·  Enter copies",
             icon: "",
             copyText: result
+        }
+    }
+
+    function calcLauncherItems() {
+        const expression = launcherQuery.trim()
+        if (expression.length === 0)
+            return []
+        const item = calcValueItem()
+        if (item)
+            return [item]
+        return [{
+            kind: "calc-error",
+            title: "Invalid expression",
+            subtitle: "Try something like (12 + 3) * 4 or sqrt(2)",
+            icon: "",
+            copyText: ""
         }]
     }
 
