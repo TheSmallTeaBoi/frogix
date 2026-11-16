@@ -191,6 +191,21 @@ ShellRoot {
         command: ["vitrina-nightlight"]
     }
 
+    /* ---------------------------------------------------------------- calendar */
+    property bool calendarOpen: false
+
+    function toggleCalendar() {
+        calendarOpen = !calendarOpen
+        if (calendarOpen) {
+            if (islandWindow) {
+                islandWindow.powerOpen = false
+                islandWindow.trayOpen = false
+                islandWindow.expanded = false
+            }
+            closeLauncher()
+        }
+    }
+
     /* ---------------------------------------------------------------- launcher */
     property var islandWindow: null
     property bool launcherOpen: false
@@ -232,6 +247,10 @@ ShellRoot {
         function close(): void {
             shell.closeLauncher()
         }
+
+        function calendar(): void {
+            shell.toggleCalendar()
+        }
     }
 
     function openLauncher(mode) {
@@ -262,6 +281,7 @@ ShellRoot {
             islandWindow.powerOpen = false
             islandWindow.trayOpen = false
         }
+        calendarOpen = false
         if (target === "windows")
             windowProc.running = true
         else if (target === "emoji")
@@ -1577,6 +1597,7 @@ ShellRoot {
             function toggleExpand() {
                 expanded = !expanded
                 powerOpen = false
+                shell.calendarOpen = false
                 if (expanded) {
                     shell.hasUnread = false
                     wifiNetsProc.running = true
@@ -1698,6 +1719,7 @@ ShellRoot {
                 }
 
                 Text {
+                    id: clockText
                     text: island.expanded ? (Qt.formatDateTime(clk.date, "dddd d MMMM") + " \u00b7 " + Qt.formatDateTime(clk.date, "HH:mm")) : Qt.formatDateTime(clk.date, "HH:mm")
                     color: Colors.fg
                     font.pixelSize: 13
@@ -1778,11 +1800,19 @@ ShellRoot {
                 }
 
             MouseArea {
+                id: headHit
                 x: island.expanded ? (morph.width - headRow.width) / 2 : 0
                 y: 0
                 width: headRow.width
                 height: 26
-                onClicked: island.toggleExpand()
+                onClicked: (mouse) => {
+                    /* the clock opens the calendar; the rest of the bar expands */
+                    const p = clockText.mapFromItem(headHit, mouse.x, mouse.y)
+                    if (p.x >= 0 && p.x <= clockText.width && p.y >= 0 && p.y <= clockText.height)
+                        shell.toggleCalendar()
+                    else
+                        island.toggleExpand()
+                }
 
                 Behavior on x {
                     NumberAnimation {
@@ -3932,6 +3962,51 @@ ShellRoot {
             }
         }
     }
+    }
+
+    Variants {
+        model: Quickshell.screens.filter(s => s === shell.mainScreen)
+
+        PanelWindow {
+            id: calWin
+            required property var modelData
+            screen: modelData
+            anchors {
+                top: true
+                bottom: true
+                left: true
+                right: true
+            }
+            exclusiveZone: -1
+            color: "transparent"
+            WlrLayershell.layer: WlrLayer.Overlay
+            visible: shell.calendarOpen
+            mask: Region {
+                item: calCard
+            }
+
+            Calendar {
+                id: calCard
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: 34
+                opacity: shell.calendarOpen ? 1 : 0
+                scale: shell.calendarOpen ? 1 : 0.96
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 140
+                    }
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 160
+                        easing.type: Easing.OutCubic
+                    }
+                }
+            }
+        }
     }
 
     Variants {
