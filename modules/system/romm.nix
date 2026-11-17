@@ -52,6 +52,14 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # romm reads its environment from the sops secret `romm_env`.
+    assertions = [
+      {
+        assertion = config.frogix.sops.enable;
+        message = "frogix.romm: romm takes its environment from the sops secret `romm_env`, so frogix.sops has to be on (services / romm / sops travel together).";
+      }
+    ];
+
     # Bind-mount existing ROM collection into RomM's library path.
     # /storage/Roms uses TOSEC naming; config.yml maps folders to slugs.
     fileSystems = lib.mkMerge [
@@ -123,7 +131,6 @@ in
       listenAddress = cfg.listenAddress;
       port = cfg.port;
       nginx.virtualHost = cfg.virtualHost;
-      environmentFile = config.sops.secrets.romm_env.path;
       extraEnvironment = {
         HASHEOUS_API_ENABLED = "true";
         LAUNCHBOX_API_ENABLED = "true";
@@ -132,6 +139,9 @@ in
         HLTB_API_ENABLED = "true";
         PLAYMATCH_API_ENABLED = "true";
       };
+    }
+    // lib.optionalAttrs config.frogix.sops.enable {
+      environmentFile = config.sops.secrets.romm_env.path;
     };
 
     services.nginx.virtualHosts.${cfg.virtualHost} = {

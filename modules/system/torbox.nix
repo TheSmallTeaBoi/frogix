@@ -42,6 +42,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # torbox builds its rclone config from the sops secrets torbox_webdav_user
+    # / torbox_webdav_pass, so sops has to be on.
+    assertions = [
+      {
+        assertion = config.frogix.sops.enable;
+        message = "frogix.torbox: the rclone remote is built from the sops secrets `torbox_webdav_user` / `torbox_webdav_pass`, so frogix.sops has to be on.";
+      }
+    ];
+
     environment.systemPackages = [ pkgs.rclone ];
 
     systemd.services.torbox-webdav = {
@@ -59,8 +68,8 @@ in
         Environment = [ "PATH=/run/wrappers/bin:/run/current-system/sw/bin" ];
         ExecStartPre = [
           "${pkgs.coreutils}/bin/mkdir -p ${mountPoint}"
-          genConf
-        ];
+        ]
+        ++ lib.optionals config.frogix.sops.enable [ genConf ];
         ExecStart =
           "${pkgs.rclone}/bin/rclone mount torbox: ${mountPoint}"
           + " --config ${confFile}"

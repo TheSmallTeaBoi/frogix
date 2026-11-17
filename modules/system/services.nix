@@ -55,16 +55,28 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # navidrome reads its environment from the sops secret `navidrome_env`.
+    # without sops there is no secret file to point at, so say so instead of
+    # dying on a missing option attribute.
+    assertions = [
+      {
+        assertion = config.frogix.sops.enable;
+        message = "frogix.services: navidrome takes its environment from the sops secret `navidrome_env`, so frogix.sops has to be on (services / romm / sops travel together).";
+      }
+    ];
+
     # rtkit is optional but recommended
     security.rtkit.enable = true;
     systemd.services.navidrome = {
       # Otherwise it starts before the music library gets mounted
       after = [ "storage.mount" ];
       requires = [ "storage.mount" ];
-      serviceConfig.PrivateUsers = lib.mkForce false;
       serviceConfig = {
+        PrivateUsers = lib.mkForce false;
         RootDirectory = lib.mkForce "";
         ProtectHome = lib.mkForce "read-only";
+      }
+      // lib.optionalAttrs config.frogix.sops.enable {
         EnvironmentFile = config.sops.secrets.navidrome_env.path;
       };
     };
