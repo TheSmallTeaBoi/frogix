@@ -2,6 +2,7 @@
   pkgs,
   lib,
   config,
+  nixosConfig ? null,
   ...
 }:
 let
@@ -35,6 +36,15 @@ let
       wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
     '';
   };
+
+  # the player is a nixos-side choice (frogix.packages.musicPlayer), so read it
+  # through nixosConfig; standalone home-manager eval (the docs pass) has no
+  # nixosConfig, and a host without the music pack has no player to wire up.
+  music =
+    if nixosConfig != null && nixosConfig.frogix.packages.music then
+      nixosConfig.frogix.packages.musicPlayer
+    else
+      null;
 
 in
 {
@@ -307,16 +317,6 @@ in
             };
           }
           {
-            match._props.app-id = "feishin";
-            open-floating = true;
-            default-column-width = {
-              fixed = 900;
-            };
-            default-window-height = {
-              fixed = 899;
-            };
-          }
-          {
             match._props.app-id = "clipse";
             open-floating = true;
             default-column-width = {
@@ -329,6 +329,18 @@ in
           {
             match._props.app-id = "floating";
             open-floating = true;
+          }
+        ]
+        ++ lib.optionals (music != null) [
+          {
+            match._props.app-id = music.appId;
+            open-floating = true;
+            default-column-width = {
+              fixed = 900;
+            };
+            default-window-height = {
+              fixed = 899;
+            };
           }
         ]
         ++ lib.optionals config.frogix.vesktop.enable [
@@ -395,9 +407,6 @@ in
           };
           "Mod+K" = {
             focus-window-up-or-column-left = { };
-          };
-          "Mod+L" = {
-            spawn._args = [ "feishin" ];
           };
           "Mod+P" = {
             toggle-window-floating = { };
@@ -547,6 +556,11 @@ in
         }
         # apps owned by other frogix areas: the bind only exists when that
         # area is on, so niri never launches (or force-builds) what is not there
+        // lib.optionalAttrs (music != null) {
+          "Mod+L" = {
+            spawn._args = [ music.command ];
+          };
+        }
         // lib.optionalAttrs config.frogix.kitty.enable {
           "Mod+Return" = {
             spawn._args = [ "kitty" ];

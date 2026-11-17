@@ -31,6 +31,33 @@ in
     keyboard = pack "QMK firmware tooling (the Vial GUI lives in frogix.vial)";
     gui = pack "personal GUI apps (obsidian, calibre, warpinator, obs, pandoc)";
     music = pack "music listening/library tools (production plugins live in frogix.musicMaking)";
+    musicPlayer = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          package = lib.mkOption {
+            type = lib.types.package;
+            default = pkgs.feishin;
+            defaultText = lib.literalExpression "pkgs.feishin";
+            description = "the player package the music pack installs";
+          };
+          command = lib.mkOption {
+            type = lib.types.str;
+            default = "feishin";
+            description = "executable niri spawns on Mod+L (a bare name resolves against the installed package)";
+          };
+          appId = lib.mkOption {
+            type = lib.types.str;
+            default = "feishin";
+            description = "Wayland app-id niri matches to float the player window";
+          };
+        };
+      };
+      default = { };
+      description = ''
+        which music player the music pack installs and niri launches on
+        Mod+L; switch it per host (package, launch command, and window app-id)
+      '';
+    };
     piracy = pack "aria2 + stremio :)";
   };
 
@@ -118,7 +145,7 @@ in
         nicotine-plus
         picard
         mpv
-        feishin
+        cfg.musicPlayer.package
       ];
     })
 
