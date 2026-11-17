@@ -365,6 +365,79 @@ ShellRoot {
         fileSearchTimer.restart()
     }
 
+    /* qalc fallback for the operation slot: the JS evaluator covers plain
+       arithmetic instantly, and anything it can't parse (units, currency,
+       hex, …) goes to libqalculate, debounced. Only numeric-looking queries
+       are sent, since qalc happily reads bare words as units. */
+    property string calcQuery: ""
+    property string calcResult: ""
+    property bool calcRunning: false
+
+    Process {
+        id: calcProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const text = this.text.replace(/\x1b\[[0-9;]*m/g, "").trim()
+                shell.calcResult = text.replace(/\s*\n\s*/g, " ")
+                shell.calcRunning = false
+                if (shell.launcherOpen)
+                    shell.refreshLauncher()
+            }
+        }
+    }
+
+    Timer {
+        id: calcTimer
+        interval: 160
+        onTriggered: {
+            const q = shell.launcherQuery.trim()
+            shell.calcQuery = q
+            shell.calcRunning = true
+            calcProc.command = ["qalc", "-t", "--color=0", "--", q]
+            calcProc.running = false
+            calcProc.running = true
+        }
+    }
+
+    function calcEligible() {
+        const q = launcherQuery.trim()
+        if (q.length < 2 || !/[0-9]/.test(q))
+            return false
+        /* if the JS evaluator already handles it, qalc adds nothing */
+        return evalExpression(q) === null
+    }
+
+    function scheduleCalc() {
+        const q = launcherQuery.trim()
+        if (q === calcQuery)
+            return
+        if (!launcherOpen || !calcEligible()) {
+            calcTimer.stop()
+            calcQuery = q
+            calcResult = ""
+            calcRunning = false
+            return
+        }
+        calcResult = ""
+        calcTimer.restart()
+    }
+
+    function operationItem() {
+        const js = calcValueItem()
+        if (js)
+            return js
+        const q = launcherQuery.trim()
+        if (q.length > 0 && q === calcQuery && calcResult.length > 0)
+            return {
+                kind: "calc",
+                title: calcResult,
+                subtitle: q + "  ·  Enter copies",
+                icon: "",
+                copyText: calcResult
+            }
+        return null
+    }
+
     function openLauncher(mode) {
         const target = launcherModes.some(m => m.id === mode) ? mode : "apps"
         if (launcherOpen && launcherMode === target) {
@@ -403,6 +476,7 @@ ShellRoot {
             clipboardFile.reload()
         refreshLauncher()
         scheduleFileSearch()
+        scheduleCalc()
     }
 
     function closeLauncher() {
@@ -430,6 +504,7 @@ ShellRoot {
             fileResults = []
         refreshLauncher()
         scheduleFileSearch()
+        scheduleCalc()
     }
 
     function setLauncherQuery(query) {
@@ -440,6 +515,7 @@ ShellRoot {
         launcherIndex = 0
         refreshLauncher()
         scheduleFileSearch()
+        scheduleCalc()
     }
 
     function cycleLauncherMode(step) {
@@ -565,7 +641,7 @@ ShellRoot {
     function everythingLauncherItems() {
         const query = launcherNorm(launcherQuery).trim()
         const out = []
-        const calc = calcValueItem()
+        const calc = operationItem()
         if (calc)
             out.push(calc)
         const apps = appLauncherItems()
@@ -720,13 +796,21 @@ ShellRoot {
         const expression = launcherQuery.trim()
         if (expression.length === 0)
             return []
-        const item = calcValueItem()
+        const item = operationItem()
         if (item)
             return [item]
+        if (calcEligible() || (calcRunning && expression === calcQuery))
+            return [{
+                kind: "calc-pending",
+                title: "…",
+                subtitle: expression,
+                icon: "",
+                copyText: ""
+            }]
         return [{
             kind: "calc-error",
             title: "Invalid expression",
-            subtitle: "Try something like (12 + 3) * 4 or sqrt(2)",
+            subtitle: "Try (12 + 3) * 4, sqrt(2) or 120 ars to usd",
             icon: "",
             copyText: ""
         }]

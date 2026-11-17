@@ -198,12 +198,32 @@ in
       pkgs.pulseaudio
       pkgs.ddcutil
       pkgs.wlsunset
+      pkgs.libqalculate
       vitrina-bright
       vitrina-nightlight
       vitrina-lock
       vitrina-lock-suspend
       vitrina-record
     ];
+
+    # keep libqalculate's exchange-rate cache fresh so the launcher's qalc
+    # calls never block on a network fetch mid-query
+    systemd.user.services.qalculate-exrates = {
+      Unit.Description = "Refresh qalculate exchange rates";
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${pkgs.libqalculate}/bin/qalc -e -t --color=0 -- 1";
+      };
+    };
+
+    systemd.user.timers.qalculate-exrates = {
+      Unit.Description = "Daily qalculate exchange rate refresh";
+      Timer = {
+        OnCalendar = "daily";
+        Persistent = true;
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
 
     # night light: unit exists but never autostarts — the island toggle
     # (or systemctl --user start wlsunset) owns it. coords: cordoba.
