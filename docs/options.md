@@ -186,7 +186,7 @@ false
 
 
 
-ricing CLI (pywal, mako, rofi)
+ricing CLI (pywal, rofi)
 
 
 
@@ -1043,7 +1043,7 @@ list of (absolute path or string)
 
 ```nix
 [
-  /nix/store/k4izv449i9a19n6iyl9n4g4wkxz9f7fj-source/modules/system/pi/surplus-provider.ts
+  /nix/store/39fpnmdnkg79zpb3v8mvh6y2h23cwf42-source/modules/system/pi/surplus-provider.ts
 ]
 ```
 
@@ -1117,7 +1117,7 @@ null or strings concatenated with “.n” or absolute path
 *Default:*
 
 ```nix
-"Verify work before declaring it working or done."
+"Verify work before declaring it working or done. Never 'recall', investigate using your tools."
 ```
 
 
@@ -1600,19 +1600,19 @@ false
 
 
 
-BROWSER in the session environment
+BROWSER in the session environment (null = unset, xdg-open/MIME decides; the browser is an opt-out area, so the module does not presume one)
 
 
 
 *Type:*
-string
+null or string
 
 
 
 *Default:*
 
 ```nix
-"qutebrowser"
+null
 ```
 
 
@@ -1622,19 +1622,19 @@ string
 
 
 
-EDITOR/VISUAL in the session environment
+EDITOR/VISUAL in the session environment (null = unset; the editor is an opt-out area, so the module does not presume one)
 
 
 
 *Type:*
-string
+null or string
 
 
 
 *Default:*
 
 ```nix
-"emacsclient -c"
+null
 ```
 
 
@@ -2376,28 +2376,6 @@ null
 
 
 kitty terminal wired to the pywal palette
-
-
-
-*Type:*
-boolean
-
-
-
-*Default:*
-
-```nix
-false
-```
-
-
-
-
-## frogix.mako.enable
-
-
-
-mako notification daemon config (daemon itself stays disabled)
 
 
 
