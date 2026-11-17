@@ -82,22 +82,25 @@ let
 
       if [ -n "$WIN_ID" ]; then
       ${
-        if cfg.output != null then ''
-          # Land it fullscreen on ${cfg.output}'s currently active workspace.
-          # focus-monitor first so the workspace index resolves against it.
-          WS_IDX="$(niri msg --json workspaces 2>/dev/null \
-              | jq -r '[.[] | select(.output == "${cfg.output}" and .is_active)] | first | .idx // empty' \
-              || true)"
-          niri msg action focus-monitor ${cfg.output} || true
-          niri msg action focus-window --id "$WIN_ID" || true
-          if [ -n "$WS_IDX" ]; then
-              niri msg action move-window-to-workspace "$WS_IDX" || true
-              niri msg action focus-workspace "$WS_IDX" || true
-          fi
-        '' else ''
-          # frogix.sunshine.output is null: leave the window where it spawned
-          # (sunshine auto-detects the capture either way)
-        ''
+        if cfg.output != null then
+          ''
+            # Land it fullscreen on ${cfg.output}'s currently active workspace.
+            # focus-monitor first so the workspace index resolves against it.
+            WS_IDX="$(niri msg --json workspaces 2>/dev/null \
+                | jq -r '[.[] | select(.output == "${cfg.output}" and .is_active)] | first | .idx // empty' \
+                || true)"
+            niri msg action focus-monitor ${cfg.output} || true
+            niri msg action focus-window --id "$WIN_ID" || true
+            if [ -n "$WS_IDX" ]; then
+                niri msg action move-window-to-workspace "$WS_IDX" || true
+                niri msg action focus-workspace "$WS_IDX" || true
+            fi
+          ''
+        else
+          ''
+            # frogix.sunshine.output is null: leave the window where it spawned
+            # (sunshine auto-detects the capture either way)
+          ''
       }
           niri msg action fullscreen-window --id "$WIN_ID" || true
       else

@@ -41,16 +41,18 @@
           };
 
           autoLayout = lib.mkOption {
-            type = lib.types.nullOr (lib.types.submodule {
-              options.widths = lib.mkOption {
-                type = lib.types.attrsOf lib.types.int;
-                description = ''
-                  logical (post-scale/transform) width per role — niri computes
-                  x offsets cumulatively in left -> main -> right order and
-                  top-aligns (y = 0); a position the host wrote still wins
-                '';
-              };
-            });
+            type = lib.types.nullOr (
+              lib.types.submodule {
+                options.widths = lib.mkOption {
+                  type = lib.types.attrsOf lib.types.int;
+                  description = ''
+                    logical (post-scale/transform) width per role — niri computes
+                    x offsets cumulatively in left -> main -> right order and
+                    top-aligns (y = 0); a position the host wrote still wins
+                  '';
+                };
+              }
+            );
             default = null;
             description = ''
               compute niri output positions from screen widths — niri
