@@ -110,6 +110,13 @@ in
           # host-side wait tools + the background-commands skill. its 60s probe
           # window comes from bgHandoffConfig below (frogix.pi.env)
           "npm:pi-bg-handoff"
+          # thinking-display: keeps the still-streaming thinking block expanded
+          # and auto-collapses it once answer text/tools follow (config at
+          # ~/.pi/agent/thinking-display.json; pi's Ctrl+T still works)
+          "npm:pi-thinking-display"
+          # openui: render_widget draws interactive dashboards, charts, diagrams
+          # and maps inline in the TUI via OpenUI Lang — no browser, no network
+          "npm:pi-openui"
         ];
       };
       description = ''
