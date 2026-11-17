@@ -126,6 +126,7 @@ ShellRoot {
     NotificationServer {
         id: ns
         bodySupported: true
+        actionsSupported: true
         keepOnReload: true
 
         onNotification: (n) => {
@@ -279,6 +280,7 @@ ShellRoot {
     property string launcherHint: ""
     property bool launcherLoading: false
     property var windowData: []
+    property string notifTarget: ""
     property string emojiRaw: ""
     property var emojiData: []
     property bool emojiLoaded: false
@@ -1119,6 +1121,34 @@ ShellRoot {
         }
     }
 
+    Process {
+        id: notifWindowProc
+        command: ["sh", "-c", "NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg --json windows"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let list = []
+                try {
+                    list = JSON.parse(this.text)
+                } catch (e) {
+                    list = []
+                }
+                const needle = shell.notifTarget.toLowerCase()
+                shell.notifTarget = ""
+                let win = null
+                for (let i = 0; i < list.length; i++) {
+                    const hay = ((list[i].app_id || "") + " " + (list[i].title || "")).toLowerCase()
+                    if (needle.length > 0 && hay.indexOf(needle) >= 0) {
+                        win = list[i]
+                        break
+                    }
+                }
+                if (win)
+                    Quickshell.execDetached(["sh", "-c", `NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg action focus-window --id ${win.id}`])
+            }
+        }
+    }
+
     FileView {
         id: emojiFile
         path: `${Quickshell.env("HOME")}/.local/share/vitrina/emojis.txt`
@@ -1143,7 +1173,7 @@ ShellRoot {
         onLoaded: {
             const out = []
             try {
-                const data = JSON.parse(this.text)
+                const data = JSON.parse(this.text())
                 const entries = data.clipboardHistory
                 if (Array.isArray(entries)) {
                     for (let i = 0; i < entries.length; i++) {
@@ -1206,6 +1236,45 @@ ShellRoot {
             vals.push(live[i])
         for (let i = 0; i < vals.length; i++)
             vals[i].dismiss()
+    }
+
+    function activateNotification(n) {
+        if (!n)
+            return false
+        const acts = n.actions || []
+        for (let i = 0; i < acts.length; i++) {
+            if (acts[i].identifier === "default") {
+                acts[i].invoke()
+                return true
+            }
+        }
+        if (acts.length === 1) {
+            acts[0].invoke()
+            return true
+        }
+        return false
+    }
+
+    function focusNotificationApp(n) {
+        if (!n)
+            return false
+        const entry = (n.desktopEntry || "").replace(/\.desktop$/, "")
+        notifTarget = entry.length > 0 ? entry : (n.appName || "")
+        if (notifTarget.length === 0)
+            return false
+        if (islandWindow)
+            islandWindow.closeOverlays()
+        notifWindowProc.running = false
+        notifWindowProc.running = true
+        return true
+    }
+
+    function handleNotificationClick(n) {
+        if (activateNotification(n))
+            return true
+        if (n && (n.actions || []).length === 0)
+            return focusNotificationApp(n)
+        return false
     }
 
     function pc(args, player) {
@@ -1385,6 +1454,7 @@ ShellRoot {
             "name": "apps",
             "items": [
                 { "key": "mod+d", "label": "App Launcher" },
+                { "key": "mod+b", "label": "Browser" },
                 { "key": "mod+enter", "label": "Terminal" },
                 { "key": "mod+o", "label": "Emacs" },
                 { "key": "mod+e", "label": "Files" },
@@ -1702,7 +1772,8 @@ ShellRoot {
             exclusiveZone: 30
             exclusionMode: ExclusionMode.Normal
             color: "transparent"
-            WlrLayershell.keyboardFocus: (island.connView === "wifi" && island.pendingSsid.length > 0) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            readonly property bool menuOpen: island.expanded || island.powerOpen || island.trayOpen || shell.calendarOpen
+            WlrLayershell.keyboardFocus: island.menuOpen ? WlrKeyboardFocus.Exclusive : ((island.connView === "wifi" && island.pendingSsid.length > 0) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None)
             mask: Region {
                 item: (island.powerOpen || island.trayOpen || island.expanded || shell.calendarOpen) ? outsideCatcher : morph
                 Region {
@@ -1719,16 +1790,26 @@ ShellRoot {
             MouseArea {
                 id: outsideCatcher
                 anchors.fill: parent
-                enabled: island.powerOpen || island.trayOpen || island.expanded || shell.calendarOpen
+                enabled: island.menuOpen
                 onClicked: {
-                    island.powerOpen = false
-                    island.trayMenuHandle = null
-                    island.trayMenuStack = []
-                    island.trayOpen = false
-                    island.expanded = false
-                    shell.calendarOpen = false
+                    island.closeOverlays()
                     shell.closeLauncher()
                 }
+
+                Shortcut {
+                    sequence: "Escape"
+                    enabled: island.menuOpen
+                    onActivated: island.closeOverlays()
+                }
+            }
+
+            function closeOverlays() {
+                island.powerOpen = false
+                island.trayMenuHandle = null
+                island.trayMenuStack = []
+                island.trayOpen = false
+                island.expanded = false
+                shell.calendarOpen = false
             }
 
             Behavior on implicitHeight {
@@ -1926,13 +2007,6 @@ ShellRoot {
                     }
                 }
 
-                Behavior on x {
-                    NumberAnimation {
-                        duration: 240
-                        easing.type: Easing.OutCubic
-                    }
-                }
-
 
                 Row {
                     height: parent.height
@@ -2054,15 +2128,24 @@ ShellRoot {
                 }
 
                 MouseArea {
-                    /* clicking the toast opens the island on the notifications */
+                    /* clicking the toast runs the notification's default action;
+                       action-less notifications still open the island */
                     x: 0
                     y: 0
-                    width: notifRow.width + 24
-                    height: 26
+                    width: morph.width
+                    height: morph.height
                     enabled: notifRow.active
                     visible: notifRow.active
+                    z: 1
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: island.toggleExpand()
+                    onClicked: {
+                        if (shell.handleNotificationClick(shell.flashNotif)) {
+                            shell.flashNotif = null
+                            notifFlashTimer.stop()
+                        } else {
+                            island.toggleExpand()
+                        }
+                    }
                 }
 
             MouseArea {
@@ -2071,6 +2154,7 @@ ShellRoot {
                 y: 0
                 width: headRow.width
                 height: 26
+                enabled: !notifRow.active
                 onClicked: (mouse) => {
                     /* the clock morphs the pill into the calendar, but only from
                        the collapsed bar; when expanded the header just collapses */
@@ -2080,13 +2164,6 @@ ShellRoot {
                         shell.toggleCalendar()
                     else
                         island.toggleExpand()
-                }
-
-                Behavior on x {
-                    NumberAnimation {
-                        duration: 240
-                        easing.type: Easing.OutCubic
-                    }
                 }
             }
 
@@ -3905,6 +3982,7 @@ ShellRoot {
                                     id: ncard
                                     required property var modelData
                                     readonly property var notif: modelData
+                                    readonly property var extraActions: notif ? notif.actions.filter(a => a.identifier !== "default") : []
                                     property bool vanishing: false
                                     property int vanishDelay: 0
                                     width: notifCol.width
@@ -3970,13 +4048,7 @@ ShellRoot {
                                                 ncard.vanish(0)
                                                 return
                                             }
-                                            const acts = notif.actions
-                                            for (let i = 0; i < acts.length; i++) {
-                                                if (acts[i].identifier === "default") {
-                                                    acts[i].invoke()
-                                                    return
-                                                }
-                                            }
+                                            shell.handleNotificationClick(notif)
                                         }
                                     }
 
@@ -4011,6 +4083,41 @@ ShellRoot {
                                             font.pixelSize: 10
                                             wrapMode: Text.Wrap
                                             width: parent.width
+                                        }
+
+                                        Row {
+                                            visible: ncard.extraActions.length > 0
+                                            width: parent.width
+                                            spacing: 6
+
+                                            Repeater {
+                                                model: ncard.extraActions
+
+                                                delegate: Rectangle {
+                                                    required property var modelData
+                                                    width: actionLabel.implicitWidth + 16
+                                                    height: 21
+                                                    radius: 6
+                                                    color: actionHover.containsMouse ? Colors.alpha(Colors.accent, "2e") : Colors.alpha(Colors.fg, "10")
+                                                    border.width: 1
+                                                    border.color: Colors.alpha(Colors.fg, "1f")
+
+                                                    Text {
+                                                        id: actionLabel
+                                                        anchors.centerIn: parent
+                                                        text: modelData.text
+                                                        color: actionHover.containsMouse ? Colors.accent : Colors.fg
+                                                        font.pixelSize: 10
+                                                    }
+
+                                                    MouseArea {
+                                                        id: actionHover
+                                                        anchors.fill: parent
+                                                        hoverEnabled: true
+                                                        onClicked: modelData.invoke()
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -4660,7 +4767,7 @@ ShellRoot {
             exclusiveZone: -1
             color: "transparent"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: shell.hotkeysVisible ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: shell.hotkeysVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             mask: Region {
                 item: shell.hotkeysVisible ? hotkeyDim : hotkeyHidden
             }
@@ -4674,7 +4781,7 @@ ShellRoot {
             Rectangle {
                 id: hotkeyDim
                 anchors.fill: parent
-                color: Colors.alpha(Colors.bg, "d9")
+                color: "transparent"
                 opacity: shell.hotkeysVisible ? 1 : 0
                 visible: opacity > 0.01
                 focus: shell.hotkeysVisible
@@ -4690,7 +4797,17 @@ ShellRoot {
                     onClicked: hideHotkeys.running = true
                 }
 
-                Keys.onPressed: hideHotkeys.running = true
+                Keys.onEscapePressed: hideHotkeys.running = true
+
+                Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_Tab) {
+                        const count = hotkeyCard.tabs.length;
+                        const step = (event.modifiers & Qt.ShiftModifier) ? -1 : 1;
+                        const next = (hotkeyCard.tabIndex + step + count) % count;
+                        hotkeyCard.tab = hotkeyCard.tabs[next].id;
+                        event.accepted = true;
+                    }
+                }
 
                 Rectangle {
                     id: hotkeyCard
@@ -4893,17 +5010,22 @@ ShellRoot {
                 id: launcherPanel
                 property bool shown: false
                 property bool closing: shell.launcherClosing
+                readonly property int openWidth: 740
+                readonly property int openHeight: Math.min(500, launcherWin.height - 80)
 
                 onClosingChanged: launcherPanel.shown = !launcherPanel.closing
 
                 x: (launcherWin.width - launcherPanel.width) / 2
                 y: 2
-                width: shown ? 740 : 220
-                height: shown ? Math.min(500, launcherWin.height - 80) : 26
+                width: shown ? openWidth : 220
+                height: shown ? openHeight : 26
                 radius: shown ? 22 : 13
                 color: Colors.bg
                 border.width: 1
                 border.color: Colors.alpha(Colors.accent, "3d")
+                /* clip so the panel's content never spills outside the
+                   shrinking close overlay while it morphs back to the pill */
+                clip: true
 
                 Component.onCompleted: openTimer.restart()
 
@@ -4940,10 +5062,13 @@ ShellRoot {
                 }
 
                 Launcher {
-                    x: 13
+                    /* keep the content at its open size and screen-centred
+                       while the panel animates, so it is masked rather than
+                       reflowed into a scrambled pile during the close */
+                    anchors.horizontalCenter: parent.horizontalCenter
                     y: 34
-                    width: launcherPanel.width - 26
-                    height: launcherPanel.height - 46
+                    width: launcherPanel.openWidth - 26
+                    height: launcherPanel.openHeight - 46
                     host: shell
                 }
             }
