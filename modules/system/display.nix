@@ -47,5 +47,13 @@ in
       xwayland-satellite
       grimblast
     ];
+
+    # Drive mounting in the session's file browser (nemo's sidebar, removable
+    # media). gvfs pulls in udisks2 itself; keep it with the display stack so a
+    # host that has no sops (and therefore frogix.services off) still gets it.
+    services.gvfs = {
+      enable = true;
+      package = pkgs.gvfs;
+    };
   };
 }

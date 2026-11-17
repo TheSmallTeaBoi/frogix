@@ -14,7 +14,7 @@ in
       default = config.frogix.enable;
       description = ''
         desktop service stack: navidrome, syncthing, pipewire, sunshine,
-        tailscale, dbus, sshd, udev rules, gnome-keyring, gvfs, fstrim,
+        tailscale, dbus, sshd, udev rules, gnome-keyring, fstrim,
         earlyoom, input-remapper, mysql
       '';
     };
@@ -143,14 +143,6 @@ in
           SUBSYSTEMS=="usb", ATTRS{idVendor}=="045e", MODE="0660", GROUP="plugdev", SYMLINK+="webusb", TAG+="uaccess"
           SUBSYSTEMS=="usb", ATTRS{idVendor}=="0170", MODE="0660", GROUP="plugdev", SYMLINK+="webusb", TAG+="uaccess"
         '';
-
-      # Drive mounting
-      gvfs = {
-        enable = true;
-        package = pkgs.gvfs;
-      };
-
-      udisks2.enable = true;
 
       # Does anyone know how to only apply this to SSDs?
       fstrim.enable = true;
