@@ -46,6 +46,16 @@ let
     else
       null;
 
+  # the editor is a nixos-side choice (frogix.shell.editor); emacs stays the
+  # fallback so hosts that never set it keep launching emacsclient.
+  editor =
+    if nixosConfig != null && nixosConfig.frogix.shell.editor != null then
+      nixosConfig.frogix.shell.editor
+    else if config.frogix.emacs.enable then
+      "emacsclient -c"
+    else
+      null;
+
 in
 {
   options.frogix."niri".enable = lib.mkOption {
@@ -566,12 +576,9 @@ in
             spawn._args = [ "kitty" ];
           };
         }
-        // lib.optionalAttrs config.frogix.emacs.enable {
+        // lib.optionalAttrs (editor != null) {
           "Mod+O" = {
-            spawn._args = [
-              "emacsclient"
-              "-c"
-            ];
+            spawn-sh._args = [ editor ];
           };
         }
         // lib.optionalAttrs config.frogix.pywal.enable {
