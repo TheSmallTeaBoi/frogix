@@ -15,14 +15,14 @@ in
       description = "fish shell, direnv and the core session environment";
     };
     editor = lib.mkOption {
-      type = lib.types.str;
-      default = "emacsclient -c";
-      description = "EDITOR/VISUAL in the session environment";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "EDITOR/VISUAL in the session environment (null = unset; the editor is an opt-out area, so the module does not presume one)";
     };
     browser = lib.mkOption {
-      type = lib.types.str;
-      default = "qutebrowser";
-      description = "BROWSER in the session environment";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "BROWSER in the session environment (null = unset, xdg-open/MIME decides; the browser is an opt-out area, so the module does not presume one)";
     };
   };
 
@@ -46,14 +46,18 @@ in
         pkgs.eza
       ];
       variables = {
-        EDITOR = cfg.editor;
-        VISUAL = cfg.editor;
-        BROWSER = cfg.browser;
         XDG_DATA_HOME = "$HOME/.local/share";
         XDG_CONFIG_HOME = "$HOME/.config";
         XDG_STATE_HOME = "$HOME/.local/state";
         XDG_CACHE_HOME = "$HOME/.cache";
         SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS = "0";
+      }
+      // lib.optionalAttrs (cfg.editor != null) {
+        EDITOR = cfg.editor;
+        VISUAL = cfg.editor;
+      }
+      // lib.optionalAttrs (cfg.browser != null) {
+        BROWSER = cfg.browser;
       };
     };
   };

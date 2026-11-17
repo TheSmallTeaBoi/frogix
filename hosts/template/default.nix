@@ -25,6 +25,13 @@
     # once your channel moves past it
     nix.permittedInsecurePackages = [ "qutebrowser-3.7.0" ];
 
+    # EDITOR/BROWSER are machine choices — the module leaves them unset, so name
+    # yours here (this host assumes the rice defaults: emacs + qutebrowser)
+    shell = {
+      editor = "emacsclient -c";
+      browser = "qutebrowser";
+    };
+
     # defaults are opt-out: uncomment what this machine does NOT have.
     # disabling `gaming` also drops "gamemode" from users.extraGroups.
     # nvidia.enable = false;          # non-nvidia machine (AMD = default drivers)
@@ -41,7 +48,8 @@
     #  secrets, so turn them on together with sops below)
 
     # services (navidrome/syncthing/...) and romm read sops secrets, so these
-    # three travel together: all on once your age key lives at
+    # three travel together (enforced: enabling services/romm with sops off
+    # fails the build with a clear assertion): all on once your age key lives at
     # ~/.config/sops/age/keys.txt and modules/system/secrets/secrets.yaml is
     # decryptable by it — all off until then.
     services.enable = false;

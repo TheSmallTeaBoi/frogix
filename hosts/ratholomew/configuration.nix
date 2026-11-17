@@ -49,6 +49,13 @@
       firewall = false;
     };
 
+    # the editor/browser env vars are machine choices (the module leaves them
+    # unset by default): this host runs emacs + qutebrowser
+    shell = {
+      editor = "emacsclient -c";
+      browser = "qutebrowser";
+    };
+
     pi.enable = true;
 
     services = {
