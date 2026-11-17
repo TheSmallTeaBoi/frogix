@@ -1132,7 +1132,7 @@ list of (absolute path or string)
 
 ```nix
 [
-  /nix/store/im67hn7mvk947h9l5rsqfnbfrix5wly4-source/modules/system/pi/surplus-provider.ts
+  /nix/store/hshcjasksq85l4a5bv0az273ciw1b34d-source/modules/system/pi/surplus-provider.ts
 ]
 ```
 
@@ -1514,7 +1514,7 @@ string
 
 
 desktop service stack: navidrome, syncthing, pipewire, sunshine,
-tailscale, dbus, sshd, udev rules, gnome-keyring, gvfs, fstrim,
+tailscale, dbus, sshd, udev rules, gnome-keyring, fstrim,
 earlyoom, input-remapper, mysql
 
 
