@@ -42,6 +42,46 @@ const toPiModel = (m) => ({
 });
 
 export default function (pi) {
+  // surplus bills the marketplace-discounted rate, not the catalog's list
+  // price, so the model `cost` rates below overstate every request badly (this
+  // account pays single-digit percentages of list on its main models). each
+  // response reports the real charge in usage.buyer_cost_micro (integer
+  // micro-USD — "what you were charged"); usage.cost carries the upstream cost.
+  // pi's openai-completions path only honours a provider-reported cost for
+  // OpenRouter-shaped providers, so read the raw stream event and overwrite the
+  // finalized assistant message's cost. the catalog rates stay as the fallback
+  // when surplus omits the charge (buyer_cost_micro is absent for unknown
+  // priced requests).
+  let buyerCostUsd;
+
+  pi.on("provider_stream_event", (event) => {
+    if (event.provider !== "surplus") return;
+    const usage = (
+      event.data as { usage?: { buyer_cost_micro?: unknown; cost?: unknown } } | undefined
+    )?.usage;
+    if (typeof usage?.buyer_cost_micro === "number") {
+      buyerCostUsd = usage.buyer_cost_micro / 1e6;
+    } else if (typeof usage?.cost === "number") {
+      buyerCostUsd = usage.cost;
+    }
+  });
+
+  pi.on("message_end", (event) => {
+    if (event.message.role !== "assistant" || event.message.provider !== "surplus") return;
+    if (buyerCostUsd === undefined) return;
+    const total = buyerCostUsd;
+    buyerCostUsd = undefined;
+    return {
+      message: {
+        ...event.message,
+        usage: {
+          ...event.message.usage,
+          cost: { ...event.message.usage.cost, total, totalFromProvider: true },
+        },
+      },
+    };
+  });
+
   pi.registerProvider("surplus", {
     name: "Surplus Intelligence",
     baseUrl: BASE_URL,
