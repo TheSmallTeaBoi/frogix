@@ -24,7 +24,6 @@
     ./shell.nix
     ./pywal.nix
     ./sunshine.nix
-    ./qute-adblock
     ./tmux.nix
     ./vesktop.nix
     ./vitrina.nix

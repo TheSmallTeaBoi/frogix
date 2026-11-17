@@ -75,6 +75,7 @@ in
         scrolling.smooth = true;
 
         tabs.show = "multiple";
+        # (no custom adblock userscript — see content.blocking below)
 
         colors.webpage = {
           # startup default only — extraConfig below re-sets this from
@@ -92,6 +93,35 @@ in
         content = {
           pdfjs = true;
           persistent_storage = true;
+
+          # native adblocking only (qutebrowser's Brave ABP engine + hosts
+          # files). this replaced the custom qute-adblock userscript engine:
+          # its hand-rolled full-document reflow sweeps pinned the main thread
+          # on large SPAs (reddit, ddg search), so it was removed entirely.
+          blocking = {
+            method = lib.mkDefault "both";
+            adblock.lists = lib.mkDefault [
+              "https://easylist.to/easylist/easylist.txt"
+              "https://easylist.to/easylist/easyprivacy.txt"
+              "https://secure.fanboy.co.nz/fanboy-annoyance.txt"
+              "https://github.com/uBlockOrigin/uAssets/raw/master/filters/filters.txt"
+              "https://github.com/uBlockOrigin/uAssets/raw/master/filters/badware.txt"
+              "https://github.com/uBlockOrigin/uAssets/raw/master/filters/privacy.txt"
+              "https://github.com/uBlockOrigin/uAssets/raw/master/filters/unbreak.txt"
+              "https://github.com/uBlockOrigin/uAssets/raw/master/filters/quick-fixes.txt"
+              "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0&mimetype=plaintext"
+              "https://raw.githubusercontent.com/easylist/easylist/master/easylist_adult/adult_adservers.txt"
+              "https://raw.githubusercontent.com/easylist/easylist/master/easylist_adult/adult_thirdparty.txt"
+              "https://raw.githubusercontent.com/easylist/easylist/master/easylist_adult/adult_adservers_popup.txt"
+              "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-2024.txt"
+              "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-2025.txt"
+              "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-2026.txt"
+              "https://raw.githubusercontent.com/gioxx/xfiles/master/filtri.txt"
+              "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/AnnoyancesList"
+              "https://filters.adtidy.org/windows/filters/2.txt"
+            ];
+          };
+          javascript.can_open_tabs_automatically = lib.mkDefault false;
         };
 
         editor.command = [
