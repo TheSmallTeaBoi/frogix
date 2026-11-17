@@ -160,6 +160,95 @@ false
 
 
 
+## frogix.packages.musicPlayer
+
+
+
+which music player the music pack installs and niri launches on
+Mod+L; switch it per host (package, launch command, and window app-id)
+
+
+
+*Type:*
+submodule
+
+
+
+*Default:*
+
+```nix
+{ }
+```
+
+
+
+
+## frogix.packages.musicPlayer.package
+
+
+
+the player package the music pack installs
+
+
+
+*Type:*
+package
+
+
+
+*Default:*
+
+```nix
+pkgs.feishin
+```
+
+
+
+
+## frogix.packages.musicPlayer.appId
+
+
+
+Wayland app-id niri matches to float the player window
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"feishin"
+```
+
+
+
+
+## frogix.packages.musicPlayer.command
+
+
+
+executable niri spawns on Mod+L (a bare name resolves against the installed package)
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"feishin"
+```
+
+
+
+
 ## frogix.packages.piracy
 
 
@@ -1043,7 +1132,7 @@ list of (absolute path or string)
 
 ```nix
 [
-  /nix/store/39fpnmdnkg79zpb3v8mvh6y2h23cwf42-source/modules/system/pi/surplus-provider.ts
+  /nix/store/im67hn7mvk947h9l5rsqfnbfrix5wly4-source/modules/system/pi/surplus-provider.ts
 ]
 ```
 
@@ -1189,6 +1278,8 @@ attribute set
     "npm:@getpipher/vision"
     "npm:@heyhuynhgiabuu/pi-pretty"
     "npm:pi-bg-handoff"
+    "npm:pi-thinking-display"
+    "npm:pi-openui"
   ];
   theme = "pywal";
 }
