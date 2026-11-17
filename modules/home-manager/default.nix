@@ -19,7 +19,6 @@
     # ./hyprland.nix
     ./iamb.nix
     ./kitty.nix
-    ./mako.nix
     ./niri.nix
     ./rofi.nix
     ./shell.nix

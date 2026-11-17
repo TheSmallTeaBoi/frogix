@@ -26,7 +26,7 @@ in
     };
 
     terminal = pack "core CLI tools (fetch, browse, clipboard, av wrangling, compression)";
-    rice = pack "ricing CLI (pywal, mako, rofi)";
+    rice = pack "ricing CLI (pywal, rofi)";
     coding = pack "dev tooling (nix-alien, devenv, secret/keyring CLIs)";
     keyboard = pack "QMK firmware tooling (the Vial GUI lives in frogix.vial)";
     gui = pack "personal GUI apps (obsidian, calibre, warpinator, obs, pandoc)";
@@ -79,7 +79,6 @@ in
       environment.systemPackages = with pkgs; [
         pywal16
         psmisc
-        mako
         rofi
       ];
     })

@@ -67,7 +67,6 @@
     frogix.qutebrowser.enable = false;
     frogix.hermes.enable = false;
     frogix.iamb.enable = false;
-    frogix.mako.enable = false;
     frogix.rofi.enable = false;
     frogix.vesktop.enable = false;
     frogix.beets.enable = false;
