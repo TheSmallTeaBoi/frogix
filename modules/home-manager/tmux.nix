@@ -6,6 +6,10 @@
 }:
 let
   cfg = config.frogix.tmux;
+  # Nerd Font Powerline half-circle caps, used to round the active-window
+  # pill. Kept as JSON escapes so the source stays ASCII.
+  pillLeft = builtins.fromJSON "\"\\uE0B6\"";
+  pillRight = builtins.fromJSON "\"\\uE0B4\"";
 in
 {
   options.frogix."tmux".enable = lib.mkOption {
@@ -47,11 +51,44 @@ in
           set-option -g extended-keys on
           set-option -g extended-keys-format csi-u
 
-          # Set the modules
+          set -g status on
+          set -g status-justify left
+          set -g status-interval 5
+          set -g status-left-length 40
+          set -g status-right-length 40
           set -g status-left ""
           set -g status-right ""
+          set -g window-status-separator ""
+          # tmux underlines the current window by default; keep it flat.
+          set -g window-status-current-style "nounderscore"
 
-          run-shell -b 'if [ -r ~/.cache/wal/colors.sh ]; then . ~/.cache/wal/colors.sh; tmux set -g status-style "bg=$background,fg=$foreground"; tmux set -g message-style "bg=$color4,fg=$foreground"; tmux set -g mode-style "bg=$color4,fg=$foreground"; tmux set -g pane-border-style "fg=$color0"; tmux set -g pane-active-border-style "fg=$color4"; fi'
+          # Palette push, re-run every time set-wal reloads this file (see
+          # pywal.nix). `#[...]` are tmux format escapes; the shell only
+          # substitutes the pywal variables. Each block resets to bg/fg so a
+          # neighbouring segment never inherits the accent pill.
+          #
+          # run-shell expands formats in its argument, so the format codes
+          # below are written as `##I`/`##W`: the outer expansion turns each
+          # `##` into a literal `#`, leaving `#I`/`#W` for the inner `tmux set`
+          # to store and render. Without this the window index/name expand to
+          # nothing at config-load time.
+          run-shell -b 'if [ -r ~/.cache/wal/colors.sh ]; then
+            . ~/.cache/wal/colors.sh
+            tmux set -g status-style "bg=$background,fg=$foreground"
+            tmux set -g status-left ""
+            tmux set -g status-right "#[fg=$color8,bg=$background,nobold,nounderscore]  alt + space  for menu "
+            tmux set -g window-status-format "#[fg=$color8,bg=$background,nounderscore] ##I  ##W "
+            tmux set -g window-status-current-format "#[fg=$color1,bg=$background,nobold,nounderscore]${pillLeft}#[fg=$background,bg=$color1,bold,nounderscore] ##I  ##W #[fg=$color1,bg=$background,nobold,nounderscore]${pillRight}"
+            tmux set -g window-status-activity-style "fg=$color2,bg=$background,nounderscore"
+            tmux set -g window-status-bell-style "fg=$background,bg=$color2,bold,nounderscore"
+            tmux set -g pane-border-style "fg=$color0"
+            tmux set -g pane-active-border-style "fg=$color1"
+            tmux set -g message-style "bg=$color0,fg=$foreground"
+            tmux set -g mode-style "bg=$color1,fg=$background"
+            tmux set -g clock-mode-colour "$color1"
+            tmux set -g display-panes-colour "$color8"
+            tmux set -g display-panes-active-colour "$color1"
+          fi'
 
           # Reorder windows when one gets deleted.
           set -g renumber-windows on
