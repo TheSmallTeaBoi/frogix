@@ -2,18 +2,15 @@ import QtQuick
 import Quickshell
 import "."
 
-/* Month calendar flyout, opened from the island clock (see shell.qml).
-   Self-contained: it follows today until the user pages away, and shares
-   the pywal palette through the Colors singleton. */
-Rectangle {
+/* Month calendar, opened from the island clock (see shell.qml). Rendered as
+   bare content inside the island's morphing pill, which supplies the card
+   chrome. It follows today until the user pages away, and shares the pywal
+   palette through the Colors singleton. */
+Item {
     id: root
 
     implicitWidth: 280
     implicitHeight: 264
-    radius: 18
-    color: Colors.bg
-    border.width: 1
-    border.color: Colors.alpha(Colors.accent, "3d")
 
     SystemClock {
         id: clock

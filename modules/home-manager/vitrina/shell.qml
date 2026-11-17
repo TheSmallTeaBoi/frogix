@@ -1698,13 +1698,13 @@ ShellRoot {
                 left: true
                 right: true
             }
-            implicitHeight: (island.expanded || island.powerOpen || island.trayOpen) ? modelData.height : (Math.max(morph.height, powerPill.height, trayPill.height) + 6)
+            implicitHeight: (island.expanded || island.powerOpen || island.trayOpen || shell.calendarOpen) ? modelData.height : (Math.max(morph.height, powerPill.height, trayPill.height) + 6)
             exclusiveZone: 30
             exclusionMode: ExclusionMode.Normal
             color: "transparent"
             WlrLayershell.keyboardFocus: (island.connView === "wifi" && island.pendingSsid.length > 0) ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
             mask: Region {
-                item: (island.powerOpen || island.trayOpen || island.expanded) ? outsideCatcher : morph
+                item: (island.powerOpen || island.trayOpen || island.expanded || shell.calendarOpen) ? outsideCatcher : morph
                 Region {
                     item: wsPill
                 }
@@ -1719,13 +1719,14 @@ ShellRoot {
             MouseArea {
                 id: outsideCatcher
                 anchors.fill: parent
-                enabled: island.powerOpen || island.trayOpen || island.expanded
+                enabled: island.powerOpen || island.trayOpen || island.expanded || shell.calendarOpen
                 onClicked: {
                     island.powerOpen = false
                     island.trayMenuHandle = null
                     island.trayMenuStack = []
                     island.trayOpen = false
                     island.expanded = false
+                    shell.calendarOpen = false
                     shell.closeLauncher()
                 }
             }
@@ -1762,6 +1763,10 @@ ShellRoot {
             property string tab: "music"
             readonly property int tabIndex: tab === "settings" ? 1 : 0
             readonly property int panelMaxH: Math.min(690, modelData.height - 80)
+            /* calendar morph target: a 280-wide calendar plus 12px side padding,
+               and header row + gap + calendar height + bottom padding */
+            readonly property int calW: 304
+            readonly property int calH: 312
             property var trayMenuHandle: null
             property string trayMenuTitle: ""
             property var trayMenuStack: []
@@ -1870,9 +1875,10 @@ ShellRoot {
                         anchors.top: parent.top
                         anchors.topMargin: 2
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: island.expanded ? 740 : (notifRow.active ? notifRow.width + 24 : headRow.width + 24)
-                        height: island.expanded ? Math.min(cols.implicitHeight + cols.y + 22, island.panelMaxH) : 26
-                        radius: island.expanded ? 22 : 13
+                        readonly property bool open: island.expanded || shell.calendarOpen
+                        width: island.expanded ? 740 : (shell.calendarOpen ? island.calW : (notifRow.active ? notifRow.width + 24 : headRow.width + 24))
+                        height: island.expanded ? Math.min(cols.implicitHeight + cols.y + 22, island.panelMaxH) : (shell.calendarOpen ? island.calH : 26)
+                        radius: morph.open ? 22 : 13
                         color: Colors.bg
                         border.width: 1
                         border.color: Colors.alpha(Colors.accent, "3d")
@@ -1907,7 +1913,7 @@ ShellRoot {
 
             Row {
                 id: headRow
-                x: island.expanded ? (morph.width - headRow.width) / 2 : 12
+                x: (morph.width - headRow.width) / 2
                 y: 0
                 height: 26
                 spacing: 8
@@ -2008,7 +2014,7 @@ ShellRoot {
 
                 Row {
                     id: notifRow
-                    readonly property bool active: shell.flashNotif !== null && !island.expanded
+                    readonly property bool active: shell.flashNotif !== null && !island.expanded && !shell.calendarOpen
                     x: 12
                     y: 0
                     height: 26
@@ -2061,14 +2067,16 @@ ShellRoot {
 
             MouseArea {
                 id: headHit
-                x: island.expanded ? (morph.width - headRow.width) / 2 : 0
+                x: (morph.width - headRow.width) / 2
                 y: 0
                 width: headRow.width
                 height: 26
                 onClicked: (mouse) => {
-                    /* the clock opens the calendar; the rest of the bar expands */
+                    /* the clock morphs the pill into the calendar, but only from
+                       the collapsed bar; when expanded the header just collapses */
                     const p = clockText.mapFromItem(headHit, mouse.x, mouse.y)
-                    if (p.x >= 0 && p.x <= clockText.width && p.y >= 0 && p.y <= clockText.height)
+                    const onClock = p.x >= 0 && p.x <= clockText.width && p.y >= 0 && p.y <= clockText.height
+                    if (onClock && !island.expanded)
                         shell.toggleCalendar()
                     else
                         island.toggleExpand()
@@ -2077,6 +2085,28 @@ ShellRoot {
                 Behavior on x {
                     NumberAnimation {
                         duration: 240
+                        easing.type: Easing.OutCubic
+                    }
+                }
+            }
+
+            Calendar {
+                id: calCard
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: 34
+                opacity: shell.calendarOpen ? 1 : 0
+                visible: opacity > 0.01
+                scale: shell.calendarOpen ? 1 : 0.96
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 140
+                    }
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 160
                         easing.type: Easing.OutCubic
                     }
                 }
@@ -4106,6 +4136,7 @@ ShellRoot {
                 enabled: !trayOpen
                 onClicked: {
                     island.expanded = false
+                    shell.calendarOpen = false
                     island.powerOpen = false
                     island.trayMenuHandle = null
                     island.trayMenuStack = []
@@ -4350,6 +4381,7 @@ ShellRoot {
                 enabled: !powerOpen
                 onClicked: {
                     island.expanded = false
+                    shell.calendarOpen = false
                     trayOpen = false
                     powerOpen = true
                 }
@@ -4419,51 +4451,6 @@ ShellRoot {
             }
         }
     }
-    }
-
-    Variants {
-        model: Quickshell.screens.filter(s => s === shell.mainScreen)
-
-        PanelWindow {
-            id: calWin
-            required property var modelData
-            screen: modelData
-            anchors {
-                top: true
-                bottom: true
-                left: true
-                right: true
-            }
-            exclusiveZone: -1
-            color: "transparent"
-            WlrLayershell.layer: WlrLayer.Overlay
-            visible: shell.calendarOpen
-            mask: Region {
-                item: calCard
-            }
-
-            Calendar {
-                id: calCard
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: 34
-                opacity: shell.calendarOpen ? 1 : 0
-                scale: shell.calendarOpen ? 1 : 0.96
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: 140
-                    }
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: 160
-                        easing.type: Easing.OutCubic
-                    }
-                }
-            }
-        }
     }
 
     Variants {
