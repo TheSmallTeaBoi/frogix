@@ -80,6 +80,26 @@ in
     };
 
     services = {
+      # whole-filesystem filename index (plocate), refreshed daily. The default
+      # prunes already skip pseudo-filesystems, /nix/store, /tmp, /var/cache and
+      # VCS/cache dirs; add common tool caches. `pruneFS` matches the mount type
+      # exactly, so `fuse` does not catch /storage (fuse.mergerfs) — it is indexed.
+      locate = {
+        enable = true;
+        interval = "daily";
+        pruneNames = [
+          ".bzr"
+          ".cache"
+          ".cargo"
+          ".git"
+          ".hg"
+          ".npm"
+          ".rustup"
+          ".svn"
+          "node_modules"
+        ];
+      };
+
       infract = {
         enable = true;
         environment = {

@@ -320,8 +320,8 @@ ShellRoot {
         }
     }
 
-    /* file search for the "All" launcher mode — fd runs debounced off the
-       query and its results are merged with apps and the calculator */
+    /* file search for the "All" launcher mode — plocate runs debounced off
+       the query and its results are merged with apps and the calculator */
     Process {
         id: fileProc
         stdout: StdioCollector {
@@ -338,10 +338,12 @@ ShellRoot {
         id: fileSearchTimer
         interval: 180
         onTriggered: {
-            const home = Quickshell.env("HOME")
-            const extra = (Quickshell.env("FROGIX_SEARCH_ROOTS") || "").split(":").filter(r => r.trim().length > 0)
-            const base = ["fd", "--color=never", "-F", "-t", "f", "-t", "d", "-E", ".git", "-E", "node_modules", "--max-results", "12", "-a", "--", shell.launcherQuery.trim()]
-            fileProc.command = base.concat([home]).concat(extra)
+            /* plocate ANDs multiple patterns, so split into terms like the app
+               search does; -b matches basenames and -i ignores case */
+            const terms = shell.launcherQuery.trim().split(/\s+/).filter(t => t.length > 0)
+            if (terms.length === 0)
+                return
+            fileProc.command = ["plocate", "-i", "-b", "-l", "12", "--"].concat(terms)
             fileProc.running = false
             fileProc.running = true
         }
