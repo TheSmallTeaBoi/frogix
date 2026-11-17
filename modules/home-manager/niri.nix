@@ -51,6 +51,34 @@ in
     # service comes from modules/system/services.nix.
     home.packages = [ pkgs.hyprlock ];
 
+    # pywal renders the hyprlock config (it is a wal template, symlinked in
+    # pywal.nix). when pywal is off there is nothing to symlink, so land a
+    # plain config here — otherwise hyprlock would start with no config at all.
+    xdg.configFile = lib.mkIf (!config.frogix.pywal.enable) {
+      "hypr/hyprlock.conf".text = ''
+        general {
+            hide_cursor = true
+        }
+
+        background {
+            monitor =
+            color = rgba(000000ff)
+        }
+
+        input-field {
+            monitor =
+            size = 340, 50
+            rounding = 12
+            outline_thickness = 1
+            inner_color = rgba(ffffffff)
+            outer_color = rgba(000000ff)
+            font_color = rgba(000000ff)
+            placeholder_text = Password
+            fade_on_empty = false
+        }
+      '';
+    };
+
     wayland.windowManager.niri = {
       enable = true;
       settings = {
@@ -87,9 +115,7 @@ in
               main_screen
               right_screen
             ];
-            entryFor =
-              n:
-              lib.findFirst (o: builtins.head (o._args or [ "" ]) == n) null screens.outputs;
+            entryFor = n: lib.findFirst (o: builtins.head (o._args or [ "" ]) == n) null screens.outputs;
             withRoles = map (
               n:
               let
@@ -103,7 +129,8 @@ in
 
             autoX = lib.optionalAttrs (screens.autoLayout != null) (
               builtins.foldl'
-                (acc: role:
+                (
+                  acc: role:
                   if screens ? ${role} && screens.${role} != null && screens.autoLayout.widths ? ${role} then
                     acc
                     // {
@@ -122,7 +149,8 @@ in
                   "right"
                 ]
             );
-            injectPosition = o:
+            injectPosition =
+              o:
               let
                 name = builtins.head (o._args or [ "" ]);
                 computed = lib.optionalAttrs (autoX ? ${name}) {
@@ -142,8 +170,9 @@ in
               else
                 o // { position._props = computed; };
           in
-          lib.mkIf (screens.outputs != [ ] || left_screen != null || main_screen != null || right_screen != null)
-            (map injectPosition (withRoles ++ others));
+          lib.mkIf (
+            screens.outputs != [ ] || left_screen != null || main_screen != null || right_screen != null
+          ) (map injectPosition (withRoles ++ others));
 
         input = {
           keyboard = {
@@ -162,7 +191,6 @@ in
         };
 
         spawn-at-startup = [
-          { _args = [ "${pkgs.awww}/bin/awww-daemon" ]; }
           {
             _args = [
               "input-remapper-control"
@@ -170,25 +198,15 @@ in
               "autoload"
             ];
           }
-
-          # Run pywal after awww-daemon is already up
-          {
-            _args = [
-              "${pkgs.bash}/bin/bash"
-              "-c"
-              "until ${pkgs.awww}/bin/awww query >/dev/null 2>&1 && [ -S /run/user/$(id -u)/emacs/server ]; do sleep 0.2; done && set-wal \"$(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)\""
-            ];
-          }
           # spawn-at-startup does not run through a shell: each list entry is one
           # argv token, so this must be split into real arguments (the old
           # single "hyprlock --grace 0" string was exec'd as one binary name and
           # silently never launched).
-          { _args = [ "${pkgs.hyprlock}/bin/hyprlock" "--grace" "0" ]; }
           {
             _args = [
-              "${pkgs.bash}/bin/bash"
-              "-c"
-              "until [ -f ~/.cache/wal/colors.json ]; do sleep 0.2; done && ${pkgs.quickshell}/bin/quickshell -p ${config.xdg.configHome}/vitrina"
+              "${pkgs.hyprlock}/bin/hyprlock"
+              "--grace"
+              "0"
             ];
           }
           {
@@ -198,6 +216,9 @@ in
               "kill $(${pkgs.lsof}/bin/lsof -t -i:10420) || true"
             ];
           }
+          # bare names: these apps belong to frogix.packages / the host, so
+          # niri resolves them from PATH instead of force-building them here.
+          # a missing one just no-ops.
           {
             _args = [
               "sh"
@@ -207,14 +228,37 @@ in
           }
           {
             _args = [
-              "${pkgs.clipse}/bin/clipse"
+              "clipse"
               "-listen"
             ];
           }
-          { _args = [ "vesktop" ]; }
+        ]
+        # wallpaper + palette belong to pywal (it owns awww and set-wal)
+        ++ lib.optionals config.frogix.pywal.enable [
+          { _args = [ "${pkgs.awww}/bin/awww-daemon" ]; }
+          # Run pywal after awww-daemon is already up
           {
             _args = [
-              "${pkgs.easyeffects}/bin/easyeffects"
+              "${pkgs.bash}/bin/bash"
+              "-c"
+              "until ${pkgs.awww}/bin/awww query >/dev/null 2>&1 && [ -S /run/user/$(id -u)/emacs/server ]; do sleep 0.2; done && set-wal \"$(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)\""
+            ];
+          }
+        ]
+        ++ lib.optionals config.frogix.vitrina.enable [
+          {
+            _args = [
+              "${pkgs.bash}/bin/bash"
+              "-c"
+              "until [ -f ~/.cache/wal/colors.json ]; do sleep 0.2; done && ${pkgs.quickshell}/bin/quickshell -p ${config.xdg.configHome}/vitrina"
+            ];
+          }
+        ]
+        ++ lib.optionals config.frogix.vesktop.enable [ { _args = [ "vesktop" ]; } ]
+        ++ lib.optionals config.services.easyeffects.enable [
+          {
+            _args = [
+              "easyeffects"
               "--gapplication-service"
             ];
           }
@@ -263,11 +307,6 @@ in
             };
           }
           {
-            match._props.app-id = "vesktop";
-            open-on-workspace = ""; # discord
-            open-focused = false;
-          }
-          {
             match._props.app-id = "feishin";
             open-floating = true;
             default-column-width = {
@@ -292,6 +331,13 @@ in
             open-floating = true;
           }
         ]
+        ++ lib.optionals config.frogix.vesktop.enable [
+          {
+            match._props.app-id = "vesktop";
+            open-on-workspace = ""; # discord
+            open-focused = false;
+          }
+        ]
         ++ lib.optionals config.frogix.qutebrowser.enable [
           {
             match._props.app-id = "qute";
@@ -311,12 +357,6 @@ in
         hotkey-overlay.skip-at-startup = true;
 
         binds = {
-          # vitrina hotkey reminder (replaces niri's built-in overlay bind)
-          "Mod+Shift+Slash" = {
-            spawn-sh._args = [
-              "if [ -e /run/user/1000/vitrina-hotkeys ]; then rm -f /run/user/1000/vitrina-hotkeys; else touch /run/user/1000/vitrina-hotkeys; fi"
-            ];
-          };
           "Mod+Tab" = {
             focus-monitor-next = { };
           };
@@ -329,34 +369,16 @@ in
           "Mod+Control+Grave" = {
             move-window-to-monitor-previous = { };
           };
-          "Mod+Return" = {
-            spawn._args = [ "kitty" ];
-          };
           "Mod+Shift+P" = {
             toggle-window-floating = { };
           };
-          "Mod+C" = {
+          # Launch the XDG default browser's desktop entry (qutebrowser when
+          # frogix.qutebrowser is on) with no URL, so existing tabs are kept.
+          "Mod+B" = {
             spawn._args = [
-              "${pkgs.quickshell}/bin/qs"
-              "-p"
-              "${config.xdg.configHome}/vitrina"
-              "ipc"
-              "call"
-              "vitrina"
-              "launcher"
-              "calc"
-            ];
-          };
-          "Mod+D" = {
-            spawn._args = [
-              "${pkgs.quickshell}/bin/qs"
-              "-p"
-              "${config.xdg.configHome}/vitrina"
-              "ipc"
-              "call"
-              "vitrina"
-              "launcher"
-              "apps"
+              "${pkgs.bash}/bin/bash"
+              "-c"
+              "exec ${lib.getExe' pkgs.gtk3 "gtk-launch"} \"$(${lib.getExe' pkgs.xdg-utils "xdg-settings"} get default-web-browser)\""
             ];
           };
           "Mod+E" = {
@@ -377,54 +399,11 @@ in
           "Mod+L" = {
             spawn._args = [ "feishin" ];
           };
-          "Mod+Shift+W" = {
-            spawn._args = [
-              "sh"
-              "-c"
-              "set-wal $(find /storage/Walls/ | shuf -n 1)"
-            ];
-          };
-          "Mod+Shift+L" = {
-            spawn._args = [
-              "rice-mode"
-              "toggle"
-            ];
-          };
-          "Mod+O" = {
-            spawn._args = [
-              "emacsclient"
-              "-c"
-            ];
-          };
           "Mod+P" = {
             toggle-window-floating = { };
           };
-          "Mod+R" = {
-            spawn._args = [
-              "${pkgs.quickshell}/bin/qs"
-              "-p"
-              "${config.xdg.configHome}/vitrina"
-              "ipc"
-              "call"
-              "vitrina"
-              "launcher"
-              "clipboard"
-            ];
-          };
           "Mod+T" = {
             close-window = { };
-          };
-          "Mod+Period" = {
-            spawn._args = [
-              "${pkgs.quickshell}/bin/qs"
-              "-p"
-              "${config.xdg.configHome}/vitrina"
-              "ipc"
-              "call"
-              "vitrina"
-              "launcher"
-              "emoji"
-            ];
           };
 
           "Super+WheelScrollUp" = {
@@ -564,13 +543,93 @@ in
               (lib.getExe set-muted)
             ];
           };
-          "XF86MonBrightnessUp" = {
-            spawn._args = [ "vitrina-bright" "up" ];
-          };
-          "XF86MonBrightnessDown" = {
-            spawn._args = [ "vitrina-bright" "down" ];
-          };
 
+        }
+        # apps owned by other frogix areas: the bind only exists when that
+        # area is on, so niri never launches (or force-builds) what is not there
+        // lib.optionalAttrs config.frogix.kitty.enable {
+          "Mod+Return" = {
+            spawn._args = [ "kitty" ];
+          };
+        }
+        // lib.optionalAttrs config.frogix.emacs.enable {
+          "Mod+O" = {
+            spawn._args = [
+              "emacsclient"
+              "-c"
+            ];
+          };
+        }
+        // lib.optionalAttrs config.frogix.pywal.enable {
+          "Mod+Shift+W" = {
+            spawn._args = [
+              "sh"
+              "-c"
+              "set-wal $(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)"
+            ];
+          };
+          "Mod+Shift+L" = {
+            spawn._args = [
+              "rice-mode"
+              "toggle"
+            ];
+          };
+        }
+        // lib.optionalAttrs config.frogix.vitrina.enable {
+          # vitrina hotkey reminder (replaces niri's built-in overlay bind)
+          "Mod+Shift+Slash" = {
+            spawn-sh._args = [
+              "if [ -e /run/user/1000/vitrina-hotkeys ]; then rm -f /run/user/1000/vitrina-hotkeys; else touch /run/user/1000/vitrina-hotkeys; fi"
+            ];
+          };
+          "Mod+C" = {
+            spawn._args = [
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
+              "calc"
+            ];
+          };
+          "Mod+D" = {
+            spawn._args = [
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
+              "apps"
+            ];
+          };
+          "Mod+R" = {
+            spawn._args = [
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
+              "clipboard"
+            ];
+          };
+          "Mod+Period" = {
+            spawn._args = [
+              "${pkgs.quickshell}/bin/qs"
+              "-p"
+              "${config.xdg.configHome}/vitrina"
+              "ipc"
+              "call"
+              "vitrina"
+              "launcher"
+              "emoji"
+            ];
+          };
           "Mod+W" = {
             spawn._args = [
               "${pkgs.quickshell}/bin/qs"
@@ -583,11 +642,21 @@ in
               "windows"
             ];
           };
-
           "Mod+N" = {
             spawn._args = [ "vitrina-nightlight" ];
           };
-
+          "XF86MonBrightnessUp" = {
+            spawn._args = [
+              "vitrina-bright"
+              "up"
+            ];
+          };
+          "XF86MonBrightnessDown" = {
+            spawn._args = [
+              "vitrina-bright"
+              "down"
+            ];
+          };
         }
         // (builtins.listToAttrs (
           builtins.concatLists (
@@ -627,14 +696,14 @@ in
         # suspend action uses vitrina-lock-suspend, which is deterministic.
         general = {
           lock_cmd = "pidof hyprlock || hyprlock --no-fade-in";
-          before_sleep_cmd = "vitrina-lock";
+          before_sleep_cmd = if config.frogix.vitrina.enable then "vitrina-lock" else "hyprlock --grace 0";
           after_sleep_cmd = "niri msg action power-on-monitors";
           inhibit_sleep = 1;
         };
         listener = [
           {
             timeout = 500;
-            on-timeout = "${pkgs.bash}/bin/bash -c 'hyprlock --grace 120; set-wal $(find /storage/Walls/ | shuf -n 1)'";
+            on-timeout = "${pkgs.bash}/bin/bash -c 'hyprlock --grace 120${lib.optionalString config.frogix.pywal.enable "; set-wal $(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)"}'";
           }
           {
             timeout = 1500;

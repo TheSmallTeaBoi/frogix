@@ -14,15 +14,9 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    xdg.desktopEntries = {
-      # steam = {
-      #   name = "Steam";
-      #   genericName = "Game Store";
-      #   exec = "steam -no-cef-sandbox";
-      #   icon = "steam";
-      #   terminal = false;
-      #   categories = [ "Application" ];
-      # };
+    # the entry launches vesktop, which frogix.vesktop owns — only emit it when
+    # that area is on.
+    xdg.desktopEntries = lib.mkIf config.frogix.vesktop.enable {
       vesktop = {
         name = "Vesktop";
         exec = "vesktop --enable-features=VaapiIgnoreDriverChecks,VaapiVideoEncoder,VaapiVideoDecoder,UseMultiPlaneFormatForHardwareVideo";

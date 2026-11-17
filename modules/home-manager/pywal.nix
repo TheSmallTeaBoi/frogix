@@ -8,12 +8,6 @@ let
   cfg = config.frogix.pywal;
   walCache = "${config.home.homeDirectory}/.cache/wal";
 
-  quteConfigSource = lib.optionalString config.frogix.qutebrowser.enable ''
-    if pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
-      qutebrowser --target auto ":config-source" || true
-    fi
-  '';
-
   quteRestart = lib.optionalString config.frogix.qutebrowser.enable ''
     cdp_port="''${RICE_CDP_PORT:-9222}"
     if [ "$restart_qute" = 1 ] && pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
@@ -201,19 +195,21 @@ let
   set-wal = (
     pkgs.writeShellApplication {
       name = "set-wal";
-      runtimeInputs = with pkgs; [
-        pywal16-full
-        awww
-        procps
-        mako
-        pywalfox-native
-        glib # gsettings/glib runtime (kept for the pywalfox path)
-        dconf # gtk-theme / icon-theme / color-scheme, schema-free
-        python3
-        niri
-        coreutils
-        gnused
-      ] ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ];
+      runtimeInputs =
+        with pkgs;
+        [
+          pywal16-full
+          awww
+          procps
+          pywalfox-native
+          glib # gsettings/glib runtime (kept for the pywalfox path)
+          dconf # gtk-theme / icon-theme / color-scheme, schema-free
+          python3
+          coreutils
+          gnused
+        ]
+        ++ lib.optionals config.frogix.niri.enable [ niri ]
+        ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ];
       text = ''
         set -euo pipefail
         set -x
@@ -261,39 +257,53 @@ let
 
         awww img "$1" --transition-type any --transition-duration 2 --transition-fps 180
 
-        # qutebrowser re-reads config.py (chrome colors live). only poke an
-        # instance that is already running: a CLI call with no IPC peer opens a
-        # whole browser window.
-        ${quteConfigSource}
+        ${lib.optionalString config.frogix.qutebrowser.enable ''
+          # only poke an instance that is already running: a CLI call with no
+          # IPC peer opens a whole browser window.
+          if pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
+            qutebrowser --target auto ":config-source" || true
+          fi
+        ''}
 
-        makoctl reload 2>/dev/null || true
-        pkill -USR1 kitty 2>/dev/null || true
-        if command -v tmux >/dev/null 2>&1; then
-          tmux source-file ~/.config/tmux/tmux.conf >/dev/null 2>&1 || true
-        fi
+        ${lib.optionalString config.frogix.niri.enable ''
+          # niri only auto-reloads on config.kdl edits, not on this include.
+          niri_sock="''${NIRI_SOCKET:-}"
+          if [ -z "$niri_sock" ]; then
+            niri_dir="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+            for s in "$niri_dir"/niri.wayland-1.*.sock; do
+              if [ -S "$s" ]; then
+                niri_sock="$s"
+                break
+              fi
+            done
+          fi
+          if [ -n "$niri_sock" ]; then
+            NIRI_SOCKET="$niri_sock" niri msg action reload-config >/dev/null 2>&1 || true
+          fi
+        ''}
 
-        # niri only auto-reloads on config.kdl edits, not on this include.
-        niri_sock="''${NIRI_SOCKET:-}"
-        if [ -z "$niri_sock" ]; then
-          niri_dir="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-          for s in "$niri_dir"/niri.wayland-1.*.sock; do
-            if [ -S "$s" ]; then
-              niri_sock="$s"
-              break
-            fi
-          done
-        fi
-        if [ -n "$niri_sock" ]; then
-          NIRI_SOCKET="$niri_sock" niri msg action reload-config >/dev/null 2>&1 || true
-        fi
+        # pywalfox only has a target when firefox exists; never abort set-wal
+        # over it (set -e is on).
+        pywalfox update || true
 
-        pywalfox update
-
-        ln -sf ~/.cache/wal/vesktop.css ~/.config/vesktop/themes/custom.css
+        ${lib.optionalString config.frogix.vesktop.enable ''
+          ln -sf ~/.cache/wal/vesktop.css ~/.config/vesktop/themes/custom.css
+        ''}
 
         if command -v emacsclient >/dev/null 2>&1; then
           emacsclient --eval '(load-file "~/.config/emacs/pywal.el")' >/dev/null 2>&1 || true
         fi
+
+        ${lib.optionalString config.frogix.tmux.enable ''
+          # reload tmux's config so its run-shell re-sources the colors.sh wal
+          # just regenerated; the status line, borders and modes then follow the
+          # new wallpaper without restarting the server. re-sourcing the config
+          # keeps the palette definition in one place (tmux.nix) instead of
+          # duplicating it here. no server running is a silent no-op.
+          if command -v tmux >/dev/null 2>&1; then
+            tmux source-file ${config.xdg.configHome}/tmux/tmux.conf >/dev/null 2>&1 || true
+          fi
+        ''}
       '';
     }
   );
@@ -305,14 +315,17 @@ let
   # reloads the saved session so tabs come back).
   rice-mode = pkgs.writeShellApplication {
     name = "rice-mode";
-    runtimeInputs = with pkgs; [
-      coreutils
-      gnused
-      gnugrep
-      procps
-      curl
-      set-wal
-    ] ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ];
+    runtimeInputs =
+      with pkgs;
+      [
+        coreutils
+        gnused
+        gnugrep
+        procps
+        curl
+        set-wal
+      ]
+      ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ];
     text = ''
       set -euo pipefail
 
@@ -683,16 +696,6 @@ in
         }
       '';
 
-      "wal/templates/mako-colors".text = ''
-        background-color={background}
-        text-color={foreground}
-        border-color={color4}
-        border-radius=5
-        margin=20
-
-        border-size=3
-      '';
-
       "wal/templates/niri-colors.kdl".text = ''
         layout {
           background-color "{background}"
@@ -1060,7 +1063,9 @@ in
         '';
 
       "emacs/pywal.el".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/emacs.el";
-      "vesktop/themes/custom.css".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/vesktop.css";
+      "vesktop/themes/custom.css" = lib.mkIf config.frogix.vesktop.enable {
+        source = config.lib.file.mkOutOfStoreSymlink "${walCache}/vesktop.css";
+      };
       "hypr/hyprlock.conf".source = config.lib.file.mkOutOfStoreSymlink "${walCache}/hyprlock.conf";
 
       # qt reads its palette at app startup, so symlink the wal output

@@ -62,28 +62,31 @@ in
       # the starship transience module doesn't handle empty commands properly
       # https://github.com/starship/starship/issues/4929
       # Add a tmux session when you start fish
-      interactiveShellInit =
-        lib.mkAfter
-          # Fish
-          ''
-            function transient_prompt_func
-              starship module character
-            end
+      interactiveShellInit = lib.mkAfter (
+        # Fish
+        ''
+          function transient_prompt_func
+            starship module character
+          end
+        ''
+        # the terminal multiplexer is frogix.tmux's area; autostarting it here
+        # would error on every shell when that area is off.
+        + lib.optionalString config.frogix.tmux.enable ''
+          if not set -q TMUX
+              and not set -q INSIDE_EMACS
+              and not set -q VIM
+              and not set -q NVIM
 
-            if not set -q TMUX
-                and not set -q INSIDE_EMACS
-                and not set -q VIM
-                and not set -q NVIM
-
-            # Every terminal shares the same windows through grouped sessions,
-            # but each gets its own current-window pointer.
-            if tmux has-session -t base 2>/dev/null
-                exec tmux new-session -s "t-$fish_pid" -t base
-            else
-                exec tmux new-session -A -s base
-            end
-            end
-          '';
+          # Every terminal shares the same windows through grouped sessions,
+          # but each gets its own current-window pointer.
+          if tmux has-session -t base 2>/dev/null
+              exec tmux new-session -s "t-$fish_pid" -t base
+          else
+              exec tmux new-session -A -s base
+          end
+          end
+        ''
+      );
     };
 
     # fish plugins, home-manager's programs.fish.plugins has a weird format

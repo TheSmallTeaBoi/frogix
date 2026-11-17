@@ -45,6 +45,10 @@ in
         };
         extraConfig = ''
           allow_remote_control yes
+        ''
+        # pywal writes the palette; without it the include would be a missing
+        # file, which kitty treats as a config error.
+        + lib.optionalString config.frogix.pywal.enable ''
           include ~/.cache/wal/colors-kitty.conf
         '';
         # some sort of race condition with kitty and starship
