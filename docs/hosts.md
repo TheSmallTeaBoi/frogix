@@ -96,6 +96,9 @@ home-manager.users.theo = {
   # the arrangement must be explicit); per-output mode/transform/position
   # overrides live under frogix.screens.outputs
   frogix.screens.autoLayout.widths = { left = 768; main = 1920; right = 1366; };
+  # HDMI-A-3 returns in the wrong mode from DPMS, so it is never blanked;
+  # hyprlock's black background covers it at idle instead
+  frogix.niri.keepOnOutputs = [ "HDMI-A-3" ];
   frogix.wallpapersDir = "/storage/Walls";
   # host service choices, hm side (not frogix.* toggles):
   services.easyeffects = { enable = true; preset = "Voice Moondrop"; };

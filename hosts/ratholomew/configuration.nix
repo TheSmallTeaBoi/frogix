@@ -146,6 +146,11 @@
         }
       ];
     };
+
+    # HDMI-A-3 cannot be DPMS-blanked (it comes back in the wrong mode), so
+    # leave it powered on; hyprlock's black background covers it at idle.
+    frogix.niri.keepOnOutputs = [ "HDMI-A-3" ];
+
     frogix.wallpapersDir = "/storage/Walls";
     frogix.audio.mixerElement = "Emotiva Little Ego";
     frogix.beets.libraryDir = "/storage/Music/";

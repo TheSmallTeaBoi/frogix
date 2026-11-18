@@ -12,6 +12,14 @@ let
   left_screen = screens.left;
   right_screen = screens.right;
 
+  # outputs hypridle DPMS-blanks at its timeout: every declared screen except
+  # the ones the host opts out (see keepOnOutputs below).
+  powerOffOutputs = builtins.filter (s: s != null && !builtins.elem s cfg.keepOnOutputs) [
+    main_screen
+    left_screen
+    right_screen
+  ];
+
   get-muted = pkgs.writeShellApplication {
     name = "get-muted";
     runtimeInputs = with pkgs; [
@@ -62,6 +70,19 @@ in
     type = lib.types.bool;
     default = config.frogix.enable;
     description = "the full niri rice: compositor config, keybinds, hypridle/hyprlock";
+  };
+
+  options.frogix."niri".keepOnOutputs = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [ ];
+    description = ''
+      declared screens hypridle must not DPMS-blank at its timeout. every
+      other declared screen (main, left, right) is powered off and back on
+      with the rest. a host whose monitor cannot be blanked — it returns in
+      the wrong mode, or the output drop reflows the layout — lists it here;
+      hyprlock's black background then covers that screen instead of
+      blanking it.
+    '';
   };
 
   config = lib.mkIf cfg.enable {
@@ -726,16 +747,16 @@ in
             timeout = 500;
             on-timeout = "${pkgs.bash}/bin/bash -c 'hyprlock --grace 120${lib.optionalString config.frogix.pywal.enable "; set-wal $(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)"}'";
           }
-          {
-            timeout = 1500;
-            on-timeout = "${pkgs.bash}/bin/bash -c 'niri msg output ${main_screen} off${
-              lib.optionalString (left_screen != null) "; niri msg output ${left_screen} off"
-            }'";
-            on-resume = "${pkgs.bash}/bin/bash -c 'niri msg output ${main_screen} on${
-              lib.optionalString (left_screen != null) "; niri msg output ${left_screen} on"
-            }'";
-          }
-        ];
+        ]
+        ++ lib.optional (powerOffOutputs != [ ]) {
+          timeout = 1500;
+          on-timeout = "${pkgs.bash}/bin/bash -c '${
+            lib.concatMapStringsSep "; " (o: "niri msg output ${o} off") powerOffOutputs
+          }'";
+          on-resume = "${pkgs.bash}/bin/bash -c '${
+            lib.concatMapStringsSep "; " (o: "niri msg output ${o} on") powerOffOutputs
+          }'";
+        };
       };
     };
 
