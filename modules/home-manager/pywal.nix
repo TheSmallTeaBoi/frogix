@@ -228,7 +228,7 @@ let
           mode="dark"
         fi
 
-        wal_args=(--backend colorz -n)
+        wal_args=(--backend wal -n)
         if [ "$mode" = "light" ]; then
           wal_args+=(-l)
         fi
@@ -1106,7 +1106,7 @@ in
       run mkdir -p "${walCache}"
       if [ ! -e "${walCache}/colors.sh" ]; then
         verboseEcho "Seeding pywal cache from the bundled wallpaper"
-        run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal --backend colorz -i ${./wallpaper.png} -n -q || true
+        run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal --backend wal -i ${./wallpaper.png} -n -q || true
       else
         verboseEcho "Refreshing pywal templates from the existing cache"
         run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal -R -n -q || true
