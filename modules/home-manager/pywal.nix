@@ -155,9 +155,13 @@ let
           mode="dark"
         fi
 
-        wal_args=(--backend wal -n)
+        # dark palettes come from the k-means backend (frogix.pywal.darkBackend);
+        # wal's background darkening muddies bright wallpapers. light mode always
+        # uses wal — its derived background behaves there and modeFix expects it.
         if [ "$mode" = "light" ]; then
-          wal_args+=(-l)
+          wal_args=(--backend wal -l -n)
+        else
+          wal_args=(--backend ${cfg.darkBackend} -n)
         fi
         wal "''${wal_args[@]}" -i "$@" || true
 
@@ -315,6 +319,21 @@ in
     description = "pywal16 rice engine: set-wal, light mode and every consumer template";
   };
 
+  options.frogix.pywal.darkBackend = lib.mkOption {
+    type = lib.types.str;
+    default = "colorz";
+    description = ''
+      Backend pywal uses to extract dark-mode palettes. Light mode always uses wal.
+
+      wal derives the background by darkening the darkest quantized colour, which
+      on bright or pastel wallpapers lands on murky desaturated tones (measured
+      `#1f2921` on the bundled wallpaper, 2026-11-17). The k-means backends keep the
+      background anchored near-black with bolder accents, so dark mode defaults to
+      colorz. Must name a backend pywal16-full ships: wal, colorthief,
+      fast_colorthief, modern_colorthief, haishoku or colorz.
+    '';
+  };
+
   options.frogix.pywal.cycleInterval = lib.mkOption {
     type = lib.types.int;
     default = 15;
@@ -322,6 +341,23 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+
+    # the knob must name a backend this module's pywal16-full actually provides;
+    # anything else would fail silently inside set-wal's `|| true` and leave a
+    # stale palette behind
+    assertions = [
+      {
+        assertion = builtins.elem cfg.darkBackend [
+          "wal"
+          "colorthief"
+          "fast_colorthief"
+          "modern_colorthief"
+          "haishoku"
+          "colorz"
+        ];
+        message = "frogix.pywal.darkBackend: '${cfg.darkBackend}' is not a backend pywal16-full ships (wal, colorthief, fast_colorthief, modern_colorthief, haishoku, colorz)";
+      }
+    ];
 
     home.packages = [
       set-wal
@@ -955,8 +991,19 @@ in
     home.activation.seedPywal = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       run mkdir -p "${walCache}"
       if [ ! -e "${walCache}/colors.sh" ]; then
+        # the seed is mode-aware so a dark-mode host never boots with a wal
+        # palette: light seeds with wal -l, dark seeds with darkBackend (the
+        # first set-wal regenerates both from the real wallpaper anyway).
         verboseEcho "Seeding pywal cache from the bundled wallpaper"
-        run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal --backend wal -i ${./wallpaper.png} -n -q || true
+        seed_mode="dark"
+        if [ -r "${riceModeFile}" ]; then
+          seed_mode="$(tr -d '[:space:]' < "${riceModeFile}")"
+        fi
+        if [ "$seed_mode" = "light" ]; then
+          run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal --backend wal -l -i ${./wallpaper.png} -n -q || true
+        else
+          run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal --backend ${cfg.darkBackend} -i ${./wallpaper.png} -n -q || true
+        fi
       else
         verboseEcho "Refreshing pywal templates from the existing cache"
         run env -i HOME="$HOME" TERM=xterm-256color ${pywal16-full}/bin/wal -R -n -q || true

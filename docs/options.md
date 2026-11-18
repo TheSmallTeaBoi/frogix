@@ -1286,7 +1286,7 @@ attribute set
     "npm:@juicesharp/rpiv-ask-user-question"
     "npm:@aliou/pi-guardrails"
   ];
-  theme = "pywal";
+  theme = "system";
 }
 ```
 
@@ -2611,6 +2611,35 @@ signed integer
 ```nix
 15
 ```
+
+
+
+## frogix.pywal.darkBackend
+
+
+
+Backend pywal uses to extract dark-mode palettes. Light mode always uses wal.
+
+wal derives the background by darkening the darkest quantized colour, which
+on bright or pastel wallpapers lands on murky desaturated tones (measured
+` #1f2921 ` on the bundled wallpaper, 2026-11-17). The k-means backends keep the
+background anchored near-black with bolder accents, so dark mode defaults to
+colorz. Must name a backend pywal16-full ships: wal, colorthief,
+fast_colorthief, modern_colorthief, haishoku or colorz.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"colorz"
+```
+
 
 
 
