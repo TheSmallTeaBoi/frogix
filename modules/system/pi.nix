@@ -20,6 +20,69 @@ let
       windowSeconds = 60;
     }
   );
+
+  # anthropics/skills' frontend-design skill — instructions only (one SKILL.md,
+  # no scripts or components), so it is passed to pi as a plain --skill path.
+  # pinned by rev+hash like the other external sources in this repo; refresh by
+  # re-running
+  #   nix-prefetch-url --unpack https://github.com/anthropics/skills/archive/<rev>.tar.gz
+  # and swapping rev/hash. nothing to remove: it only shapes design choices
+  # (palette, type, layout) and needs no upstream patch.
+  anthropicSkills = pkgs.fetchFromGitHub {
+    owner = "anthropics";
+    repo = "skills";
+    rev = "e4bb5d960d87126ff3b3a8af1a104b7db67560ba";
+    hash = "sha256-Gr9LatjawHHK9uKpoclWoiDHZ0NTpP3/4Pmeatl8p/Q=";
+  };
+  frontendDesignSkill = "${anthropicSkills}/skills/frontend-design";
+
+  # the wrapper binary pi.nix builds around the raw package (merges settings,
+  # sources the sops dotenv, passes rules/skills/extensions). the desktop
+  # entry below must launch this one — through piPicker below, not the bare
+  # package — or the shared provider setup silently stops applying when pi is
+  # started from a launcher.
+  piWrapped = config.programs.pi.coding-agent.finalPackage;
+
+  # the directory picker the desktop entry runs before pi: fzf's directory
+  # walker over the frogix user's whole home (any directory is fair game, not
+  # just git repos), fuzzy-search with a contents preview. a pi session is
+  # pinned to the directory it starts in, so the choice has to happen before
+  # launch; esc exits without starting pi and kitty then closes the window.
+  # walker matches come back home-relative with a trailing slash (verified on
+  # fzf 0.75), so a plain relative cd lands in the pick.
+  piPicker = pkgs.writeShellApplication {
+    name = "pi-picker";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.fzf
+      pkgs.git
+    ];
+    text = ''
+      home="${config.users.users.${frogixUser}.home}"
+      cd "$home"
+
+      selection=$(
+        fzf --walker=dir,follow --height=100% --layout=reverse --border \
+            --header='pi · pick a directory (esc cancels)' \
+            --preview='git -C {} log --oneline -8 2>/dev/null || ls -A --group-directories-first --color=always {}' \
+            --preview-window=right:55%:wrap
+      ) || exit 0
+      [ -n "$selection" ] || exit 0
+
+      cd "$selection"
+      exec ${lib.getExe piWrapped}
+    '';
+  };
+
+  # pi-web-access keeps its settings in <agentDir>/web-search.json — a file the
+  # pi wrapper does not merge, unlike settings.json/mcp.json. it also can't be a
+  # store symlink: the extension rewrites the file itself at runtime when a
+  # provider or curator workflow is picked (saveConfig), and the store is
+  # read-only. so the module renders the file and merges it over whatever is on
+  # disk at activation, the same jq merge the wrapper does for settings.json:
+  # the knobs below win, runtime keys (chosen provider, workflow, browser
+  # cookies) survive.
+  webSearchConfig = pkgs.writeText "pi-web-search.json" (builtins.toJSON cfg.webSearch);
 in
 {
   # pi — earendil-works' terminal coding agent via lukasl-dev/pi.nix (input
@@ -87,12 +150,12 @@ in
       default = {
         defaultProvider = "surplus";
         defaultModel = "deepseek-v4.1-flash";
-        # follow the rice: pywal.nix renders ~/.cache/wal/pi-theme.json and
-        # symlinks ~/.pi/agent/themes/pywal.json at it, so the TUI recolors on
-        # every set-wal. on a host with pywal disabled this theme is missing
-        # and pi falls back to `system` (which samples the terminal palette
-        # itself) after one startup warning — delete this line there.
-        theme = "pywal";
+        # `system` samples the live terminal palette: kitty's palette itself
+        # comes from pywal's colors-kitty.conf template, so the TUI still
+        # tracks the wallpaper through the terminal. the dedicated pywal theme
+        # file (wal template + ~/.pi/agent/themes symlink) is gone — one color
+        # pipeline (kitty's) instead of two that could disagree.
+        theme = "system";
         # pi packages (extensions/skills/etc as one unit): pi-web-access
         # from the pi.dev gallery — web search + fetch tools for the agent.
         # pi installs npm sources on startup, no store-pinning needed here
@@ -104,19 +167,36 @@ in
           # vision: delegates image analysis only when the active model is
           # text-only; passes images straight through on multimodal models
           "npm:@getpipher/vision"
-          # pretty output: shiki-highlighted reads, colored bash, tree views
-          "npm:@heyhuynhgiabuu/pi-pretty"
           # bg-handoff: moves long-running bash calls to background tasks, adds
           # host-side wait tools + the background-commands skill. its 60s probe
           # window comes from bgHandoffConfig below (frogix.pi.env)
           "npm:pi-bg-handoff"
-          # thinking-display: keeps the still-streaming thinking block expanded
-          # and auto-collapses it once answer text/tools follow (config at
-          # ~/.pi/agent/thinking-display.json; pi's Ctrl+T still works)
-          "npm:pi-thinking-display"
           # openui: render_widget draws interactive dashboards, charts, diagrams
           # and maps inline in the TUI via OpenUI Lang — no browser, no network
           "npm:pi-openui"
+          # open-tui: polished header/footer, framed editor, git + telemetry
+          # status, compact tool rows, thinking peek and fullscreen copy
+          # buttons. settings live in ~/.pi/agent/open-tui.json via /open-tui;
+          # replaces the pretty-tui package (one TUI renderer at a time)
+          "npm:pi-open-tui"
+          # rpiv-ask-user-question: registers the ask_user_question tool, a
+          # structured questionnaire (typed options, multi-select, optional
+          # external-editor answer) the model can put to the user instead of
+          # guessing on underspecified requests
+          "npm:@juicesharp/rpiv-ask-user-question"
+          # guardrails: .env/secret-file policies, out-of-workspace path access
+          # and dangerous-command confirmation, as four extensions (guardrails,
+          # path-access, permission-gate, herdr). registers no tools — only
+          # tool_call hooks and guardrails:* commands, so it cannot collide with
+          # the tool names above. the wrapper merges only settings.json/mcp.json
+          # into the agent dir, so its state file
+          # (~/.pi/agent/extensions/guardrails.json, written by
+          # /guardrails:settings) stays user-owned: configure once with
+          # /guardrails:onboarding. defaults keep pathAccess off; note that
+          # in a headless run (pi -p, subagents) permission-gate BLOCKS
+          # dangerous commands instead of prompting — allow-list those with
+          # /guardrails:settings if scripted runs need them
+          "npm:@aliou/pi-guardrails"
         ];
       };
       description = ''
@@ -132,10 +212,34 @@ in
 
     skills = lib.mkOption {
       type = lib.types.listOf lib.types.path;
-      default = [ ];
+      default = [ frontendDesignSkill ];
       description = ''
         shared skill directories passed to pi via --skill on every
-        invocation (paths into this repo, e.g. ./skills/nixpkgs)
+        invocation (paths into this repo, e.g. ./skills/nixpkgs). defaults to
+        anthropics/skills' frontend-design skill, which pushes pi toward
+        deliberate, non-templated visual design when building web UI
+      '';
+    };
+
+    webSearch = lib.mkOption {
+      type = lib.types.attrs;
+      default = {
+        # "auto" (the package default) starts a session with only the compact
+        # web_enable loader on models that accept tools added mid-conversation,
+        # and exposes every web tool from the first request elsewhere. "eager"
+        # always exposes them immediately: no web_enable turn and no chance the
+        # model forgets to enable them, at the cost of sending the tool
+        # definitions up front. cannot be combined with toolExposure
+        # "deferred" (the package rejects that pair at startup).
+        toolActivation = "eager";
+      };
+      description = ''
+        contents merged into pi-web-access' own config,
+        ~/.pi/agent/web-search.json (keys set here win; everything else —
+        chosen provider, curator workflow, browser cookie settings — is
+        preserved). defaults to toolActivation = "eager" so web_search,
+        source_check, fetch_content and get_search_content are available from
+        the first request instead of behind the web_enable loader
       '';
     };
 
@@ -147,7 +251,11 @@ in
         the bundled default registers the surplus intelligence provider with
         live catalog discovery — refreshModels pulls /v1/models so new
         marketplace models and price changes need no repo edits; the
-        fallback inside covers offline starts for glm-5.3-flash
+        fallback inside covers offline starts for glm-5.3-flash. pricing is
+        key-scoped: the calling key's provider allow/deny list and trust
+        preference (read via /v1/keys by secret prefix) filter the live
+        /api/markets order book, so /model shows what this key can actually
+        pay, and /models-by-price ranks models by blended 9:1 in:out $/1M
       '';
     };
 
@@ -242,6 +350,59 @@ in
           home.file.".pi/agent/extensions/subagent/config.json".text = builtins.toJSON {
             waitTool.name = "subagent_wait";
           };
+
+          # pi-web-access' config: merged rather than symlinked (see
+          # webSearchConfig above), so the extension can keep writing it at
+          # runtime. entryAfter writeBoundary so the agent dir can be created.
+          # desktop entry: piPicker asks for the project directory first (a pi
+          # session is pinned to the directory it starts in — see piPicker
+          # above), then pi runs in a kitty of its own, with tmux's environment
+          # stripped. pi's terminal-image detection short-circuits on TMUX*/
+          # TERM_PROGRAM=tmux, and those variables leak into any process
+          # launched from a tmux pane — including a `kitty -e pi` whose kitty
+          # window actually talks to the compositor directly, no tmux in the
+          # render path. launching through this entry keeps detection honest:
+          # unset vars mean pi auto-detects kitty graphics when it owns the
+          # terminal, and still falls back to text in a real tmux pane. needs
+          # frogix.kitty: the entry exists for graphics, and it reuses the
+          # module's kitty package rather than a bare `kitty` from PATH.
+          xdg.desktopEntries = lib.mkIf config.frogix.kitty.enable {
+            pi = {
+              name = "pi";
+              genericName = "Terminal Coding Agent";
+              icon = "utilities-terminal";
+              exec = lib.concatStringsSep " " [
+                (lib.getExe config.programs.kitty.package)
+                "--class pi"
+                "-e"
+                "env"
+                "-u TMUX"
+                "-u TMUX_PANE"
+                "-u TERM_PROGRAM"
+                "-u TERM_PROGRAM_VERSION"
+                (lib.getExe piPicker)
+              ];
+              categories = [
+                "Development"
+                "TerminalEmulator"
+              ];
+              # hm's desktopEntries has no startupWMClass attr; the key goes
+              # through the freeform settings set instead
+              settings."StartupWMClass" = "pi";
+            };
+          };
+
+          home.activation.piWebSearchConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            webSearchConfig="${config.home.homeDirectory}/.pi/agent/web-search.json"
+            run mkdir -p "$(dirname "$webSearchConfig")"
+            if [ -f "$webSearchConfig" ]; then
+              mergedConfig="$(mktemp)"
+              run ${lib.getExe pkgs.jq} -s '.[0] * .[1]' "$webSearchConfig" ${webSearchConfig} > "$mergedConfig"
+              run mv "$mergedConfig" "$webSearchConfig"
+            else
+              run install -m 0600 ${webSearchConfig} "$webSearchConfig"
+            fi
+          '';
         }
       )
     ];

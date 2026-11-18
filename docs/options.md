@@ -1119,7 +1119,11 @@ shared extensions passed to pi via --extension on every invocation.
 the bundled default registers the surplus intelligence provider with
 live catalog discovery — refreshModels pulls /v1/models so new
 marketplace models and price changes need no repo edits; the
-fallback inside covers offline starts for glm-5.3-flash
+fallback inside covers offline starts for glm-5.3-flash. pricing is
+key-scoped: the calling key’s provider allow/deny list and trust
+preference (read via /v1/keys by secret prefix) filter the live
+/api/markets order book, so /model shows what this key can actually
+pay, and /models-by-price ranks models by blended 9:1 in:out $/1M
 
 
 
@@ -1132,7 +1136,7 @@ list of (absolute path or string)
 
 ```nix
 [
-  /nix/store/hshcjasksq85l4a5bv0az273ciw1b34d-source/modules/system/pi/surplus-provider.ts
+  /nix/store/d2wf3zzn0m0pgs05linjqsrxnf9k2nl4-source/modules/system/pi/surplus-provider.ts
 ]
 ```
 
@@ -1276,10 +1280,11 @@ attribute set
     "npm:pi-web-access"
     "npm:pi-subagents"
     "npm:@getpipher/vision"
-    "npm:@heyhuynhgiabuu/pi-pretty"
     "npm:pi-bg-handoff"
-    "npm:pi-thinking-display"
     "npm:pi-openui"
+    "npm:pi-open-tui"
+    "npm:@juicesharp/rpiv-ask-user-question"
+    "npm:@aliou/pi-guardrails"
   ];
   theme = "pywal";
 }
@@ -1293,7 +1298,9 @@ attribute set
 
 
 shared skill directories passed to pi via --skill on every
-invocation (paths into this repo, e.g. ./skills/nixpkgs)
+invocation (paths into this repo, e.g. ./skills/nixpkgs). defaults to
+anthropics/skills’ frontend-design skill, which pushes pi toward
+deliberate, non-templated visual design when building web UI
 
 
 
@@ -1305,7 +1312,9 @@ list of absolute path
 *Default:*
 
 ```nix
-[ ]
+[
+  "/nix/store/cmi6mq1vvz7bq03gqy6n64halfb5pfy6-source/skills/frontend-design"
+]
 ```
 
 
@@ -1328,6 +1337,35 @@ list of absolute path
 
 ```nix
 [ ]
+```
+
+
+
+
+## frogix.pi.webSearch
+
+
+
+contents merged into pi-web-access’ own config,
+~/.pi/agent/web-search.json (keys set here win; everything else —
+chosen provider, curator workflow, browser cookie settings — is
+preserved). defaults to toolActivation = “eager” so web_search,
+source_check, fetch_content and get_search_content are available from
+the first request instead of behind the web_enable loader
+
+
+
+*Type:*
+attribute set
+
+
+
+*Default:*
+
+```nix
+{
+  toolActivation = "eager";
+}
 ```
 
 
@@ -2501,6 +2539,33 @@ boolean
 
 ```nix
 false
+```
+
+
+
+
+## frogix.niri.keepOnOutputs
+
+
+
+declared screens hypridle must not DPMS-blank at its timeout. every
+other declared screen (main, left, right) is powered off and back on
+with the rest. a host whose monitor cannot be blanked — it returns in
+the wrong mode, or the output drop reflows the layout — lists it here;
+hyprlock’s black background then covers that screen instead of
+blanking it.
+
+
+
+*Type:*
+list of string
+
+
+
+*Default:*
+
+```nix
+[ ]
 ```
 
 
