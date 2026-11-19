@@ -257,7 +257,6 @@ let
         current="$(tr -d '[:space:]' < "$mode_file")"
       fi
 
-      restart_qute=1
       args=()
       for arg in "$@"; do
         case "$arg" in
