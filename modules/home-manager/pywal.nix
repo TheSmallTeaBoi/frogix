@@ -260,7 +260,6 @@ let
       args=()
       for arg in "$@"; do
         case "$arg" in
-          --no-qute) restart_qute=0 ;;
           *) args+=("$arg") ;;
         esac
       done
