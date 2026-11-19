@@ -8,15 +8,6 @@ let
   cfg = config.frogix.pywal;
   walCache = "${config.home.homeDirectory}/.cache/wal";
 
-  quteRestart = lib.optionalString config.frogix.qutebrowser.enable ''
-    cdp_port="''${RICE_CDP_PORT:-9222}"
-    if [ "$restart_qute" = 1 ] && pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
-      if ! curl -sf --max-time 1 "http://127.0.0.1:$cdp_port/json/version" >/dev/null 2>&1; then
-        qutebrowser --target auto ":restart" || true
-      fi
-    fi
-  '';
-
   pywal16-full = pkgs.pywal16.override {
     withColorthief = true;
     withColorz = true;
@@ -300,13 +291,6 @@ let
         wall="$(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)"
       fi
       set-wal "$wall"
-
-      # live path: config.py re-applies the mode to every open page over the
-      # devtools protocol (ricecdp.py), triggered by the :config-source set-wal
-      # already sent. Restart only when that port is missing, i.e. qute was
-      # started without QTWEBENGINE_REMOTE_DEBUGGING (blink flag is the only
-      # lever then, and that one is startup-only).
-      ${quteRestart}
 
       echo "rice mode: $want"
     '';
