@@ -555,6 +555,7 @@ ShellRoot {
             /* copy value back to clipboard and re-store to move to top */
             shell.closeLauncher()
             clipboardCopyTimer.value = item.copyText
+            clipboardCopyTimer.filePath = item.copyFile || ""
             clipboardCopyTimer.restart()
             return
         } else if (item.copyText && item.copyText.length > 0) {
@@ -764,16 +765,19 @@ ShellRoot {
             out.push({
                 score: score,
                 display: display,
-                value: entry.value
+                value: entry.value,
+                filePath: entry.filePath
             })
         }
         out.sort((a, b) => query.length === 0 ? a.score - b.score : (a.score - b.score || a.display.localeCompare(b.display)))
         return out.slice(0, 100).map(x => ({
             kind: "clipboard",
             title: x.display.length > 80 ? x.display.slice(0, 80) + "…" : x.display,
-            subtitle: "clipse entry",
-            icon: "",
-            copyText: x.value
+            subtitle: x.filePath.length > 0 ? "image" : "text",
+            /* file:// thumbnails so images are recognisable in the list */
+            icon: x.filePath.length > 0 ? "file://" + x.filePath : "",
+            copyText: x.value,
+            copyFile: x.filePath
         }))
     }
 
@@ -1182,7 +1186,10 @@ ShellRoot {
                             out.push({
                                 value: entry.value,
                                 pinned: entry.pinned === true,
-                                recorded: entry.recorded || ""
+                                recorded: entry.recorded || "",
+                                /* clipse stores images as "📷 name.png" in value
+                                   and the real file in filePath ("null" for text) */
+                                filePath: entry.filePath && entry.filePath !== "null" ? entry.filePath : ""
                             })
                         }
                     }
@@ -1204,9 +1211,16 @@ ShellRoot {
     Timer {
         id: clipboardCopyTimer
         property string value: ""
+        property string filePath: ""
         interval: 260 /* must outlast the close animation — drop keyboard focus first */
         onTriggered: {
-            if (value.length > 0)
+            if (filePath.length > 0)
+                /* image entry: put the real PNG on the clipboard rather than
+                   the "📷 name.png" placeholder text, then re-store via clipse
+                   so it surfaces to the top of history. Fall back to the text
+                   if the backing file was cleaned up. */
+                Quickshell.execDetached(["sh", "-c", `if [ -f "$1" ]; then wl-copy -t image/png < "$1"; clipse -wl-store < "$1"; else printf '%s' "$2" | wl-copy; printf '%s' "$2" | clipse -wl-store; fi`, "--", filePath, value])
+            else if (value.length > 0)
                 /* write the historic value back to the clipboard and
                    re-store via clipse so it surfaces to the top of history */
                 Quickshell.execDetached(["sh", "-c", `printf '%s' "$1" | wl-copy; printf '%s' "$1" | clipse -wl-store`, "--", value])
