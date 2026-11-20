@@ -400,17 +400,23 @@ in
         hotkey-overlay.skip-at-startup = true;
 
         binds = {
+          # next/previous cycle monitors in niri's sorted_outputs order, which
+          # sorts by make/model/serial then connector NAME — not by physical
+          # position (niri.rs reposition_outputs). with DP-4 main + HDMI-A-*
+          # sides, Tab moved LEFT and Grave RIGHT. the *direction* actions are
+          # the only ones that compare actual output geometry, so bind to those
+          # instead (2026-11-24).
           "Mod+Tab" = {
-            focus-monitor-next = { };
+            focus-monitor-right = { };
           };
           "Mod+Grave" = {
-            focus-monitor-previous = { };
+            focus-monitor-left = { };
           };
           "Mod+Control+Tab" = {
-            move-window-to-monitor-next = { };
+            move-window-to-monitor-right = { };
           };
           "Mod+Control+Grave" = {
-            move-window-to-monitor-previous = { };
+            move-window-to-monitor-left = { };
           };
           "Mod+Shift+P" = {
             toggle-window-floating = { };

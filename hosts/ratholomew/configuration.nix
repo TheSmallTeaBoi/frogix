@@ -57,6 +57,7 @@
     };
 
     pi.enable = true;
+    "computer-use-linux".enable = true;
 
     services = {
       navidrome.musicFolder = "/storage/Music/";
@@ -126,7 +127,7 @@
         }
         {
           _args = [ "HDMI-A-1" ];
-          # mode = "1366x768@60";
+          mode = "1366x768@59.79";
           scale = 1.0;
           position._props.y = -50; # taller than main: poke above the top edge
           transform = "270";
@@ -140,7 +141,7 @@
         }
         {
           _args = [ "HDMI-A-3" ];
-          # mode = "1366x768@60";
+          mode = "1366x768@59.79";
           scale = 1.0;
           position._props.y = 312; # ride the bottom edge
         }
