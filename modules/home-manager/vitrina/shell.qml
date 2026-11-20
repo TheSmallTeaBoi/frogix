@@ -174,6 +174,27 @@ ShellRoot {
 
     property bool nightLight: false
 
+    /* caffeine (idle inhibit) switch state, mirrored by the vitrina-caffeine
+       script */
+    property bool caffeine: false
+
+    FileView {
+        path: "/run/user/1000/vitrina-caffeine"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: {
+            reload()
+            shell.caffeine = loaded
+        }
+        onLoaded: shell.caffeine = true
+        onLoadFailed: shell.caffeine = false
+    }
+
+    Process {
+        id: caffeineToggle
+        command: ["vitrina-caffeine"]
+    }
+
     /* night light switch state, mirrored by the vitrina-nightlight script */
     FileView {
         path: "/run/user/1000/vitrina-nightlight"
@@ -3640,10 +3661,55 @@ ShellRoot {
                                                 }
                                                 Row {
                                                     width: parent.width
+                                                    spacing: 8
                                                     visible: island.connView === ""
 
                                                     Rectangle {
-                                                        width: parent.width
+                                                        width: (parent.width - 8) / 2
+                                                        height: 56
+                                                        radius: 16
+                                                        color: shell.caffeine ? Colors.alpha(Colors.accent, "2e") : Colors.alpha(Colors.fg, "0a")
+                                                        border.width: 1
+                                                        border.color: shell.caffeine ? "transparent" : Colors.alpha(Colors.fg, "12")
+
+                                                        Text {
+                                                            id: caffeineIcon
+                                                            x: 12
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            text: "\uf0f4"
+                                                            font.family: "Maple Mono NF"
+                                                            font.pixelSize: 18
+                                                            color: shell.caffeine ? Colors.accent : Colors.muted
+                                                        }
+
+                                                        Column {
+                                                            anchors.left: caffeineIcon.right
+                                                            anchors.leftMargin: 10
+                                                            anchors.verticalCenter: parent.verticalCenter
+                                                            spacing: 1
+
+                                                            Text {
+                                                                text: "Caffeine"
+                                                                font.pixelSize: 11
+                                                                font.weight: Font.DemiBold
+                                                                color: shell.caffeine ? Colors.fg : Colors.muted
+                                                            }
+
+                                                            Text {
+                                                                text: shell.caffeine ? "On" : "Off"
+                                                                font.pixelSize: 10
+                                                                color: Colors.muted
+                                                            }
+                                                        }
+
+                                                        MouseArea {
+                                                            anchors.fill: parent
+                                                            onClicked: caffeineToggle.running = true
+                                                        }
+                                                    }
+
+                                                    Rectangle {
+                                                        width: (parent.width - 8) / 2
                                                         height: 56
                                                         radius: 16
                                                         color: shell.recording ? Colors.alpha(Colors.accent2, "2e") : Colors.alpha(Colors.fg, "0a")

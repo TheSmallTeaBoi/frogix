@@ -49,6 +49,29 @@ let
     '';
   };
 
+  # caffeine switch: toggles a systemd unit that holds a logind "idle"
+  # inhibitor lock (via systemd-inhibit --what=idle) for as long as it runs.
+  # hypridle watches logind's BlockInhibited property and skips all idle
+  # listeners while an idle inhibitor is held (it also honours ScreenSaver
+  # dbus inhibits, but a plain shell script cannot cleanly name-own that bus
+  # name — a logind lock avoids the fight and video players' own inhibitors
+  # keep working independently). Reports the real unit state to the island
+  # via the flag file, like the night light.
+  vitrina-caffeine = pkgs.writeShellApplication {
+    name = "vitrina-caffeine";
+    runtimeInputs = [ pkgs.systemd ];
+    text = ''
+      f=/run/user/$(id -u)/vitrina-caffeine
+      if systemctl --user is-active --quiet vitrina-caffeine; then
+        systemctl --user stop vitrina-caffeine
+        rm -f "$f"
+      else
+        systemctl --user start vitrina-caffeine
+        touch "$f"
+      fi
+    '';
+  };
+
   # lock the session, idempotently, and only return once hyprlock is up.
   # niri does not implement hyprland-lock-notify-v1, so hypridle cannot wait
   # for the locker before sleep; this is used as its before_sleep_cmd and by
@@ -304,6 +327,7 @@ in
       pkgs.curl # lyrics fetch in shell.qml
       vitrina-bright
       vitrina-nightlight
+      vitrina-caffeine
       vitrina-lock
       vitrina-lock-suspend
       vitrina-record
@@ -326,6 +350,18 @@ in
         Persistent = true;
       };
       Install.WantedBy = [ "timers.target" ];
+    };
+
+    # caffeine: unit exists but never autostarts — the island toggle (or
+    # systemctl --user start vitrina-caffeine) owns it. While running it holds
+    # a logind idle inhibitor, so hypridle never blanks, locks or powers off
+    # outputs from idleness; manual hyprlock and logind suspend are untouched.
+    systemd.user.services.vitrina-caffeine = {
+      Unit.Description = "Caffeine (inhibit idle while running)";
+      Service = {
+        ExecStart = "${pkgs.systemd}/bin/systemd-inhibit --what=idle --who=vitrina --mode=block sleep infinity";
+        Restart = "on-failure";
+      };
     };
 
     # night light: unit exists but never autostarts — the island toggle
