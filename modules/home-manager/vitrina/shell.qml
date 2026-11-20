@@ -1399,7 +1399,7 @@ ShellRoot {
         triggeredOnStart: true
         onTriggered: {
             /* only a line from the track that is actually playing may show */
-            if (!shell.isPlaying || shell.lyrics.length === 0 || (shell.artistName + "\u0000" + shell.trackName) !== shell.lyricsKey) {
+            if (!shell.isPlaying || shell.lyrics.length === 0 || (String(shell.artistName || "") + "\u0000" + String(shell.trackName || "")) !== shell.lyricsKey) {
                 shell.lyricIndex = -1
                 return
             }
@@ -1454,8 +1454,8 @@ ShellRoot {
                 shell.mprisPos = chosen ? chosen.position : 0
                 shell.mprisAt = Date.now()
                 shell.playerName = chosen ? chosen.name : ""
-                shell.artistName = chosen ? chosen.artist : ""
-                shell.trackName = chosen ? chosen.title : ""
+                shell.artistName = chosen ? String(chosen.artist || "") : ""
+                shell.trackName = chosen ? String(chosen.title || "") : ""
                 shell.scheduleLyrics(chosen)
             }
         }
@@ -1518,7 +1518,19 @@ ShellRoot {
         if (lyricsKey.length === 0 || lyricsQueue.length === 0)
             return
         lyricsProc.fetchKey = lyricsKey
-        lyricsProc.command = ["curl", "-sf", "--max-time", "10", "--", lyricsQueue[0]]
+        /* lrclib asks every client to identify itself with a User-Agent; a
+           bare curl UA is a throttling candidate and a throttle reads as
+           "no lyrics" here */
+        lyricsProc.command = [
+            "curl",
+            "-sf",
+            "--max-time",
+            "10",
+            "-H",
+            "User-Agent: vitrina/1.0 (frogix quickshell)",
+            "--",
+            lyricsQueue[0]
+        ]
         lyricsProc.running = false
         lyricsProc.running = true
     }
@@ -1527,8 +1539,8 @@ ShellRoot {
         /* keyed on artist+title only, so a pause/resume of the same track is a
            no-op and the fetched lines stay cached; display is gated separately
            in lyricTick on there being a playing player for this track */
-        const has = player && String(player.title || "").length > 0 && String(player.artist || "").length > 0
-        const key = has ? player.artist + "\u0000" + player.title : ""
+        const has = player !== null && player !== undefined && String(player.title || "").length > 0
+        const key = has ? String(player.artist || "") + "\u0000" + String(player.title || "") : ""
         if (key === lyricsKey)
             return
         lyricsKey = key
@@ -1540,40 +1552,230 @@ ShellRoot {
             return
         const album = String(player.album || "")
         const len = Number(player.length) || 0
-        lyricsWanted = { title: player.title, album: album, length: len }
-        const precise = "https://lrclib.net/api/search?track_name=" + encodeURIComponent(player.title) + "&artist_name=" + encodeURIComponent(player.artist)
-        const loose = "https://lrclib.net/api/search?q=" + encodeURIComponent(player.artist + " " + player.title)
-        lyricsQueue = [precise, loose]
+        const variants = lyricsVariants(player)
+        lyricsWanted = { variants: variants, album: album, length: len }
+        const queue = []
+        const add = url => {
+            if (queue.indexOf(url) < 0)
+                queue.push(url)
+        }
+        /* precise lookups first — one per reading of the metadata — then the
+           free-text search, which is far more forgiving about the exact
+           spelling of either field */
+        for (let i = 0; i < variants.length; i++) {
+            const q = variants[i].query
+            if (q.artist.length > 0)
+                add("https://lrclib.net/api/search?track_name=" + encodeURIComponent(q.title) + "&artist_name=" + encodeURIComponent(q.artist))
+        }
+        for (let i = 0; i < variants.length; i++) {
+            const q = variants[i].query
+            add("https://lrclib.net/api/search?q=" + encodeURIComponent((q.artist.length > 0 ? q.artist + " " : "") + q.title))
+        }
+        lyricsQueue = queue
         /* if a fetch is already running, its completion handler will pick up
            the new queue; never restart it mid-flight */
         if (!lyricsProc.running)
             startLyricsFetch()
     }
 
-    /* pick the synced search result that best describes the playing track:
-       correct duration first, then album and title (minus feat./bracket
-       suffixes) as tie-breakers */
+    /* the ways this track can be spelled in a database, best first. YouTube
+       and other web players report the upload channel as the artist
+       ("Artist - Topic", "ArtistVEVO") and leave the upload decoration in the
+       title ("(Official Video)", "[4K Remaster]"), and lrclib searches both
+       strings literally — that mismatch is why video sources never matched. */
+    function lyricsVariants(player) {
+        const artist = lyricArtistClean(String(player.artist || ""))
+        const artistNorm = lyricNorm(artist)
+        const title = lyricTitleClean(String(player.title || ""))
+        const out = []
+        const seen = []
+        const add = (t, a) => {
+            const k = t.toLowerCase() + "\u0000" + a.toLowerCase()
+            /* a handful of readings is plenty; the list is only walked until
+               one of them produces a match */
+            if (t.length === 0 || seen.indexOf(k) >= 0 || out.length >= 6)
+                return
+            seen.push(k)
+            out.push({ query: { title: t, artist: a }, title: lyricNorm(t), artist: lyricNorm(a) })
+        }
+        const splitOf = t => t.match(/^(.{2,60}?)\s+[-\u2013\u2014]\s+(.+)$/)
+        const titles = []
+        const addTitle = t => {
+            const v = t.trim()
+            if (v.length > 0 && titles.indexOf(v) < 0 && titles.length < 3)
+                titles.push(v)
+        }
+        /* candidate titles, most literal first: the cleaned title, then the
+           same title with one trailing pipe segment removed at a time
+           ("Song | A COLORS SHOW" -> "Song"), then with trailing bracket
+           groups dropped, so a "(Live on KEXP)" suffix cannot zero out the
+           search. Pipe segments are never searched on their own: upload
+           context such as "A COLORS SHOW" exists in lrclib as a track title
+           and would match another artist's video. */
+        addTitle(title)
+        const parts = title.split(/\s*[|\uff5c]\s*/)
+        while (parts.length > 1) {
+            parts.pop()
+            addTitle(parts.join(" | "))
+        }
+        let core = title
+        while (core.length > 0) {
+            const cut = core.replace(/\s*[([][^)\]]*[)\]]\s*$/, "").trim()
+            if (cut === core)
+                break
+            addTitle(cut)
+            core = cut
+        }
+        /* no artist field at all: all the metadata says is "Artist - Song" */
+        if (artistNorm.length === 0) {
+            for (let i = 0; i < titles.length; i++) {
+                const m = splitOf(titles[i])
+                if (m)
+                    add(m[2], m[1])
+            }
+        }
+        for (let i = 0; i < titles.length; i++)
+            add(titles[i], artist)
+        for (let i = 0; i < titles.length; i++) {
+            const m = splitOf(titles[i])
+            if (m)
+                add(m[2], m[1])
+        }
+        /* the artist field may still be an uploader that is not the performer,
+           so title-only readings are kept as a last fallback */
+        const withArtist = out.slice()
+        for (let i = 0; i < withArtist.length; i++)
+            add(withArtist[i].query.title, "")
+        return out
+    }
+
+    /* drop upload-decoration brackets from a title, keeping the words that
+       select a different recording (live, remix, acoustic, demo, sped up) */
+    function lyricTitleClean(raw) {
+        const cleaned = String(raw || "").replace(/[([][^)\]]*[)\]]/g, all => {
+            const inner = all.toLowerCase().replace(/\./g, "")
+            if (/\b(official|lyrics?|lyric video|audio|video|visuali[sz]er|hd|hq|hdr|4k|8k|mv|m\/v|explicit|clean|remaster(?:ed)?|colou?r coded|eng(?:lish)? sub(?:title)?s?)\b/.test(inner))
+                return " "
+            /* performer credits belong in the artist field, not the title */
+            if (/\b(feat|ft|featuring|prod)\b/.test(inner))
+                return " "
+            return all
+        })
+        return cleaned.replace(/\s+/g, " ").trim()
+    }
+
+    function lyricArtistClean(raw) {
+        let a = String(raw || "")
+        a = a.replace(/\s*[-\u2013\u2014]\s*topic\s*$/i, "")
+        a = a.replace(/\s*\(\s*topic\s*\)\s*$/i, "")
+        a = a.replace(/\s*vevo\s*$/i, "")
+        a = a.replace(/\s*[-\u2013\u2014]\s*official\s*$/i, "")
+        return a.trim()
+    }
+
+    /* lowercase, drop feat./prod. credits and punctuation so that
+       "\u201cWeird Al\u201d Yankovic" and "Weird Al Yankovic" compare equal */
+    function lyricNorm(s) {
+        return String(s || "")
+            .toLowerCase()
+            .replace(/[\u2018\u2019\u02bc']/g, "")
+            .replace(/&/g, " and ")
+            .replace(/[([]\s*(?:feat|ft|featuring|prod)\.?[^)\]]*[)\]]/g, " ")
+            .replace(/[\u0021-\u002f\u003a-\u0040\u005b-\u0060\u007b-\u007e]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+    }
+
+    function lyricTitleMatch(a, b) {
+        if (a.length === 0 || b.length === 0)
+            return 45
+        if (a === b)
+            return 0
+        const at = a.split(" ")
+        const bt = b.split(" ")
+        if (a.indexOf(b) >= 0 || b.indexOf(a) >= 0) {
+            /* one word inside a longer title is the weakest possible signal
+               ("Intro", "Home"), so it needs the artist to back it up */
+            if (Math.min(at.length, bt.length) === 1 && Math.max(at.length, bt.length) > 2)
+                return 18
+            return 5
+        }
+        let hit = 0
+        for (let i = 0; i < at.length; i++) {
+            if (bt.indexOf(at[i]) >= 0)
+                hit++
+        }
+        return Math.round((1 - hit / Math.max(at.length, bt.length)) * 45)
+    }
+
+    function lyricArtistMatch(a, b) {
+        /* an empty side is unknown, not wrong */
+        if (a.length === 0 || b.length === 0)
+            return 10
+        if (a === b)
+            return 0
+        const ap = a.replace(/ /g, "")
+        const bp = b.replace(/ /g, "")
+        if (ap === bp || ap.indexOf(bp) >= 0 || bp.indexOf(ap) >= 0)
+            return 4
+        const at = a.split(" ")
+        const bt = b.split(" ")
+        let hit = 0
+        for (let i = 0; i < at.length; i++) {
+            if (bt.indexOf(at[i]) >= 0)
+                hit++
+        }
+        return hit / Math.max(at.length, bt.length) >= 0.5 ? 9 : 20
+    }
+
+    /* a YouTube upload of the album cut can run tens of seconds off (intro,
+       outro, remaster), so runtime only nudges the ranking instead of
+       eliminating the otherwise-correct candidate */
+    function lyricDurationMatch(a, b) {
+        if (!(a > 0) || !(b > 0))
+            return 0
+        const d = Math.abs(a - b)
+        return d <= 3 ? 0 : Math.min(25, (d - 3) * 0.3)
+    }
+
+    /* score every synced result against the cleaned readings of the track and
+       keep the closest: title and artist decide, runtime and album only break
+       ties. A result whose title only half agrees is rejected unless the
+       artist or the runtime vouches for it, so a fuzzy title match cannot pull
+       in a different song from a popular uploader. */
     function pickSynced(results) {
         const want = lyricsWanted
         if (!want || !Array.isArray(results))
             return null
-        const norm = s => String(s || "").toLowerCase().replace(/\((?:feat|ft|with|featuring)[^)]*\)|\[[^\]]*\]/g, "").replace(/\s+/g, " ").trim()
-        const wantTitle = norm(want.title)
-        const wantAlbum = norm(want.album)
+        const variants = want.variants || []
+        const albumKey = lyricNorm(want.album)
         let best = null
         let bestScore = Infinity
         for (let i = 0; i < results.length; i++) {
             const r = results[i]
             if (!r || !r.syncedLyrics)
                 continue
-            let score = 0
-            const dur = Number(r.duration) || 0
-            if (want.length > 0 && dur > 0)
-                score += Math.abs(dur - want.length)
-            if (wantAlbum.length > 0 && norm(r.albumName) !== wantAlbum)
-                score += 15
-            if (norm(r.trackName) !== wantTitle)
-                score += 25
+            const rTitle = lyricNorm(r.trackName)
+            const rArtist = lyricNorm(r.artistName)
+            const durScore = lyricDurationMatch(Number(want.length) || 0, Number(r.duration) || 0)
+            let titleScore = 45
+            let artistScore = 20
+            for (let j = 0; j < variants.length; j++) {
+                const v = variants[j]
+                const t = lyricTitleMatch(v.title, rTitle)
+                /* no artist in this reading means unknown, not correct */
+                const a = v.artist.length > 0 ? lyricArtistMatch(v.artist, rArtist) : 10
+                if (t + a < titleScore + artistScore) {
+                    titleScore = t
+                    artistScore = a
+                }
+            }
+            const close = titleScore <= 10 && (artistScore <= 9 || durScore <= 0)
+            if (!close && !(titleScore <= 25 && artistScore <= 9))
+                continue
+            let score = titleScore + artistScore + durScore
+            if (albumKey.length > 0 && lyricNorm(r.albumName) !== albumKey)
+                score += 6
             if (score < bestScore) {
                 bestScore = score
                 best = r
