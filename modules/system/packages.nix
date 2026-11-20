@@ -145,6 +145,7 @@ in
         nicotine-plus
         picard
         mpv
+        beets
         cfg.musicPlayer.package
       ];
     })
@@ -154,6 +155,7 @@ in
         # Piracy stuff :)
         aria2
         stremio-linux-shell
+
       ];
     })
   ];

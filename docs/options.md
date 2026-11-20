@@ -335,6 +335,34 @@ false
 
 
 
+## frogix.computer-use-linux.enable
+
+
+
+accessibility plumbing (AT-SPI bus, GTK/Qt bridge env) that
+@agent-sh/computer-use-linux needs to read this desktop. the binary
+itself is not installed here: it ships inside the pi package
+npm:@agent-sh/computer-use-linux (see frogix.pi.settings.packages),
+which downloads it when pi starts. disabling this makes computer-use’s
+apps/state tools come back empty; changes take effect for new login
+sessions only (the variables are PAM session variables)
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
+```
+
+
+
+
 ## frogix.core.enable
 
 
@@ -763,7 +791,7 @@ false
 
 
 
-enable the NixOS documentation (off by default: I usually have internet)
+enable the NixOS documentation (slows generations down)
 
 
 
@@ -1136,7 +1164,7 @@ list of (absolute path or string)
 
 ```nix
 [
-  /nix/store/d2wf3zzn0m0pgs05linjqsrxnf9k2nl4-source/modules/system/pi/surplus-provider.ts
+  /nix/store/sy9hhf28klp0wg2cpy1x1ahmqz7a3qx6-source/modules/system/pi/surplus-provider.ts
 ]
 ```
 
@@ -1280,6 +1308,7 @@ attribute set
     "npm:pi-web-access"
     "npm:pi-subagents"
     "npm:@getpipher/vision"
+    "npm:@agent-sh/computer-use-linux"
     "npm:pi-bg-handoff"
     "npm:pi-openui"
     "npm:pi-open-tui"
@@ -2614,6 +2643,7 @@ signed integer
 
 
 
+
 ## frogix.pywal.darkBackend
 
 
@@ -2639,7 +2669,6 @@ string
 ```nix
 "colorz"
 ```
-
 
 
 

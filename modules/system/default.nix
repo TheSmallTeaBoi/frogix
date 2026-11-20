@@ -1,6 +1,7 @@
 {
   imports = [
     ./core.nix
+    ./computer-use-linux.nix
     ./gaming.nix
     ./nix-settings.nix
     ./user.nix

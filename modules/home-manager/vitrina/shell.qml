@@ -1235,6 +1235,8 @@ ShellRoot {
 
     property bool hasPlayer: false
     property bool isPlaying: false
+    property real mprisPos: 0
+    property real mprisAt: 0
     property string playerName: ""
     property string artistName: ""
     property string trackName: ""
@@ -1242,6 +1244,17 @@ ShellRoot {
     property bool hasUnread: false
     property real lastMpris: 0
     property var visHeights: [0.7, 0.3, 0.9, 0.45, 0.8, 0.35]
+
+    /* synced lyrics for the header, fetched from lrclib.net. lyricsKey is the
+       track the fetched lines belong to, so pausing/resuming never refetches.
+       lyricIndex is -1 whenever no line is live, which keeps the header slot
+       empty instead of showing stale text. */
+    property string lyricsKey: ""
+    property var lyricsQueue: []
+    property var lyricsWanted: null
+    property var lyrics: []
+    property int lyricIndex: -1
+    property string lyricLine: (lyricIndex >= 0 && lyricIndex < lyrics.length) ? lyrics[lyricIndex].text : ""
 
     function clearAll() {
         const vals = []
@@ -1293,8 +1306,12 @@ ShellRoot {
 
     function pc(args, player) {
         const target = player ? ["-p", player] : (playerName.length > 0 ? ["-p", playerName] : [])
-        if (args[0] === "play-pause")
+        if (args[0] === "play-pause") {
             isPlaying = !isPlaying
+            /* resume drift from here so the lyric does not jump while the
+               next playerctl poll is still 800ms away */
+            mprisAt = Date.now()
+        }
         lastMpris = Date.now()
         pctlCmd.running = false
         pctlCmd.command = ["playerctl", ...target, ...args]
@@ -1305,6 +1322,10 @@ ShellRoot {
     function seek(player, sec) {
         if (!(sec >= 0))
             return
+        /* jump the lyric clock to the seek target immediately instead of
+           drifting from the pre-seek position until the next poll */
+        mprisPos = sec
+        mprisAt = Date.now()
         lastMpris = Date.now()
         pctlCmd.running = false
         pctlCmd.command = ["playerctl", "-p", player, "position", String(Math.round(sec))]
@@ -1344,6 +1365,28 @@ ShellRoot {
                 0.15 + Math.random() * 0.85,
                 0.15 + Math.random() * 0.85
             ]
+        }
+    }
+
+    /* lyrics follow the player-reported position and drift it forward between
+       the 1s polls, so a line flips at its timestamp without extra polling */
+    Timer {
+        id: lyricTick
+        interval: 250
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            /* only a line from the track that is actually playing may show */
+            if (!shell.isPlaying || shell.lyrics.length === 0 || (shell.artistName + "\u0000" + shell.trackName) !== shell.lyricsKey) {
+                shell.lyricIndex = -1
+                return
+            }
+            /* drift the last sampled position forward so a line flips at its
+               timestamp instead of waiting for the next 1s playerctl poll */
+            const pos = shell.mprisPos + (Date.now() - shell.mprisAt) / 1000
+            /* switch half a second early so the next line can be anticipated */
+            shell.lyricIndex = shell.lyricIndexAt(pos + 0.5)
         }
     }
 
@@ -1387,15 +1430,183 @@ ShellRoot {
                 } : null)
                 shell.hasPlayer = chosen !== null && chosen.title.length > 0
                 shell.isPlaying = chosen ? chosen.playing : false
+                shell.mprisPos = chosen ? chosen.position : 0
+                shell.mprisAt = Date.now()
                 shell.playerName = chosen ? chosen.name : ""
                 shell.artistName = chosen ? chosen.artist : ""
                 shell.trackName = chosen ? chosen.title : ""
+                shell.scheduleLyrics(chosen)
             }
         }
     }
 
     Process {
         id: pctlCmd
+    }
+
+    Process {
+        id: lyricsProc
+        /* the key this process was started for; a response is only applied
+           when it still matches shell.lyricsKey, so a slow request for the
+           previous track can never paint over the current one */
+        property string fetchKey: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const k = lyricsProc.fetchKey
+                let lines = []
+                try {
+                    const data = JSON.parse(this.text)
+                    /* /api/search returns every known recording; /api/get
+                       returns a single best match which is sometimes a
+                       plain-only entry, so prefer the search list and pick a
+                       synced candidate that matches the playing track */
+                    if (Array.isArray(data)) {
+                        const best = shell.pickSynced(data)
+                        if (best)
+                            lines = shell.parseLrc(best.syncedLyrics)
+                    } else if (data && data.syncedLyrics) {
+                        lines = shell.parseLrc(data.syncedLyrics)
+                    }
+                } catch (e) {
+                    lines = [] /* 404 body or transient parse issue — no lyrics */
+                }
+                if (k === shell.lyricsKey) {
+                    if (lines.length > 0) {
+                        shell.lyrics = lines
+                        shell.lyricIndex = -1
+                    } else if (shell.lyricsQueue.length > 1) {
+                        /* the precise query found nothing; retry the looser
+                           free-text search before giving up */
+                        shell.lyricsQueue = shell.lyricsQueue.slice(1)
+                        shell.startLyricsFetch()
+                    } else {
+                        shell.lyrics = []
+                        shell.lyricIndex = -1
+                    }
+                    return
+                }
+                /* the track changed while this request was in flight: follow
+                   up now that the process is free */
+                if (shell.lyricsKey.length > 0)
+                    shell.startLyricsFetch()
+            }
+        }
+    }
+
+    function startLyricsFetch() {
+        if (lyricsKey.length === 0 || lyricsQueue.length === 0)
+            return
+        lyricsProc.fetchKey = lyricsKey
+        lyricsProc.command = ["curl", "-sf", "--max-time", "10", "--", lyricsQueue[0]]
+        lyricsProc.running = false
+        lyricsProc.running = true
+    }
+
+    function scheduleLyrics(player) {
+        /* keyed on artist+title only, so a pause/resume of the same track is a
+           no-op and the fetched lines stay cached; display is gated separately
+           in lyricTick on there being a playing player for this track */
+        const has = player && String(player.title || "").length > 0 && String(player.artist || "").length > 0
+        const key = has ? player.artist + "\u0000" + player.title : ""
+        if (key === lyricsKey)
+            return
+        lyricsKey = key
+        lyrics = []
+        lyricIndex = -1
+        lyricsQueue = []
+        lyricsWanted = null
+        if (!has)
+            return
+        const album = String(player.album || "")
+        const len = Number(player.length) || 0
+        lyricsWanted = { title: player.title, album: album, length: len }
+        const precise = "https://lrclib.net/api/search?track_name=" + encodeURIComponent(player.title) + "&artist_name=" + encodeURIComponent(player.artist)
+        const loose = "https://lrclib.net/api/search?q=" + encodeURIComponent(player.artist + " " + player.title)
+        lyricsQueue = [precise, loose]
+        /* if a fetch is already running, its completion handler will pick up
+           the new queue; never restart it mid-flight */
+        if (!lyricsProc.running)
+            startLyricsFetch()
+    }
+
+    /* pick the synced search result that best describes the playing track:
+       correct duration first, then album and title (minus feat./bracket
+       suffixes) as tie-breakers */
+    function pickSynced(results) {
+        const want = lyricsWanted
+        if (!want || !Array.isArray(results))
+            return null
+        const norm = s => String(s || "").toLowerCase().replace(/\((?:feat|ft|with|featuring)[^)]*\)|\[[^\]]*\]/g, "").replace(/\s+/g, " ").trim()
+        const wantTitle = norm(want.title)
+        const wantAlbum = norm(want.album)
+        let best = null
+        let bestScore = Infinity
+        for (let i = 0; i < results.length; i++) {
+            const r = results[i]
+            if (!r || !r.syncedLyrics)
+                continue
+            let score = 0
+            const dur = Number(r.duration) || 0
+            if (want.length > 0 && dur > 0)
+                score += Math.abs(dur - want.length)
+            if (wantAlbum.length > 0 && norm(r.albumName) !== wantAlbum)
+                score += 15
+            if (norm(r.trackName) !== wantTitle)
+                score += 25
+            if (score < bestScore) {
+                bestScore = score
+                best = r
+            }
+        }
+        return best
+    }
+
+    /* parse LRC into sorted {time, text} pairs; a row may carry several
+       leading [mm:ss.xx] stamps and enhanced-LRC <mm:ss.xx> word tags */
+    function parseLrc(raw) {
+        const out = []
+        const rows = String(raw || "").split("\n")
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i]
+            const re = /\[(\d+):(\d+(?:\.\d+)?)\]/g
+            const stamps = []
+            let pos = 0
+            let m
+            while ((m = re.exec(row)) !== null) {
+                if (m.index !== pos)
+                    break
+                stamps.push(parseInt(m[1]) * 60 + parseFloat(m[2]))
+                pos = re.lastIndex
+            }
+            const text = row.slice(pos).replace(/<\d+:\d+(?:\.\d+)?>/g, "").trim()
+            for (let j = 0; j < stamps.length; j++) {
+                if (text.length > 0)
+                    out.push({ time: stamps[j], text: text })
+            }
+        }
+        out.sort((a, b) => a.time - b.time)
+        return out
+    }
+
+    function lyricIndexAt(pos) {
+        const lines = lyrics
+        let idx = -1
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].time <= pos)
+                idx = i
+            else
+                break
+        }
+        return idx
+    }
+
+    /* seconds until the next line is displayed. Lines switch 0.5s early, so
+       the deadline is next.time - 0.5 at the current (drifted) position. */
+    function lyricRemaining() {
+        if (lyricIndex < 0 || lyricIndex + 1 >= lyrics.length)
+            return 0
+        const now = mprisPos + (Date.now() - mprisAt) / 1000 + 0.5
+        return Math.max(0, lyrics[lyricIndex + 1].time - now)
     }
 
     function runPower(cmd) {
@@ -2000,6 +2211,99 @@ ShellRoot {
                                     duration: 90
                                 }
                             }
+                        }
+                    }
+                }
+
+                Item {
+                    id: lyricArea
+                    anchors.verticalCenter: parent.verticalCenter
+                    /* synced lyric for the chosen player; absent entirely (no
+                       reserved space) when no line is live */
+                    readonly property real overflow: Math.max(0, lyricText.implicitWidth - width)
+                    property real scrollMs: 0
+                    visible: lyricText.text.length > 0
+                    width: Math.min(lyricText.implicitWidth, 520)
+                    height: parent.height
+                    clip: true
+
+                    onOverflowChanged: {
+                        if (overflow <= 0)
+                            lyricText.x = 0
+                    }
+
+                    function computeScrollMs() {
+                        if (overflow <= 0)
+                            return 0
+                        /* time the marquee to the current line: finish shortly
+                           before the next line swaps in */
+                        const rem = shell.lyricRemaining()
+                        if (rem > 0)
+                            return Math.max(300, Math.min(rem * 1000 - 200, 8000))
+                        /* last line has no deadline — use a readable pace */
+                        return Math.max(1200, Math.min(overflow * 30, 8000))
+                    }
+
+                    Text {
+                        id: lyricText
+                        y: 0
+                        height: lyricArea.height
+                        verticalAlignment: Text.AlignVCenter
+                        text: shell.lyricLine
+                        color: Colors.alpha(Colors.accent, "d9")
+                        font.pixelSize: 11
+                        font.weight: Font.DemiBold
+                    }
+
+                    /* restart per line (not per text value) so a repeated
+                       identical line still scrolls from the start; callLater
+                       lets implicitWidth settle before measuring the overflow */
+                    Connections {
+                        target: shell
+                        function onLyricIndexChanged() {
+                            Qt.callLater(function () {
+                                lyricText.x = 0
+                                lyricArea.scrollMs = lyricArea.computeScrollMs()
+                                lyricScroll.restart()
+                                if (lyricText.text.length > 0)
+                                    lyricEnter.restart()
+                            })
+                        }
+                    }
+
+                    /* scroll a line that does not fit, timed to arrive at the
+                       end just before the next line appears; it stays there
+                       until the index changes and resets it */
+                    NumberAnimation {
+                        id: lyricScroll
+                        target: lyricText
+                        property: "x"
+                        from: 0
+                        to: -lyricArea.overflow
+                        duration: lyricArea.scrollMs
+                        easing.type: Easing.Linear
+                    }
+
+                    /* new line rises into place from below instead of popping */
+                    ParallelAnimation {
+                        id: lyricEnter
+
+                        NumberAnimation {
+                            target: lyricText
+                            property: "y"
+                            from: lyricArea.height * 0.7
+                            to: 0
+                            duration: 240
+                            easing.type: Easing.OutCubic
+                        }
+
+                        NumberAnimation {
+                            target: lyricText
+                            property: "opacity"
+                            from: 0
+                            to: 1
+                            duration: 200
+                            easing.type: Easing.OutCubic
                         }
                     }
                 }

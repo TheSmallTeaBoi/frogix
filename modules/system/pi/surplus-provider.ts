@@ -33,6 +33,18 @@ const BASE_URL = `${API_BASE}/v1`;
 const IN_W = 0.9;
 const OUT_W = 0.1;
 
+// pi's openai-completions adapter sends the system prompt as role
+// "developer" for any reasoning model on a "standard" (non-OpenAI-lookalike)
+// endpoint — surplus's api host matches none of its special cases, so every
+// reasoning model here gets `developer`. surplus is a marketplace router: the
+// upstream seller varies per request, and the plain OpenAI-schema sellers
+// reject that tag with 400 request_rejected / union_tag_invalid "Input tag
+// 'developer' found using 'role'", which surfaced intermittently (same
+// conversation worked or failed depending on who the router picked). pinning
+// the role to "system" is the portable option: identical prompt, accepted by
+// every seller.
+const COMPAT = { supportsDeveloperRole: false };
+
 // keep chat-shaped catalog entries only: pi chat models take text in and
 // reply text. surplus also lists image/video/tts/music/embedding models and
 // Decisions-API classifiers that would need pi implementations we do not
@@ -169,6 +181,7 @@ const toPiModel = (m, market) => {
     input: (m.architecture?.input_modalities ?? []).filter((x) => x === "text" || x === "image"),
     contextWindow: m.context_length ?? 128000,
     maxTokens: m.top_provider?.max_completion_tokens ?? 16384,
+    compat: COMPAT,
     // live key-scoped marketplace rates converted micro-USD/1M -> USD/1M;
     // the catalog list price (USD per token, ×1e6) only covers fields the
     // market summary lacked or whole models with no live seller rows
@@ -283,6 +296,7 @@ export default function (pi) {
         input: ["text", "image"],
         contextWindow: 1048576,
         maxTokens: 131072,
+        compat: COMPAT,
         cost: { input: 0.0399, output: 0.0784, cacheRead: 0.03, cacheWrite: 0.0399 },
       },
     ],

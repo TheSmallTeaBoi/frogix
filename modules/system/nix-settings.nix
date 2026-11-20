@@ -72,7 +72,7 @@ in
     documentation = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "enable the NixOS documentation (off by default: I usually have internet)";
+      description = "enable the NixOS documentation (slows generations down)";
     };
     ld.enable = lib.mkOption {
       type = lib.types.bool;

@@ -155,6 +155,23 @@ header comments in `vial.nix`, `xodus-nexus.nix`, and `hermes.nix` are the
 style to match: explain the *why*, cite the upstream behaviour, and state a
 removal condition for anything patched.
 
+### Touch the pi provider extension
+
+`modules/system/pi/surplus-provider.ts` registers the `surplus` provider
+(live catalog from `/v1/models`, key-scoped prices, `/models-by-price`). It is
+passed to pi as `--extension <store path>`, so **editing it changes nothing
+until `nixos-rebuild switch`** — a running `pi` keeps the old store copy.
+
+- surplus is a marketplace router: the upstream seller differs per request, so
+  a role/parameter one seller tolerates can be a hard 400 from another. Keep
+the request shape conservative (`COMPAT` pins the instruction role to
+`system`, because reasoning models otherwise get `developer`, which
+plain-schema sellers reject intermittently).
+- Verify a provider change without rebuilding by passing the repo file again:
+`pi --extension ./modules/system/pi/surplus-provider.ts -p --model … "hi"`
+(a later `--extension` re-registers the provider and wins). Add a throwaway
+`before_provider_request` extension to log the serialized payload.
+
 ## Docs and commands
 
 `docs/options.md` is generated from the live option trees; the header prose is

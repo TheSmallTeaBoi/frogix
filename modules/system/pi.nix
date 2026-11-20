@@ -167,6 +167,12 @@ in
           # vision: delegates image analysis only when the active model is
           # text-only; passes images straight through on multimodal models
           "npm:@getpipher/vision"
+          # computer-use-linux: native desktop control for the agent —
+          # screenshots, AT-SPI accessibility trees, Wayland/X11 input. the
+          # package carries its own prebuilt binary (downloaded at pi startup;
+          # runs through nix-ld on this system). the AT-SPI bus and bridge env
+          # it needs come from frogix."computer-use-linux"
+          "npm:@agent-sh/computer-use-linux"
           # bg-handoff: moves long-running bash calls to background tasks, adds
           # host-side wait tools + the background-commands skill. its 60s probe
           # window comes from bgHandoffConfig below (frogix.pi.env)

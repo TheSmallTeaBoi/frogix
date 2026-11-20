@@ -301,6 +301,7 @@ in
       pkgs.ddcutil
       pkgs.wlsunset
       pkgs.libqalculate
+      pkgs.curl # lyrics fetch in shell.qml
       vitrina-bright
       vitrina-nightlight
       vitrina-lock
