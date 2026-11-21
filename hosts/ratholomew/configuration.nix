@@ -102,7 +102,7 @@
 
   programs.nano.enable = false;
 
-  programs.helper.enable = true;
+  programs.jerrito.enable = true;
 
   home-manager.users.theo = {
     frogix.home.stateVersion = "23.11";
