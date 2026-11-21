@@ -2,6 +2,7 @@
 modules/unfree
 *.qcow2
 result
+.direnv/
 
 # agent state
 .pi/

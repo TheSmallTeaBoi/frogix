@@ -231,6 +231,26 @@
         "type": "github"
       }
     },
+    "helper": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795233579,
+        "narHash": "sha256-N+xKMtr0nYZ2bUEj1etL5WnpbKQLOs5oJA329JZ4g/0=",
+        "owner": "TheSmallTeaBoi",
+        "repo": "helper",
+        "rev": "a3dedd130d0e057bfbdc95926cb7a735aa9b32c4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "TheSmallTeaBoi",
+        "repo": "helper",
+        "type": "github"
+      }
+    },
     "hermes-agent": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -600,6 +620,7 @@
     "root": {
       "inputs": {
         "doom-emacs": "doom-emacs",
+        "helper": "helper",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
         "infract": "infract",

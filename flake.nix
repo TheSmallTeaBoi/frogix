@@ -62,6 +62,11 @@
       url = "github:lukasl-dev/pi.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    helper = {
+      url = "github:TheSmallTeaBoi/helper";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
     {
@@ -70,6 +75,7 @@
       nix-index-database,
       sops-nix,
       hermes-agent,
+      helper,
       ...
     }@inputs:
     let
@@ -88,6 +94,7 @@
         sops-nix.nixosModules.sops
         inputs.niri-nix.nixosModules.default
         inputs.infract.nixosModules.default
+        inputs.helper.nixosModules.default
       ];
       mkHost =
         name:
