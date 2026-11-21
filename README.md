@@ -48,5 +48,3 @@ nixos-rebuild build-vm --flake .#vm
 | [docs/options.md](docs/options.md)                 | the full `frogix.*` option reference                      |
 | [docs/architecture.md](docs/architecture.md)       | how the module system works internally                    |
 | [docs/faq.md](docs/faq.md)                         | gotchas and common problems                               |
-
-Licensed MIT.
