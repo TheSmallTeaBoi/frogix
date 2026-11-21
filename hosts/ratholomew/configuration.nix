@@ -41,7 +41,8 @@
         "qutebrowser-3.7.0"
         "quickjs-2025-09-13-2"
       ];
-      documentation = false;
+      # was false (docs slow generations) — jerrito needs the man pages it links
+      documentation = true;
     };
 
     networkd = {
