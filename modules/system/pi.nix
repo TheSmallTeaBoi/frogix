@@ -203,6 +203,14 @@ in
           # dangerous commands instead of prompting — allow-list those with
           # /guardrails:settings if scripted runs need them
           "npm:@aliou/pi-guardrails"
+          # pi-co-authored-by: appends Co-Authored-By / Generated-By trailers
+          # to git commits the agent runs, without touching the repo — it
+          # intercepts the bash tool call and injects core.hooksPath at the
+          # process level, so real hooks still run and manual commits are
+          # never touched. chosen over pi-coauthor (which writes a
+          # prepare-commit-msg hook into every repo Pi opens) and over
+          # pi-must-win (adds Pi branding/promo, not just attribution)
+          "npm:@shelken/pi-co-authored-by"
         ];
       };
       description = ''
