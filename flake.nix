@@ -165,9 +165,11 @@
             }).optionsCommonMark;
 
           # cleanup: drop the declared-in blocks (file:/// store links, useless
-          # in a rendered doc) and unescape the renderer's `\.` escapes so
-          # headings and prose read naturally (safe: frogix option prose never
-          # contains literal backslashes)
+          # in a rendered doc) and unescape the renderer's backslashes so
+          # headings and prose read naturally: it writes `\$` for a literal
+          # `$` and `\\` for a literal `\`, and a bare `\` before anything
+          # else. unescape `\$` first, or the general rule would eat the `$`
+          # and render `${VAR}` in a default as `.{VAR}`
           cleanOptionsMd =
             md:
             pkgs.runCommand "frogix-options-clean.md" { } ''
@@ -176,7 +178,7 @@
                 skip == 1 && /^ - / { next }
                 skip == 1 { skip = 0 }
                 { print }
-              ' ${md} | sed 's/\\././g' > $out
+              ' ${md} | sed -e 's/\\\$/\$/g' -e 's/\\\([^$]\)/\1/g' > $out
             '';
 
           nixosMd = cleanOptionsMd nixosCommon;

@@ -1164,8 +1164,54 @@ list of (absolute path or string)
 
 ```nix
 [
-  /nix/store/sy9hhf28klp0wg2cpy1x1ahmqz7a3qx6-source/modules/system/pi/surplus-provider.ts
+  /nix/store/92h5gk7qwpzq9fq9w17bwrp8vidacgfc-source/modules/system/pi/surplus-provider.ts
 ]
+```
+
+
+
+
+## frogix.pi.mcp
+
+
+
+contents of pi’s mcp.json — remote MCP servers and their exposure,
+recursively merged into ~/.pi/agent/mcp.json on each invocation (the
+wrapper merges declarative entries over the file; unmanaged entries
+are kept). defaults to the ransack.tools server, which gives pi its
+web search and page-fetch tools; its bearer key is read from the
+RANSACK_API_KEY environment variable, so put the key in
+frogix.pi.envFile or frogix.pi.secrets, never inline here
+
+
+
+*Type:*
+attribute set
+
+
+
+*Default:*
+
+```nix
+{
+  mcpServers = {
+    ransack = {
+      description = "Search, fetch and read the live web (metasearch fanout + page extraction ladder)";
+      exposure = "direct";
+      headers = {
+        Authorization = "Bearer ${RANSACK_API_KEY}";
+      };
+      toolExposure = {
+        fetch = "hidden";
+        get_report = "hidden";
+        ransack_permit_search = "hidden";
+        search = "hidden";
+        search_memory = "hidden";
+      };
+      url = "https://ransack.tools/mcp";
+    };
+  };
+}
 ```
 
 
@@ -1231,7 +1277,7 @@ path to a rules file
 
 
 *Type:*
-null or strings concatenated with “.n” or absolute path
+null or strings concatenated with “\n” or absolute path
 
 
 
@@ -1291,6 +1337,11 @@ registered by the bundled frogix.pi.extensions entry, which also
 discovers its live catalog, and its key arrives through
 frogix.pi.envFile
 
+the subagents.* defaults keep pi-subagents’ children on the current
+session’s model and load the same surplus provider extension inside
+background children, which otherwise start without the parent’s
+–extension flags and cannot resolve a surplus model at all
+
 
 
 *Type:*
@@ -1305,7 +1356,6 @@ attribute set
   defaultModel = "deepseek-v4.1-flash";
   defaultProvider = "surplus";
   packages = [
-    "npm:pi-web-access"
     "npm:pi-subagents"
     "npm:@getpipher/vision"
     "npm:@agent-sh/computer-use-linux"
@@ -1314,7 +1364,14 @@ attribute set
     "npm:pi-open-tui"
     "npm:@juicesharp/rpiv-ask-user-question"
     "npm:@aliou/pi-guardrails"
+    "npm:@shelken/pi-co-authored-by"
   ];
+  subagents = {
+    defaultModel = "inherit";
+    defaultSubagentOnlyExtensions = [
+      "/nix/store/hpk5mskl5qyfvf9aqj3cvad6sxc2g6l2-surplus-provider.ts"
+    ];
+  };
   theme = "system";
 }
 ```
@@ -1366,35 +1423,6 @@ list of absolute path
 
 ```nix
 [ ]
-```
-
-
-
-
-## frogix.pi.webSearch
-
-
-
-contents merged into pi-web-access’ own config,
-~/.pi/agent/web-search.json (keys set here win; everything else —
-chosen provider, curator workflow, browser cookie settings — is
-preserved). defaults to toolActivation = “eager” so web_search,
-source_check, fetch_content and get_search_content are available from
-the first request instead of behind the web_enable loader
-
-
-
-*Type:*
-attribute set
-
-
-
-*Default:*
-
-```nix
-{
-  toolActivation = "eager";
-}
 ```
 
 

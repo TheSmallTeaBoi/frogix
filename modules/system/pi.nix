@@ -73,16 +73,6 @@ let
       exec ${lib.getExe piWrapped}
     '';
   };
-
-  # pi-web-access keeps its settings in <agentDir>/web-search.json — a file the
-  # pi wrapper does not merge, unlike settings.json/mcp.json. it also can't be a
-  # store symlink: the extension rewrites the file itself at runtime when a
-  # provider or curator workflow is picked (saveConfig), and the store is
-  # read-only. so the module renders the file and merges it over whatever is on
-  # disk at activation, the same jq merge the wrapper does for settings.json:
-  # the knobs below win, runtime keys (chosen provider, workflow, browser
-  # cookies) survive.
-  webSearchConfig = pkgs.writeText "pi-web-search.json" (builtins.toJSON cfg.webSearch);
 in
 {
   # pi — earendil-works' terminal coding agent via lukasl-dev/pi.nix (input
@@ -156,11 +146,12 @@ in
         # file (wal template + ~/.pi/agent/themes symlink) is gone — one color
         # pipeline (kitty's) instead of two that could disagree.
         theme = "system";
-        # pi packages (extensions/skills/etc as one unit): pi-web-access
-        # from the pi.dev gallery — web search + fetch tools for the agent.
+        # pi packages (extensions/skills/etc as one unit). web search and
+        # page fetch are NOT a package here: they come from the ransack MCP
+        # server in frogix.pi.mcp, so there is one web toolchain to key and
+        # rate-limit instead of an npm extension with its own provider ladder.
         # pi installs npm sources on startup, no store-pinning needed here
         packages = [
-          "npm:pi-web-access"
           # single-agent delegation + scripted multi-agent workflows
           # (ships its own skills/ and prompts/ alongside the extension)
           "npm:pi-subagents"
@@ -212,6 +203,26 @@ in
           # pi-must-win (adds Pi branding/promo, not just attribution)
           "npm:@shelken/pi-co-authored-by"
         ];
+
+        # pi-subagents knobs, shared by every host. children already default to
+        # the parent session's model (pi-subagents resolves it to an explicit
+        # provider/id); defaultModel = "inherit" states that instead of leaning
+        # on the fallback, so a later global default cannot pin children to a
+        # model the parent is not running.
+        #
+        # the second entry is what makes fan-out work at all: the surplus
+        # provider below reaches the parent only as a CLI --extension, and the
+        # detached runner behind background/async children starts with
+        # --no-extensions, so a child resolves "surplus/<model>" as "Model not
+        # found" and every async or parallel launch fails before its first turn.
+        # defaultSubagentOnlyExtensions adds the provider to children while
+        # leaving ambient extension discovery intact; defaultExtensions would be
+        # a plain allowlist for children and silently drop the rest (guardrails,
+        # vision, co-authored-by) from them.
+        subagents = {
+          defaultModel = "inherit";
+          defaultSubagentOnlyExtensions = [ "${./pi/surplus-provider.ts}" ];
+        };
       };
       description = ''
         shared contents of pi's settings.json, recursively merged into
@@ -221,6 +232,11 @@ in
         registered by the bundled frogix.pi.extensions entry, which also
         discovers its live catalog, and its key arrives through
         frogix.pi.envFile
+
+        the subagents.* defaults keep pi-subagents' children on the current
+        session's model and load the same surplus provider extension inside
+        background children, which otherwise start without the parent's
+        --extension flags and cannot resolve a surplus model at all
       '';
     };
 
@@ -235,25 +251,47 @@ in
       '';
     };
 
-    webSearch = lib.mkOption {
+    mcp = lib.mkOption {
       type = lib.types.attrs;
       default = {
-        # "auto" (the package default) starts a session with only the compact
-        # web_enable loader on models that accept tools added mid-conversation,
-        # and exposes every web tool from the first request elsewhere. "eager"
-        # always exposes them immediately: no web_enable turn and no chance the
-        # model forgets to enable them, at the cost of sending the tool
-        # definitions up front. cannot be combined with toolExposure
-        # "deferred" (the package rejects that pair at startup).
-        toolActivation = "eager";
+        # ransack.tools — metasearch fanout (serper/brave/ddg plus reference,
+        # academic and news engines) and a fetch ladder (plain HTTP, TLS
+        # impersonation, headless render, archive/cache fallbacks) behind one
+        # flat-rate key. one MCP tool with a mode argument covers the search
+        # and fetch jobs the old pi-web-access package split across four
+        # tools. key arrives as RANSACK_API_KEY from frogix.pi.envFile; pi
+        # interpolates ${...} in headers itself, so only the reference — never
+        # the secret — reaches the world-readable store copy of mcp.json.
+        mcpServers.ransack = {
+          url = "https://ransack.tools/mcp";
+          headers.Authorization = "Bearer \${RANSACK_API_KEY}";
+          description = "Search, fetch and read the live web (metasearch fanout + page extraction ladder)";
+          # declared to the model directly, like the built-in tools the old
+          # web-search package registered; every mode lives behind the one
+          # `ransack` tool, so only it and the transcript reader are needed.
+          exposure = "direct";
+          # hidden, not deferred/codemode: these are redundant with `ransack`
+          # (search/fetch are literal-name aliases for its modes) or niche
+          # (legacy research reports, the US permit index, a low-confidence
+          # document index) and each one declared costs context on every call.
+          # `ransack` mode=help documents all of them if one is ever wanted.
+          toolExposure = {
+            search = "hidden";
+            fetch = "hidden";
+            get_report = "hidden";
+            ransack_permit_search = "hidden";
+            search_memory = "hidden";
+          };
+        };
       };
       description = ''
-        contents merged into pi-web-access' own config,
-        ~/.pi/agent/web-search.json (keys set here win; everything else —
-        chosen provider, curator workflow, browser cookie settings — is
-        preserved). defaults to toolActivation = "eager" so web_search,
-        source_check, fetch_content and get_search_content are available from
-        the first request instead of behind the web_enable loader
+        contents of pi's mcp.json — remote MCP servers and their exposure,
+        recursively merged into ~/.pi/agent/mcp.json on each invocation (the
+        wrapper merges declarative entries over the file; unmanaged entries
+        are kept). defaults to the ransack.tools server, which gives pi its
+        web search and page-fetch tools; its bearer key is read from the
+        RANSACK_API_KEY environment variable, so put the key in
+        frogix.pi.envFile or frogix.pi.secrets, never inline here
       '';
     };
 
@@ -344,6 +382,7 @@ in
       themes = lib.mkDefault cfg.themes;
       promptTemplates = lib.mkDefault cfg.promptTemplates;
       models = lib.mkDefault cfg.models;
+      mcp = lib.mkDefault cfg.mcp;
     };
 
     # both pi-bg-handoff and pi-subagents register a tool named bg_wait, and pi
@@ -365,9 +404,6 @@ in
             waitTool.name = "subagent_wait";
           };
 
-          # pi-web-access' config: merged rather than symlinked (see
-          # webSearchConfig above), so the extension can keep writing it at
-          # runtime. entryAfter writeBoundary so the agent dir can be created.
           # desktop entry: piPicker asks for the project directory first (a pi
           # session is pinned to the directory it starts in — see piPicker
           # above), then pi runs in a kitty of its own, with tmux's environment
@@ -405,18 +441,6 @@ in
               settings."StartupWMClass" = "pi";
             };
           };
-
-          home.activation.piWebSearchConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-            webSearchConfig="${config.home.homeDirectory}/.pi/agent/web-search.json"
-            run mkdir -p "$(dirname "$webSearchConfig")"
-            if [ -f "$webSearchConfig" ]; then
-              mergedConfig="$(mktemp)"
-              run ${lib.getExe pkgs.jq} -s '.[0] * .[1]' "$webSearchConfig" ${webSearchConfig} > "$mergedConfig"
-              run mv "$mergedConfig" "$webSearchConfig"
-            else
-              run install -m 0600 ${webSearchConfig} "$webSearchConfig"
-            fi
-          '';
         }
       )
     ];
