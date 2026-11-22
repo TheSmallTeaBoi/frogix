@@ -238,11 +238,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795328820,
-        "narHash": "sha256-+jGz6Ru7GuRMH1qXHKpbfxpXLphaMuFkFC3OHhIbPsU=",
+        "lastModified": 1795363749,
+        "narHash": "sha256-kspld9111eIy+UVECsAvYC3GETSKvIRPlejMIpWHU6g=",
         "owner": "TheSmallTeaBoi",
         "repo": "helper",
-        "rev": "2622ff873a6031a8fe48a770d58c50ea86acc7c8",
+        "rev": "40aec8c920dae8d49457204a8fa4278670245cb6",
         "type": "github"
       },
       "original": {
