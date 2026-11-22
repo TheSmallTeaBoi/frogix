@@ -220,23 +220,6 @@ in
           # task tracking, subtask depth, auditor model — persist across
           # launches instead of fighting the merged settings.json
           "npm:pi-goal-x"
-          # pi-better-model-select: /bms, a searchable model picker ranked by
-          # selection frequency, plus effort-level and pi-subagents role
-          # defaults — it discovers agent roles and edits their saved model /
-          # effort, so it is the UI for the subagents knobs below. registers
-          # commands only (/bms, /bms-add, /bms-options, /bms-defaults), no
-          # tools, so it cannot clash with any name above. caveat worth
-          # knowing before trusting it: its startup defaults are written into
-          # native settings.json keys, and the wrapper's merge lets the store
-          # side win (jq '.[0] * .[1]' over the user file), so the keys this
-          # module sets — defaultProvider, defaultModel, theme,
-          # subagents.defaultModel — are reverted on the next launch. change
-          # the shared startup default here, not with Ctrl+D. everything else
-          # survives: defaultThinkingLevel and subagents.agentOverrides.* are
-          # module-untouched, per-model effort preferences and usage ranking
-          # live in BMS's own files (models.bms.json overlay,
-          # bms-settings.json), and an Enter switch is session-scoped anyway
-          "npm:pi-better-model-select"
         ];
 
         # pi-subagents knobs, shared by every host. children already default to
@@ -275,10 +258,7 @@ in
 
         the merge is deep but the store side wins, so any key listed here is
         the value every launch gets, whatever a package or /setting wrote
-        into ~/.pi/agent/settings.json: pi-better-model-select saves its
-        startup defaults into exactly those native keys, so picking a
-        default there (defaultProvider, defaultModel, theme,
-        subagents.defaultModel) is undone on the next start — edit it here
+        into ~/.pi/agent/settings.json is undone on the next start — edit it here
         instead. keys this set leaves alone are user-owned and do persist
       '';
     };
@@ -300,9 +280,7 @@ in
         # ransack.tools — metasearch fanout (serper/brave/ddg plus reference,
         # academic and news engines) and a fetch ladder (plain HTTP, TLS
         # impersonation, headless render, archive/cache fallbacks) behind one
-        # flat-rate key. one MCP tool with a mode argument covers the search
-        # and fetch jobs the old pi-web-access package split across four
-        # tools. key arrives as RANSACK_API_KEY from frogix.pi.envFile; pi
+        # flat-rate key. key arrives as RANSACK_API_KEY from frogix.pi.envFile; pi
         # interpolates ${...} in headers itself, so only the reference — never
         # the secret — reaches the world-readable store copy of mcp.json.
         mcpServers.ransack = {
