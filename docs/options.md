@@ -1164,7 +1164,7 @@ list of (absolute path or string)
 
 ```nix
 [
-  /nix/store/92h5gk7qwpzq9fq9w17bwrp8vidacgfc-source/modules/system/pi/surplus-provider.ts
+  /nix/store/6wy3jhipfjb6dk8whir5fjcwd0l4sgjj-source/modules/system/pi/surplus-provider.ts
 ]
 ```
 
@@ -1342,6 +1342,14 @@ session’s model and load the same surplus provider extension inside
 background children, which otherwise start without the parent’s
 –extension flags and cannot resolve a surplus model at all
 
+the merge is deep but the store side wins, so any key listed here is
+the value every launch gets, whatever a package or /setting wrote
+into ~/.pi/agent/settings.json: pi-better-model-select saves its
+startup defaults into exactly those native keys, so picking a
+default there (defaultProvider, defaultModel, theme,
+subagents.defaultModel) is undone on the next start — edit it here
+instead. keys this set leaves alone are user-owned and do persist
+
 
 
 *Type:*
@@ -1365,6 +1373,8 @@ attribute set
     "npm:@juicesharp/rpiv-ask-user-question"
     "npm:@aliou/pi-guardrails"
     "npm:@shelken/pi-co-authored-by"
+    "npm:pi-goal-x"
+    "npm:pi-better-model-select"
   ];
   subagents = {
     defaultModel = "inherit";

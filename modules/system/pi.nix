@@ -202,6 +202,41 @@ in
           # prepare-commit-msg hook into every repo Pi opens) and over
           # pi-must-win (adds Pi branding/promo, not just attribution)
           "npm:@shelken/pi-co-authored-by"
+          # pi-goal-x: /goal and /sisyphus — a persisted objective with a task
+          # tree, recorded evidence and an independent completion auditor that
+          # reviews the work before a goal is archived, so long multi-step
+          # work survives a paused session or a closed terminal instead of
+          # living only in the transcript. complements pi-subagents (which
+          # fans work out but tracks nothing) rather than replacing it. its
+          # tools are goal-scoped (create_goal, get_goal, update_goal,
+          # set_goal_tasks, update_goal_task, goal_question,
+          # goal_questionnaire, propose_goal_draft, submit_goal_oracle_advice)
+          # so none of them clash with the tool names above — pi aborts
+          # startup on a duplicate tool name, which is why this matters.
+          # goal_question/goal_questionnaire are the drafting-conversation
+          # tools, not a second copy of ask_user_question. its own settings
+          # live in <agentDir>/pi-goal-x-settings.json (project override
+          # <cwd>/.pi/pi-goal-x-settings.json), so /goal-settings choices —
+          # task tracking, subtask depth, auditor model — persist across
+          # launches instead of fighting the merged settings.json
+          "npm:pi-goal-x"
+          # pi-better-model-select: /bms, a searchable model picker ranked by
+          # selection frequency, plus effort-level and pi-subagents role
+          # defaults — it discovers agent roles and edits their saved model /
+          # effort, so it is the UI for the subagents knobs below. registers
+          # commands only (/bms, /bms-add, /bms-options, /bms-defaults), no
+          # tools, so it cannot clash with any name above. caveat worth
+          # knowing before trusting it: its startup defaults are written into
+          # native settings.json keys, and the wrapper's merge lets the store
+          # side win (jq '.[0] * .[1]' over the user file), so the keys this
+          # module sets — defaultProvider, defaultModel, theme,
+          # subagents.defaultModel — are reverted on the next launch. change
+          # the shared startup default here, not with Ctrl+D. everything else
+          # survives: defaultThinkingLevel and subagents.agentOverrides.* are
+          # module-untouched, per-model effort preferences and usage ranking
+          # live in BMS's own files (models.bms.json overlay,
+          # bms-settings.json), and an Enter switch is session-scoped anyway
+          "npm:pi-better-model-select"
         ];
 
         # pi-subagents knobs, shared by every host. children already default to
@@ -237,6 +272,14 @@ in
         session's model and load the same surplus provider extension inside
         background children, which otherwise start without the parent's
         --extension flags and cannot resolve a surplus model at all
+
+        the merge is deep but the store side wins, so any key listed here is
+        the value every launch gets, whatever a package or /setting wrote
+        into ~/.pi/agent/settings.json: pi-better-model-select saves its
+        startup defaults into exactly those native keys, so picking a
+        default there (defaultProvider, defaultModel, theme,
+        subagents.defaultModel) is undone on the next start — edit it here
+        instead. keys this set leaves alone are user-owned and do persist
       '';
     };
 
