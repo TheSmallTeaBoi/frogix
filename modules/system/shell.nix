@@ -37,7 +37,7 @@ in
     programs.direnv.enable = true;
 
     programs.ssh.askPassword = ""; # I have absolutely no idea why this isn't default.
-    users.users.${config.frogix.user}.shell = pkgs.fish;
+    users.users.${config.frogix.user}.shell = lib.mkOverride 900 pkgs.fish;
     environment = {
       # eza backs the ls-family aliases in the home shell config — they must
       # exist even when frogix.packages is off (VM, minimal hosts)

@@ -49,6 +49,8 @@ in
           pkgs.callPackage "${patched}/nix/pm-packages.nix" { }
         );
       in
-      inputs.hermes-agent.packages.x86_64-linux.default.override { pmPackages = fixedPm; };
+      inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+        pmPackages = fixedPm;
+      };
   };
 }

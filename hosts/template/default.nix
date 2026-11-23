@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 # realistic desktop starting point: universal defaults are ON (gpu + display,
 # the full rice, gaming, packages). copy this folder to
 # hosts/<name>, replace hardware-configuration.nix with your
@@ -58,7 +58,7 @@
   };
 
   # first login needs a password; `passwd` after booting, then delete this line
-  users.users.you.initialPassword = "changeme";
+  users.users.${config.frogix.user}.initialPassword = "changeme";
 
   # host service choices — plain NixOS options, deliberately NOT frogix.*
   # toggles (services with no frogix-specific value are enabled directly;
@@ -66,7 +66,7 @@
   programs.droidcam.enable = true;
   programs.dconf.enable = true;
   programs.virt-manager.enable = true;
-  users.extraGroups.libvirtd.members = [ "you" ];
+  users.groups.libvirtd.members = [ config.frogix.user ];
   virtualisation.libvirtd.enable = true;
   virtualisation.spiceUSBRedirection.enable = true;
 
@@ -74,7 +74,7 @@
   # firefox too, it's a plain host choice:
   # programs.firefox.enable = true;
 
-  home-manager.users.you = {
+  home-manager.users.${config.frogix.user} = {
     frogix.home.stateVersion = "26.11"; # same rule as system.stateVersion
 
     # host service choices, hm side (not frogix.* toggles):

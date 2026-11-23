@@ -87,17 +87,27 @@ async function fetchScope(signal) {
     fetch(`${BASE_URL}/keys`, { headers: authHeaders(), signal }).catch(() => null),
     fetch(`${BASE_URL}/providers`, { signal }).catch(() => null),
   ]);
+  if (!keysRes?.ok || !provRes?.ok) return;
+
   const provIndex = new Map();
-  const provs = (await provRes?.json().catch(() => null))?.data ?? [];
+  const provs = (await provRes.json().catch(() => null))?.data ?? [];
   for (const p of provs) provIndex.set(p.id, p);
 
-  const body = await keysRes?.json().catch(() => null);
+  const body = await keysRes.json().catch(() => null);
+  if (!body) return;
   // the keys listing wraps in {keys: [...]}
   const keys = Array.isArray(body) ? body : (body?.keys ?? body?.data ?? []);
-  // recognize our own key by its secret prefix; fall through to no scope
-  // when it cannot be identified (never guess between sibling keys)
+  // recognize our own key by its longest non-empty secret prefix; fall through
+  // to no scope when it cannot be identified (never guess between sibling keys)
   const self = apiKey
-    ? keys.find((k) => typeof k.key_prefix === "string" && apiKey.startsWith(k.key_prefix))
+    ? keys
+        .filter(
+          (k) =>
+            typeof k.key_prefix === "string" &&
+            k.key_prefix.length > 0 &&
+            apiKey.startsWith(k.key_prefix),
+        )
+        .sort((a, b) => b.key_prefix.length - a.key_prefix.length)[0] ?? null
     : null;
   const scope = self?.scope ?? {};
 
@@ -207,14 +217,18 @@ export default function (pi) {
   // priced requests).
   let buyerCostUsd;
 
+  pi.on("turn_start", () => {
+    buyerCostUsd = undefined;
+  });
+
   pi.on("provider_stream_event", (event) => {
     if (event.provider !== "surplus") return;
     const usage = (
       event.data as { usage?: { buyer_cost_micro?: unknown; cost?: unknown } } | undefined
     )?.usage;
-    if (typeof usage?.buyer_cost_micro === "number") {
+    if (typeof usage?.buyer_cost_micro === "number" && Number.isFinite(usage.buyer_cost_micro)) {
       buyerCostUsd = usage.buyer_cost_micro / 1e6;
-    } else if (typeof usage?.cost === "number") {
+    } else if (typeof usage?.cost === "number" && Number.isFinite(usage.cost)) {
       buyerCostUsd = usage.cost;
     }
   });
@@ -224,12 +238,13 @@ export default function (pi) {
     if (buyerCostUsd === undefined) return;
     const total = buyerCostUsd;
     buyerCostUsd = undefined;
+    const prevUsage = event.message.usage ?? {};
     return {
       message: {
         ...event.message,
         usage: {
-          ...event.message.usage,
-          cost: { ...event.message.usage.cost, total, totalFromProvider: true },
+          ...prevUsage,
+          cost: { ...(prevUsage.cost ?? {}), total, totalFromProvider: true },
         },
       },
     };
@@ -243,9 +258,10 @@ export default function (pi) {
       "Surplus: pick a model by live key-scoped price (9:1 blended $/1M, cheapest first)",
     handler: async (_args, ctx) => {
       try {
-        if (Date.now() - scopeAt > 600_000) await fetchScope(undefined);
+        const timeout = AbortSignal.timeout(15_000);
+        if (Date.now() - scopeAt > 600_000) await fetchScope(timeout);
         if (Date.now() - marketCache.at > 30_000)
-          marketCache = { at: Date.now(), markets: await fetchMarkets(undefined) };
+          marketCache = { at: Date.now(), markets: await fetchMarkets(timeout) };
         const rows = marketCache.markets
           .map((mk) => ({ mk, p: scopedBest(mk) }))
           .filter((r) => r.p.blended != null)
@@ -257,7 +273,7 @@ export default function (pi) {
         const labels = rows.map(
           (r) =>
             `$${fmt(r.p.blended)}/M bl · in $${fmt(r.p.input)} out $${fmt(r.p.output)} · ` +
-            `${r.p.discount == null ? "?" : `-${r.p.discount}%`} vs direct · ` +
+            `${r.p.discount == null ? "?" : `${r.p.discount < 0 ? "+" : "-"}${Math.abs(r.p.discount)}%`} vs direct · ` +
             `${r.p.sellers ?? "?"} sellers · ${r.mk.model}`,
         );
         const pick = await ctx.ui.select(
@@ -290,6 +306,17 @@ export default function (pi) {
     models: [
       {
         type: "chat",
+        id: "deepseek-v4.1-flash",
+        name: "DeepSeek V4.1 Flash",
+        reasoning: true,
+        input: ["text"],
+        contextWindow: 131072,
+        maxTokens: 65536,
+        compat: COMPAT,
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      },
+      {
+        type: "chat",
         id: "glm-5.3-flash",
         name: "GLM 5.3 Flash",
         reasoning: true,
@@ -303,7 +330,7 @@ export default function (pi) {
     refreshModels: async (context) => {
       const signal = context?.signal;
       const [catRes] = await Promise.all([
-        fetch(`${BASE_URL}/models`, { signal }),
+        fetch(`${BASE_URL}/models`, { headers: authHeaders(), signal }),
         fetchScope(signal).catch(() => {}),
         fetchMarkets(signal)
           .then((markets) => {

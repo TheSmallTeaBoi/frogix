@@ -13,16 +13,20 @@ let
   # vitrina OSD; setvcp runs async so the keys feel instant.
   vitrina-bright = pkgs.writeShellApplication {
     name = "vitrina-bright";
-    runtimeInputs = [ pkgs.ddcutil ];
+    runtimeInputs = with pkgs; [
+      coreutils
+      ddcutil
+      gawk
+    ];
     text = ''
-      f=/run/user/$(id -u)/vitrina-bright
+      f="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/vitrina-bright"
       if [ -s "$f" ]; then
         v=$(cat "$f")
       else
         v=$(ddcutil getvcp 10 --brief 2>/dev/null | awk '{print $4}' | head -1)
         case "$v" in ""|*[!0-9]*) v=50;; esac
       fi
-      case "$1" in
+      case "''${1:-}" in
         up) v=$((v + 10));;
         down) v=$((v - 10));;
       esac
@@ -37,8 +41,12 @@ let
   # real unit state to the island via the flag file
   vitrina-nightlight = pkgs.writeShellApplication {
     name = "vitrina-nightlight";
+    runtimeInputs = with pkgs; [
+      coreutils
+      systemd
+    ];
     text = ''
-      f=/run/user/$(id -u)/vitrina-nightlight
+      f="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/vitrina-nightlight"
       if systemctl --user is-active --quiet wlsunset; then
         systemctl --user stop wlsunset
         rm -f "$f"
@@ -59,9 +67,12 @@ let
   # via the flag file, like the night light.
   vitrina-caffeine = pkgs.writeShellApplication {
     name = "vitrina-caffeine";
-    runtimeInputs = [ pkgs.systemd ];
+    runtimeInputs = with pkgs; [
+      coreutils
+      systemd
+    ];
     text = ''
-      f=/run/user/$(id -u)/vitrina-caffeine
+      f="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/vitrina-caffeine"
       if systemctl --user is-active --quiet vitrina-caffeine; then
         systemctl --user stop vitrina-caffeine
         rm -f "$f"
@@ -84,11 +95,12 @@ let
       coreutils
     ];
     text = ''
-      if ! pidof hyprlock >/dev/null 2>&1; then
+      uid="$(id -u)"
+      if ! pgrep -u "$uid" -x hyprlock >/dev/null 2>&1; then
         hyprlock --no-fade-in >/dev/null 2>&1 &
       fi
       for _ in $(seq 1 150); do
-        pidof hyprlock >/dev/null 2>&1 && break
+        pgrep -u "$uid" -x hyprlock >/dev/null 2>&1 && break
         sleep 0.02
       done
       # let hyprlock paint the lock surface before we report success
@@ -140,7 +152,12 @@ let
         audio=1
         while [ $# -gt 0 ]; do
           case "$1" in
-            --monitor) shift; monitor="''${1:-$monitor}" ;;
+            --monitor)
+              if [ $# -ge 2 ]; then
+                shift
+                monitor="$1"
+              fi
+              ;;
             --mic) mic=1 ;;
             --no-audio) audio=0 ;;
           esac
@@ -266,7 +283,7 @@ let
         (item "mod+shift+j / mod+shift+k" "Move Down / Up")
         (item "mod+[ / mod+]" "Consume / Expel")
         (item "mod+minus / mod+=" "Column Width")
-        (item "mod+tab / mod+`" "Monitor Next / Prev")
+        (item "mod+tab / mod+`" "Monitor Right / Left")
         (item "mod+ctrl+tab / mod+ctrl+`" "Move To Monitor")
       ];
     }

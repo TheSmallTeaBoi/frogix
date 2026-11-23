@@ -34,8 +34,6 @@ in
         package = pkgs.papirus-icon-theme;
       };
 
-      gtk2.extraConfig = "gtk-application-prefer-dark-theme = true\n";
-
       gtk3.extraConfig = {
         gtk-application-prefer-dark-theme = 1;
         gtk-cursor-theme-size = 8;

@@ -42,8 +42,6 @@ in
             opus: ffmpeg -i $source -y -vn -acodec libopus -ab 192k $dest
         rewrite:
           artist CapaRezza: Caparezza
-        embedart:
-          remove_art_file: yes
         lastgenre:
           force: yes
           keep_existing: yes

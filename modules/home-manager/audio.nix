@@ -14,9 +14,9 @@ in
   };
 
   options.frogix.audio.mixerElement = lib.mkOption {
-    type = lib.types.str;
+    type = lib.types.nullOr lib.types.str;
     default = "Emotiva Little Ego";
-    description = "ALSA simple element the mixer path binds hardware volume to";
+    description = "ALSA simple element the mixer path binds hardware volume to (null = do not write override)";
   };
 
   config = lib.mkIf (cfg.enable && cfg.mixerElement != null) {

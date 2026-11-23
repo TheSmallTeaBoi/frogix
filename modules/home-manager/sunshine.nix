@@ -42,8 +42,15 @@ let
           export NIRI_SOCKET
       fi
 
-      # Steam doesn't like a second instance competing
-      pkill -x steam 2>/dev/null || true
+      # Steam doesn't like a second instance competing — shut down gracefully first
+      if pgrep -x steam >/dev/null 2>&1; then
+          steam -shutdown >/dev/null 2>&1 || true
+          for _ in $(seq 1 25); do
+              pgrep -x steam >/dev/null 2>&1 || break
+              sleep 0.2
+          done
+          pkill -x steam 2>/dev/null || true
+      fi
 
       gamescope \
           -e -f \
@@ -87,9 +94,9 @@ let
             # Land it fullscreen on ${cfg.output}'s currently active workspace.
             # focus-monitor first so the workspace index resolves against it.
             WS_IDX="$(niri msg --json workspaces 2>/dev/null \
-                | jq -r '[.[] | select(.output == "${cfg.output}" and .is_active)] | first | .idx // empty' \
+                | jq -r --arg out ${lib.escapeShellArg cfg.output} '[.[] | select(.output == $out and .is_active)] | first | .idx // empty' \
                 || true)"
-            niri msg action focus-monitor ${cfg.output} || true
+            niri msg action focus-monitor ${lib.escapeShellArg cfg.output} || true
             niri msg action focus-window --id "$WIN_ID" || true
             if [ -n "$WS_IDX" ]; then
                 niri msg action move-window-to-workspace "$WS_IDX" || true

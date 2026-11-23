@@ -39,7 +39,7 @@ in
       };
       dates = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "06:00" ];
+        default = [ "weekly" ];
         description = "systemd calendar for the optimise timer";
       };
     };
@@ -87,9 +87,9 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Cache for cuda (see frogix.nix.caches for the knob)
-    nix.settings.substituters = builtins.attrNames cfg.caches;
-    nix.settings.trusted-public-keys = builtins.attrValues cfg.caches;
+    # use extra-* so cache.nixos.org stays first and extra caches only take misses
+    nix.settings.extra-substituters = builtins.attrNames cfg.caches;
+    nix.settings.extra-trusted-public-keys = builtins.attrValues cfg.caches;
 
     nix = {
       gc = {
@@ -104,6 +104,13 @@ in
       settings = {
         experimental-features = cfg.experimentalFeatures;
         trusted-users = cfg.trustedUsers;
+        fallback = true;
+        connect-timeout = 5;
+        http-connections = 50;
+        max-substitution-jobs = 32;
+        # auto-GC when free space drops below 10 GiB until 30 GiB is free
+        min-free = 10 * 1024 * 1024 * 1024;
+        max-free = 30 * 1024 * 1024 * 1024;
       };
     };
 

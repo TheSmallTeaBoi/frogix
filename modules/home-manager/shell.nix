@@ -15,10 +15,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.sessionVariables = {
-      fish_tmux_config = "~/.config/tmux/tmux.config";
-    };
-
     programs.fish = {
       enable = true;
       functions = {
@@ -61,32 +57,33 @@ in
       # add transient prompt for fish via transient.fish plugin in fish.nix
       # the starship transience module doesn't handle empty commands properly
       # https://github.com/starship/starship/issues/4929
-      # Add a tmux session when you start fish
-      interactiveShellInit = lib.mkAfter (
-        # Fish
-        ''
+      # exec tmux BEFORE starship/prompt init so terminals don't pay fish+starship
+      # startup twice; grouped sessions set destroy-unattached so closing a
+      # terminal cleans up its t-<pid> session without touching base.
+      interactiveShellInit = lib.mkMerge [
+        (lib.mkBefore (
+          lib.optionalString config.frogix.tmux.enable ''
+            if not set -q TMUX
+                and not set -q INSIDE_EMACS
+                and not set -q VIM
+                and not set -q NVIM
+
+            # Every terminal shares the same windows through grouped sessions,
+            # but each gets its own current-window pointer.
+            if tmux has-session -t base 2>/dev/null
+                exec tmux new-session -s "t-$fish_pid" -t base \; set-option destroy-unattached on
+            else
+                exec tmux new-session -A -s base
+            end
+            end
+          ''
+        ))
+        (lib.mkAfter ''
           function transient_prompt_func
             starship module character
           end
-        ''
-        # the terminal multiplexer is frogix.tmux's area; autostarting it here
-        # would error on every shell when that area is off.
-        + lib.optionalString config.frogix.tmux.enable ''
-          if not set -q TMUX
-              and not set -q INSIDE_EMACS
-              and not set -q VIM
-              and not set -q NVIM
-
-          # Every terminal shares the same windows through grouped sessions,
-          # but each gets its own current-window pointer.
-          if tmux has-session -t base 2>/dev/null
-              exec tmux new-session -s "t-$fish_pid" -t base
-          else
-              exec tmux new-session -A -s base
-          end
-          end
-        ''
-      );
+        '')
+      ];
     };
 
     # fish plugins, home-manager's programs.fish.plugins has a weird format

@@ -69,8 +69,8 @@ in
     security.rtkit.enable = true;
     systemd.services.navidrome = {
       # Otherwise it starts before the music library gets mounted
-      after = [ "storage.mount" ];
-      requires = [ "storage.mount" ];
+      after = lib.optional (config.fileSystems ? "/storage") "storage.mount";
+      requires = lib.optional (config.fileSystems ? "/storage") "storage.mount";
       serviceConfig = {
         PrivateUsers = lib.mkForce false;
         RootDirectory = lib.mkForce "";
@@ -122,22 +122,19 @@ in
       udev.extraRules =
         # Udev
         ''
-          KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
-
-          # Allows Sunshine to access /dev/uinput
+          # Allows Sunshine to access /dev/uinput and /dev/uhid
           KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"
-          # Allows Sunshine to access /dev/uhid
           KERNEL=="uhid", TAG+="uaccess"
 
           # Joypads
-          KERNEL=="hidraw*" ATTRS{name}=="Sunshine PS5 (virtual) pad" MODE="0660", TAG+="uaccess"
+          KERNEL=="hidraw*", ATTRS{name}=="Sunshine PS5 (virtual) pad", MODE="0660", TAG+="uaccess"
           SUBSYSTEMS=="input", ATTRS{name}=="Sunshine X-Box One (virtual) pad", MODE="0660", TAG+="uaccess"
           SUBSYSTEMS=="input", ATTRS{name}=="Sunshine gamepad (virtual) motion sensors", MODE="0660", TAG+="uaccess"
           SUBSYSTEMS=="input", ATTRS{name}=="Sunshine Nintendo (virtual) pad", MODE="0660", TAG+="uaccess"
 
-          # Chirp
-          SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE="0666"
-          SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="0666"
+          # Chirp (CH340 / PL2303 USB-serial adapters)
+          SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE="0660", TAG+="uaccess"
+          SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", MODE="0660", TAG+="uaccess"
 
           # Alpakka controller
           SUBSYSTEMS=="usb", ATTRS{idVendor}=="045e", MODE="0660", GROUP="plugdev", SYMLINK+="webusb", TAG+="uaccess"
@@ -161,7 +158,11 @@ in
         enable = true;
         # Start with the graphical session; it never gets socket-activated
         autoStart = true;
-        package = pkgs.sunshine.override { cudaSupport = true; };
+        package =
+          if config.frogix.nvidia.enable then
+            pkgs.sunshine.override { cudaSupport = true; }
+          else
+            pkgs.sunshine;
       };
 
       input-remapper.enable = true;
@@ -233,7 +234,7 @@ in
           "monitor.alsa.rules" = [
             {
               matches = [
-                { node.name = "~alsa_output\\.usb-Emotiva.*"; }
+                { "node.name" = "~alsa_output\\.usb-Emotiva.*"; }
               ];
               actions.update-props = {
                 "audio.format" = "S32_LE";
@@ -246,7 +247,13 @@ in
       # Enable the OpenSSH daemon.
       openssh.enable = true;
 
-      earlyoom.enable = true;
+      earlyoom = {
+        enable = true;
+        extraArgs = [
+          "--avoid"
+          "^(niri|sshd|pipewire|dbus-broker|systemd)$"
+        ];
+      };
 
       # Syncthing
       syncthing = {
@@ -258,28 +265,35 @@ in
         overrideFolders = false;
         settings = {
           devices = builtins.mapAttrs (name: id: { inherit id; }) cfg.syncthing.devices;
-          folders = {
-            "Obsidian" = {
-              path = cfg.syncthing.folders."Obsidian";
-              devices = [ "Phone" ];
-              ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
+          folders =
+            lib.optionalAttrs (cfg.syncthing.folders ? "Obsidian") {
+              "Obsidian" = {
+                path = cfg.syncthing.folders."Obsidian";
+                devices = [ "Phone" ];
+                ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
+              };
+            }
+            // lib.optionalAttrs (cfg.syncthing.folders ? "Org") {
+              "Org" = {
+                path = cfg.syncthing.folders."Org";
+                devices = [ "Phone" ];
+                ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
+              };
+            }
+            // lib.optionalAttrs (cfg.syncthing.folders ? "z7ezp-ya3ym") {
+              "z7ezp-ya3ym" = {
+                path = cfg.syncthing.folders."z7ezp-ya3ym";
+                devices = [ "JTB" ];
+                ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
+              };
+            }
+            // lib.optionalAttrs (cfg.syncthing.folders ? "wargame-lore") {
+              "wargame-lore" = {
+                path = cfg.syncthing.folders."wargame-lore";
+                devices = [ "Jin's Phone" ];
+                ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
+              };
             };
-            "Org" = {
-              path = cfg.syncthing.folders."Org";
-              devices = [ "Phone" ];
-              ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
-            };
-            "z7ezp-ya3ym" = {
-              path = cfg.syncthing.folders."z7ezp-ya3ym";
-              devices = [ "JTB" ];
-              ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
-            };
-            "wargame-lore" = {
-              path = cfg.syncthing.folders."wargame-lore";
-              devices = [ "Jin's Phone" ];
-              ignorePerms = false; # By default, Syncthing doesn't sync file permissions. This line enables it for this folder.
-            };
-          };
         };
       };
     };

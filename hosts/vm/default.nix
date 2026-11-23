@@ -1,7 +1,7 @@
 { config, lib, ... }:
 # minimal frogix VM: console-only, universal defaults, opt-outs instead of opt-ins.
 # build with: nixos-rebuild build-vm --flake .#vm
-# run with:   ./result/bin/run-vm  (add -nographic for a headless serial console)
+# run with:   ./result/bin/run-frogix-vm-vm  (add -nographic for a headless serial console)
 {
   imports = [
     ./hardware-configuration.nix

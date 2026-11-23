@@ -112,7 +112,7 @@ in
 
     (lib.mkIf cfg.coding {
       environment.systemPackages = with pkgs; [
-        inputs.nix-alien.packages.x86_64-linux.nix-alien
+        inputs.nix-alien.packages.${pkgs.stdenv.hostPlatform.system}.nix-alien
 
         devenv
         gnome-keyring
@@ -123,8 +123,8 @@ in
     (lib.mkIf cfg.keyboard {
       environment.systemPackages = with pkgs; [
         qmk
-        qmk-udev-rules
       ];
+      services.udev.packages = [ pkgs.qmk-udev-rules ];
     })
 
     (lib.mkIf cfg.gui {

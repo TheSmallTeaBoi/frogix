@@ -59,12 +59,7 @@ in
       };
     };
 
-    # the config file that defines CONTAINER_LIST and CONTAINER_BASE
-    xdg.dataFile."qutebrowser/userscripts/containers_config".text = ''
-      CONTAINER_LIST="$HOME/.config/qute-containers/containers"
-      CONTAINER_BASE="$HOME/.local/share/qute-containers"
-    '';
-
+    # the config file that defines CONTAINER_LIST, CONTAINER_BASE and helper funcs
     xdg.dataFile."qutebrowser/userscripts/containers_config".source =
       "${qute-containers}/containers_config";
 
@@ -224,8 +219,6 @@ in
       extraConfig =
         #python
         ''
-          import pywalQute.draw
-          import json
           import os
 
           # rice mode (see pywal.nix). chrome colors follow the pywal cache on
@@ -251,27 +244,24 @@ in
           config.set('colors.webpage.darkmode.enabled', rice_mode == 'dark', 'qute://*')
           config.set('colors.webpage.darkmode.enabled', rice_mode == 'dark',
                      'www.w3schools.com')
+        ''
+        + lib.optionalString config.frogix.pywal.enable ''
 
-          pywalQute.draw.color(c, {
-              'spacing': {
-                  'vertical': 6,
-                  'horizontal': 8
-              }
-          })
-
-
-          with open('${config.home.homeDirectory}/.cache/wal/colors.json') as f:
-              wal = json.load(f)
-
-          bg = wal['special']['background']
-          fg = wal['special']['foreground']
+          import pywalQute.draw
+          if os.path.exists('${config.home.homeDirectory}/.cache/wal/colors.json'):
+              pywalQute.draw.color(c, {
+                  'spacing': {
+                      'vertical': 6,
+                      'horizontal': 8
+                  }
+              })
+        ''
+        + ''
 
           c.content.javascript.log_message.excludes = {
             'userscript:_qute_stylesheet' : ['*Refused to apply inline style   because it violates the following Content Security Policy directive:   *'],
             'userscript:_qute_js' : ['*TrustedHTML*']
           }
-
-
         '';
     };
   };

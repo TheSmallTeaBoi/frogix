@@ -69,7 +69,7 @@ let
       ) || exit 0
       [ -n "$selection" ] || exit 0
 
-      cd "$selection"
+      cd -- "$selection"
       exec ${lib.getExe piWrapped}
     '';
   };
@@ -266,6 +266,7 @@ in
     skills = lib.mkOption {
       type = lib.types.listOf lib.types.path;
       default = [ frontendDesignSkill ];
+      defaultText = lib.literalExpression "[ frontendDesignSkill ]";
       description = ''
         shared skill directories passed to pi via --skill on every
         invocation (paths into this repo, e.g. ./skills/nixpkgs). defaults to
@@ -319,6 +320,7 @@ in
     extensions = lib.mkOption {
       type = lib.types.listOf (lib.types.either lib.types.path lib.types.str);
       default = [ ./pi/surplus-provider.ts ];
+      defaultText = lib.literalExpression "[ ./pi/surplus-provider.ts ]";
       description = ''
         shared extensions passed to pi via --extension on every invocation.
         the bundled default registers the surplus intelligence provider with
@@ -391,6 +393,10 @@ in
       {
         assertion = cfg.envFile == null || cfg.secrets == { };
         message = "frogix.pi: envFile and secrets are exclusive — environment is either one sourced dotenv or an attrset of single variables";
+      }
+      {
+        assertion = (cfg.envFile == null && cfg.secrets == { }) || config.frogix.sops.enable;
+        message = "frogix.pi: envFile/secrets read from sops-nix, so frogix.sops has to be on (or set frogix.pi.envFile = null).";
       }
     ];
 

@@ -589,6 +589,117 @@ false
 
 
 
+## frogix.emeet-linux.applyPreset.enable
+
+
+
+Re-apply a saved emeet-linux preset when the camera is plugged in.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+
+
+
+## frogix.emeet-linux.applyPreset.preset
+
+
+
+Name of the preset to replay, as saved in the app’s Presets tab.
+Single word: it ends up in a systemd ExecStart line.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"default"
+```
+
+
+
+
+## frogix.emeet-linux.applyPreset.presetFile
+
+
+
+JSON file the app writes its presets to.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"${config.users.users.${cfg.applyPreset.user}.home}/.config/emeet-linux/presets.json"
+```
+
+
+
+
+## frogix.emeet-linux.applyPreset.usbId
+
+
+
+Vendor:product id of the camera, as ` lsusb ` prints it.
+
+
+
+*Type:*
+string matching the pattern [0-9a-f]{4}:[0-9a-f]{4}
+
+
+
+*Default:*
+
+```nix
+"328f:00e7"
+```
+
+
+
+
+## frogix.emeet-linux.applyPreset.user
+
+
+
+User whose emeet-linux presets are read.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"user"
+```
+
+
+
+
 ## frogix.gaming.enable
 
 
@@ -681,7 +792,7 @@ false
 
 
 
-keep the firewall disabled (the frogix default)
+enable the NixOS firewall (defaults on; hosts that need open ports can disable it or open specific ports)
 
 
 
@@ -693,7 +804,7 @@ boolean
 *Default:*
 
 ```nix
-false
+true
 ```
 
 
@@ -703,7 +814,7 @@ false
 
 
 
-interfaces dhcpcd is allowed to manage (empty = all)
+interfaces dhcpcd is allowed to manage (empty = all non-wireless interfaces; iwd manages wireless DHCP)
 
 
 
@@ -961,7 +1072,7 @@ list of string
 
 ```nix
 [
-  "06:00"
+  "weekly"
 ]
 ```
 
@@ -1163,9 +1274,7 @@ list of (absolute path or string)
 *Default:*
 
 ```nix
-[
-  /nix/store/6wy3jhipfjb6dk8whir5fjcwd0l4sgjj-source/modules/system/pi/surplus-provider.ts
-]
+[ ./pi/surplus-provider.ts ]
 ```
 
 
@@ -1344,10 +1453,7 @@ background children, which otherwise start without the parent’s
 
 the merge is deep but the store side wins, so any key listed here is
 the value every launch gets, whatever a package or /setting wrote
-into ~/.pi/agent/settings.json: pi-better-model-select saves its
-startup defaults into exactly those native keys, so picking a
-default there (defaultProvider, defaultModel, theme,
-subagents.defaultModel) is undone on the next start — edit it here
+into ~/.pi/agent/settings.json is undone on the next start — edit it here
 instead. keys this set leaves alone are user-owned and do persist
 
 
@@ -1374,12 +1480,11 @@ attribute set
     "npm:@aliou/pi-guardrails"
     "npm:@shelken/pi-co-authored-by"
     "npm:pi-goal-x"
-    "npm:pi-better-model-select"
   ];
   subagents = {
     defaultModel = "inherit";
     defaultSubagentOnlyExtensions = [
-      "/nix/store/hpk5mskl5qyfvf9aqj3cvad6sxc2g6l2-surplus-provider.ts"
+      "/nix/store/q3hay99c6giqbql4jd6xvmf59lfsjkzp-surplus-provider.ts"
     ];
   };
   theme = "system";
@@ -1408,9 +1513,7 @@ list of absolute path
 *Default:*
 
 ```nix
-[
-  "/nix/store/cmi6mq1vvz7bq03gqy6n64halfb5pfy6-source/skills/frontend-design"
-]
+[ frontendDesignSkill ]
 ```
 
 
@@ -2030,9 +2133,8 @@ false
 
 
 
-groups the primary user is a member of. the groups must exist —
-disabling a module that owns one (e.g. gaming and “gamemode”) means
-removing it here too
+groups the primary user is a member of (“gamemode” is added
+automatically when frogix.gaming is enabled)
 
 
 
@@ -2044,14 +2146,7 @@ list of string
 *Default:*
 
 ```nix
-[
-  "wheel"
-  "input"
-  "uinput"
-  "audio"
-  "gamemode"
-  "bluetooth"
-]
+[ "wheel" "input" "uinput" "audio" "bluetooth" ] ++ lib.optional config.frogix.gaming.enable "gamemode"
 ```
 
 
@@ -2108,7 +2203,7 @@ string
 
 
 
-the full wine family + winetricks
+wine (wow64) + winetricks
 
 
 
@@ -2204,12 +2299,12 @@ false
 
 
 
-ALSA simple element the mixer path binds hardware volume to
+ALSA simple element the mixer path binds hardware volume to (null = do not write override)
 
 
 
 *Type:*
-string
+null or string
 
 
 

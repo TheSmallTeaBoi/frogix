@@ -127,13 +127,14 @@ let
           gnused
         ]
         ++ lib.optionals config.frogix.niri.enable [ niri ]
-        ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ];
+        ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ]
+        ++ lib.optionals config.frogix.tmux.enable [ tmux ]
+        ++ lib.optionals config.frogix.emacs.enable [ config.programs.doom-emacs.emacs ];
       text = ''
         set -euo pipefail
-        set -x
 
         if [ "$#" -lt 1 ]; then
-          echo "usage: wal-set <image-or-pywal-args...>" >&2
+          echo "usage: set-wal <image-or-pywal-args...>" >&2
           exit 2
         fi
 
@@ -175,46 +176,74 @@ let
         else
           color_scheme="prefer-dark"
         fi
-        dconf write /org/gnome/desktop/interface/color-scheme "'$color_scheme'" 2>/dev/null || true
+        # Fire independent consumer reloads in parallel so wallpaper / mode
+        # switches feel immediate instead of serializing on qutebrowser IPC.
+        pids=()
+        (dconf write /org/gnome/desktop/interface/color-scheme "'$color_scheme'" 2>/dev/null || true) &
+        pids+=($!)
 
-        awww img "$1" --transition-type any --transition-duration 2 --transition-fps 180
+        (awww img "$1" --transition-type any --transition-duration 2 --transition-fps 180 || true) &
+        pids+=($!)
 
         ${lib.optionalString config.frogix.qutebrowser.enable ''
           # only poke an instance that is already running: a CLI call with no
           # IPC peer opens a whole browser window.
-          if pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
-            qutebrowser --target auto ":config-source" || true
-          fi
+          (
+            if pgrep -f 'bin/[.]qutebrowser-wrapped' >/dev/null 2>&1; then
+              qutebrowser --target auto ":config-source" || true
+            fi
+          ) &
+          pids+=($!)
         ''}
 
         ${lib.optionalString config.frogix.niri.enable ''
           # niri only auto-reloads on config.kdl edits, not on this include.
-          niri_sock="''${NIRI_SOCKET:-}"
-          if [ -z "$niri_sock" ]; then
-            niri_dir="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-            for s in "$niri_dir"/niri.wayland-1.*.sock; do
-              if [ -S "$s" ]; then
-                niri_sock="$s"
-                break
-              fi
-            done
-          fi
-          if [ -n "$niri_sock" ]; then
-            NIRI_SOCKET="$niri_sock" niri msg action reload-config >/dev/null 2>&1 || true
-          fi
+          (
+            niri_sock="''${NIRI_SOCKET:-}"
+            if [ -z "$niri_sock" ]; then
+              niri_dir="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+              for s in "$niri_dir"/niri.*.sock; do
+                if [ -S "$s" ]; then
+                  niri_sock="$s"
+                  break
+                fi
+              done
+            fi
+            if [ -n "$niri_sock" ]; then
+              NIRI_SOCKET="$niri_sock" niri msg action reload-config >/dev/null 2>&1 || true
+            fi
+          ) &
+          pids+=($!)
         ''}
 
         # pywalfox only has a target when firefox exists; never abort set-wal
         # over it (set -e is on).
-        pywalfox update || true
+        (pywalfox update || true) &
+        pids+=($!)
 
         ${lib.optionalString config.frogix.vesktop.enable ''
-          ln -sf ~/.cache/wal/vesktop.css ~/.config/vesktop/themes/custom.css
+          # Vencord watches ~/.config/vesktop/themes/ with fs.watch (inotify),
+          # which does not follow symlinks into ~/.cache/wal/. Bumping the
+          # symlink mtime with touch -h emits an inotify event so a running
+          # Vesktop hot-reloads the theme without clobbering HM's symlink.
+          (
+            theme="${config.xdg.configHome}/vesktop/themes/custom.css"
+            if [ -L "$theme" ]; then
+              touch -h "$theme" || true
+            else
+              mkdir -p "${config.xdg.configHome}/vesktop/themes"
+              ln -sf "${walCache}/vesktop.css" "$theme" || true
+            fi
+          ) &
+          pids+=($!)
         ''}
 
-        if command -v emacsclient >/dev/null 2>&1; then
-          emacsclient --eval '(load-file "~/.config/emacs/pywal.el")' >/dev/null 2>&1 || true
-        fi
+        (
+          if command -v emacsclient >/dev/null 2>&1; then
+            emacsclient --eval '(load-file "~/.config/emacs/pywal.el")' >/dev/null 2>&1 || true
+          fi
+        ) &
+        pids+=($!)
 
         ${lib.optionalString config.frogix.tmux.enable ''
           # reload tmux's config so its run-shell re-sources the colors.sh wal
@@ -222,32 +251,31 @@ let
           # new wallpaper without restarting the server. re-sourcing the config
           # keeps the palette definition in one place (tmux.nix) instead of
           # duplicating it here. no server running is a silent no-op.
-          if command -v tmux >/dev/null 2>&1; then
-            tmux source-file ${config.xdg.configHome}/tmux/tmux.conf >/dev/null 2>&1 || true
-          fi
+          (
+            if command -v tmux >/dev/null 2>&1; then
+              tmux source-file ${config.xdg.configHome}/tmux/tmux.conf >/dev/null 2>&1 || true
+            fi
+          ) &
+          pids+=($!)
         ''}
+
+        for pid in "''${pids[@]}"; do
+          wait "$pid" || true
+        done
       '';
     }
   );
 
   # rice-mode [light|dark|toggle] — no argument prints the current mode.
-  # Flips the marker, re-derives the palette from the wallpaper that is on
-  # screen, and restarts qutebrowser (its website color scheme is a startup-only
-  # blink setting: configdata.yml marks it `restart: true`, and `:restart`
-  # reloads the saved session so tabs come back).
+  # Flips the marker and re-derives the palette from the wallpaper on screen.
   rice-mode = pkgs.writeShellApplication {
     name = "rice-mode";
-    runtimeInputs =
-      with pkgs;
-      [
-        coreutils
-        gnused
-        gnugrep
-        procps
-        curl
-        set-wal
-      ]
-      ++ lib.optionals config.frogix.qutebrowser.enable [ qutebrowser ];
+    runtimeInputs = with pkgs; [
+      coreutils
+      findutils
+      gnused
+      set-wal
+    ];
     text = ''
       set -euo pipefail
 
@@ -257,14 +285,7 @@ let
         current="$(tr -d '[:space:]' < "$mode_file")"
       fi
 
-      args=()
-      for arg in "$@"; do
-        case "$arg" in
-          *) args+=("$arg") ;;
-        esac
-      done
-
-      want="''${args[0]:-}"
+      want="''${1:-}"
       case "$want" in
         "") echo "$current"; exit 0 ;;
         light|dark) ;;
@@ -276,7 +297,7 @@ let
           fi
           ;;
         *)
-          echo "usage: rice-mode [light|dark|toggle] [--no-qute]" >&2
+          echo "usage: rice-mode [light|dark|toggle]" >&2
           exit 2
           ;;
       esac
@@ -286,7 +307,7 @@ let
 
       wall="$(sed -n 's/.*"wallpaper": *"\(.*\)",*$/\1/p' "$HOME/.cache/wal/colors.json" 2>/dev/null | head -n1)"
       if [ -z "$wall" ] || [ ! -e "$wall" ]; then
-        wall="$(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)"
+        wall="$(find ${lib.escapeShellArg (toString config.frogix.wallpapersDir)} -type f | shuf -n 1)"
       fi
       set-wal "$wall"
 
@@ -351,9 +372,21 @@ in
     systemd.user.services.wal-cycle = lib.mkIf (cfg.cycleInterval > 0) {
       Service = {
         Type = "oneshot";
-        ExecStart = "${pkgs.writeShellScript "wal-cycle" ''
-          ${set-wal}/bin/set-wal "$(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)"
-        ''}";
+        ExecStart = lib.getExe (
+          pkgs.writeShellApplication {
+            name = "wal-cycle";
+            runtimeInputs = [
+              pkgs.coreutils
+              pkgs.findutils
+              set-wal
+            ];
+            text = ''
+              wall="$(find ${lib.escapeShellArg (toString config.frogix.wallpapersDir)} -type f | shuf -n 1)"
+              [ -n "$wall" ] || exit 0
+              exec set-wal "$wall"
+            '';
+          }
+        );
       };
     };
 
@@ -361,7 +394,7 @@ in
       Timer = {
         OnBootSec = "${toString cfg.cycleInterval}min";
         OnUnitActiveSec = "${toString cfg.cycleInterval}min";
-        Persistent = true;
+        Persistent = false;
       };
       Install = {
         WantedBy = [ "timers.target" ];

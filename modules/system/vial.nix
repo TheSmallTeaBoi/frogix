@@ -66,7 +66,7 @@ in
 
     services.udev.extraRules = ''
       # This is needed for Vial and plover
-      KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*${cfg.serial}*", MODE="0660", GROUP="users", TAG+="uaccess", TAG+="udev-acl"
+      KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{serial}=="*${cfg.serial}*", MODE="0660", TAG+="uaccess"
     '';
   };
 }

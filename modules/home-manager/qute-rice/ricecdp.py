@@ -24,11 +24,16 @@ from PyQt6.QtWebSockets import QWebSocket
 from qutebrowser.utils import log
 
 def _port():
-    # same env qtwebengine itself uses; "host:port" is allowed there too
-    raw = (os.environ.get("RICE_CDP_PORT")
-           or os.environ.get("QTWEBENGINE_REMOTE_DEBUGGING")
-           or "9222")
-    return int(raw.rsplit(":", 1)[-1])
+    # same env qtwebengine itself uses; "host:port" is allowed there too.
+    # return None when neither env var is set so a non-CDP launch (e.g. Mod+B)
+    # does not probe port 9222 forever or attach to an unrelated browser/Electron.
+    raw = os.environ.get("RICE_CDP_PORT") or os.environ.get("QTWEBENGINE_REMOTE_DEBUGGING")
+    if not raw:
+        return None
+    try:
+        return int(raw.rsplit(":", 1)[-1])
+    except ValueError:
+        return None
 
 
 PORT = _port()
@@ -38,12 +43,17 @@ _client = None
 _starting = False
 
 _DEBUG = bool(os.environ.get("RICE_CDP_DEBUG"))
+_DEBUG_DIR = os.environ.get("XDG_RUNTIME_DIR") or os.path.expanduser("~/.cache")
+_DEBUG_LOG = os.path.join(_DEBUG_DIR, "ricecdp-debug.log")
 
 
 def _dbg(msg):
     if _DEBUG:
-        with open("/tmp/ricecdp-debug.log", "a") as f:
-            f.write(str(msg) + "\n")
+        try:
+            with open(_DEBUG_LOG, "a") as f:
+                f.write(str(msg) + "\n")
+        except OSError:
+            pass
 
 
 def current_mode():
@@ -102,6 +112,7 @@ class Client(QObject):
 
     def _on_disconnected(self):
         self._sessions.clear()
+        self._attach_ids.clear()
         self._retry.start(2000)
 
     # protocol -------------------------------------------------------
@@ -145,7 +156,7 @@ class Client(QObject):
     def _emulate(self, session):
         _dbg("emulate %s on %s" % (current_mode(), session))
         self._send("Emulation.setEmulatedMedia", {
-            "media": "screen",
+            "media": "",
             "features": [{"name": "prefers-color-scheme",
                           "value": current_mode()}],
         }, session=session)
@@ -165,6 +176,8 @@ def apply():
     safe point; apply() from later :config-source reloads hits the live client.
     """
     global _client, _starting
+    if PORT is None:
+        return
     if _client is not None:
         _client.apply()
     elif not _starting:

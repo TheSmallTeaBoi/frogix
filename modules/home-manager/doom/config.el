@@ -106,7 +106,8 @@
   '(font-lock-doc-face :slant italic)
   )
 
-(add-to-list 'yas-snippet-dirs "~/.emacs.d/snippets")
+(after! yasnippet
+  (add-to-list 'yas-snippet-dirs (expand-file-name "~/.config/emacs/snippets")))
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `with-eval-after-load' block, otherwise Doom's defaults may override your

@@ -254,7 +254,9 @@
     "hermes-agent": {
       "inputs": {
         "flake-parts": "flake-parts",
-        "home-manager": "home-manager",
+        "home-manager": [
+          "home-manager"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -277,27 +279,6 @@
       }
     },
     "home-manager": {
-      "inputs": {
-        "nixpkgs": [
-          "hermes-agent",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1792703141,
-        "narHash": "sha256-3X34FaSeMJXMx8CK/BN6sZ9knwNauuiJXQhLM+bQQuI=",
-        "owner": "nix-community",
-        "repo": "home-manager",
-        "rev": "6750249c69969d09d952efaf3fab88a2bdac7ec6",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "home-manager",
-        "type": "github"
-      }
-    },
-    "home-manager_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -435,7 +416,9 @@
     "nix-alien": {
       "inputs": {
         "flake-compat": "flake-compat",
-        "nix-index-database": "nix-index-database",
+        "nix-index-database": [
+          "nix-index-database"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -455,27 +438,6 @@
       }
     },
     "nix-index-database": {
-      "inputs": {
-        "nixpkgs": [
-          "nix-alien",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1791711434,
-        "narHash": "sha256-LpIhxnuO0tYeZ4k7BbNMxsPs2zJpB4hWXO1jdhUuE7Q=",
-        "owner": "nix-community",
-        "repo": "nix-index-database",
-        "rev": "9a2dd40780eeab8543aa97c59c26f11267025616",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nix-index-database",
-        "type": "github"
-      }
-    },
-    "nix-index-database_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -622,13 +584,13 @@
         "doom-emacs": "doom-emacs",
         "helper": "helper",
         "hermes-agent": "hermes-agent",
-        "home-manager": "home-manager_2",
+        "home-manager": "home-manager",
         "infract": "infract",
         "lsfg-vk-nix": "lsfg-vk-nix",
         "musnix": "musnix",
         "niri-nix": "niri-nix",
         "nix-alien": "nix-alien",
-        "nix-index-database": "nix-index-database_2",
+        "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs",
         "pi": "pi",
         "sops-nix": "sops-nix"

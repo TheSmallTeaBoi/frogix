@@ -1,6 +1,5 @@
 {
   inputs,
-  outputs,
   config,
   lib,
   ...
@@ -11,14 +10,13 @@ in
 {
   imports = [
     ./system
-    inputs.home-manager.nixosModules.home-manager
   ];
 
   config = lib.mkIf cfg.enable {
     home-manager.backupFileExtension = "back";
 
     home-manager = {
-      extraSpecialArgs = { inherit inputs outputs; };
+      extraSpecialArgs = { inherit inputs; };
       useGlobalPkgs = true;
       useUserPackages = true;
       users.${cfg.user} = {

@@ -24,12 +24,18 @@ Singleton {
         blockLoading: true
         onFileChanged: this.reload()
         onLoaded: {
-            const c = JSON.parse(this.text())
-            root.bg = c.special.background
-            root.fg = c.special.foreground
-            root.accent = c.colors.color1
-            root.accent2 = c.colors.color2
-            root.muted = c.colors.color8
+            try {
+                const c = JSON.parse(this.text())
+                if (!c || !c.special || !c.colors)
+                    return
+                root.bg = c.special.background
+                root.fg = c.special.foreground
+                root.accent = c.colors.color1
+                root.accent2 = c.colors.color2
+                root.muted = c.colors.color8
+            } catch (e) {
+                // ignore transient partial write during pywal regeneration
+            }
         }
     }
 }

@@ -22,10 +22,12 @@ Singleton {
         running: true
         stdout: SplitParser {
             onRead: (line) => {
-                if (line.indexOf("sink") < 0 && line.indexOf("source") < 0)
+                const isSink = line.indexOf("on sink ") >= 0
+                const isSource = line.indexOf("on source ") >= 0
+                if (!isSink && !isSource)
                     return
                 if (line.indexOf("'change'") >= 0) {
-                    if (line.indexOf("sink") >= 0)
+                    if (isSink)
                         sinkVolProc.running = true
                     else
                         sourceVolProc.running = true
@@ -122,7 +124,7 @@ Singleton {
                         section = ""
                         continue
                     }
-                    const m = line.match(/(\*?)\s*(\d+)\.\s+(.+?)\s+\[vol:\s*([\d.]+)\]/)
+                    const m = line.match(/(\*?)\s*(\d+)\.\s+(.+?)\s+\[vol:\s*([\d.]+)(?:\s+MUTED)?\]/)
                     if (!m)
                         continue
                     const isDefault = m[1] === "*"

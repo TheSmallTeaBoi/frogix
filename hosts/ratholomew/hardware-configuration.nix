@@ -23,7 +23,7 @@
     "sd_mod"
   ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel" ];
+  boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" = {
@@ -32,22 +32,20 @@
     options = [ "noatime" ];
   };
 
-  fileSystems."/efi" = {
-    device = "systemd-1";
-    fsType = "autofs";
-  };
-
   fileSystems."/mnt/HDD1" = {
     device = "/dev/disk/by-uuid/e0fa5f82-c2b8-417d-a4dd-9ff45ee93fb4";
     fsType = "ext4";
-    options = [ "nofail" ];
+    options = [
+      "noatime"
+      "nofail"
+    ];
   };
 
   fileSystems."/mnt/HDD2" = {
     device = "/dev/disk/by-uuid/65e258da-2f64-4fa5-a170-afc2de0ff11c";
     fsType = "btrfs";
     options = [
-      "compress-force=zstd:10"
+      "compress=zstd:3"
       "noatime"
       "nofail"
     ];
@@ -65,31 +63,32 @@
   fileSystems."/boot" = {
     device = "/dev/disk/by-uuid/0027-2F83";
     fsType = "vfat";
+    options = [
+      "fmask=0077"
+      "dmask=0077"
+    ];
   };
 
   systemd.tmpfiles.rules = [
-    "d /storage 0777 theo users -"
+    "d /storage 0775 theo users -"
   ];
 
   fileSystems."/storage" = {
     device = "/mnt/HDD*";
     fsType = "fuse.mergerfs";
     options = [
-      "defaults"
       "allow_other"
-      "cache.files=off"
+      "cache.files=partial"
       "dropcacheonclose=true"
       "category.create=mfs"
       "nofail"
       "umask=002"
-      # mergerfs expands the /mnt/HDD* glob when /storage mounts and is happy to
-      # union empty mountpoints, so the union would come up seconds before the
-      # disks did and anything reading it at boot (navidrome, romm) would scan a
-      # blank library. Requiring the branches makes /storage wait for the real
-      # filesystems; navidrome already waits for /storage.
-      "x-systemd.requires-mounts-for=/mnt/HDD1"
-      "x-systemd.requires-mounts-for=/mnt/HDD2"
-      "x-systemd.requires-mounts-for=/mnt/HDD3"
+      # nofail omits Before=local-fs.target so spinning HDD spin-up mounts
+      # asynchronously in parallel with graphical login off the SSD, while
+      # x-systemd.requires= ensures mergerfs waits for all three HDDs first.
+      "x-systemd.requires=mnt-HDD1.mount"
+      "x-systemd.requires=mnt-HDD2.mount"
+      "x-systemd.requires=mnt-HDD3.mount"
     ];
   };
 
@@ -102,9 +101,6 @@
   # (the default) this is the recommended approach. When using systemd-networkd it's
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
-  networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.enp2s0.useDHCP = lib.mkDefault true;
-
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 }

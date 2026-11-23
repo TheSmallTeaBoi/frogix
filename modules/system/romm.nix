@@ -6,6 +6,10 @@
 }:
 let
   cfg = config.frogix.romm;
+  bindMountTargets =
+    lib.optional (cfg.libraryDir != null) "/var/lib/romm/library/roms"
+    ++ lib.optional (cfg.biosDir != null) "/var/lib/romm/library/bios"
+    ++ lib.optional (cfg.resourcesDir != null) "/var/lib/romm/resources";
 in
 {
   options.frogix.romm = {
@@ -62,14 +66,22 @@ in
 
     # Bind-mount existing ROM collection into RomM's library path.
     # /storage/Roms uses TOSEC naming; config.yml maps folders to slugs.
+    # nofail omits Before=local-fs.target so spinning HDDs never block early
+    # boot / display-manager startup; RomM units order after these via
+    # RequiresMountsFor below.
     fileSystems = lib.mkMerge [
       (lib.mkIf (cfg.libraryDir != null) {
         "/var/lib/romm/library/roms" = {
           device = cfg.libraryDir;
           fsType = "none";
-          options = [ "bind" ];
+          options = [
+            "bind"
+            "nofail"
+            "x-systemd.requires-mounts-for=${cfg.libraryDir}"
+          ];
         };
-
+      })
+      (lib.mkIf (cfg.biosDir != null) {
         # Bind-mount curated console BIOS/firmware into RomM's firmware path.
         # /storage/Bios holds firmware organized by platform slug (bios/{slug}/),
         # sourced from the thor's EmuDeck bios stash. RomM's default firmware
@@ -77,7 +89,11 @@ in
         "/var/lib/romm/library/bios" = {
           device = cfg.biosDir;
           fsType = "none";
-          options = [ "bind" ];
+          options = [
+            "bind"
+            "nofail"
+            "x-systemd.requires-mounts-for=${cfg.biosDir}"
+          ];
         };
       })
       (lib.mkIf (cfg.resourcesDir != null) {
@@ -88,7 +104,11 @@ in
         "/var/lib/romm/resources" = {
           device = cfg.resourcesDir;
           fsType = "none";
-          options = [ "bind" ];
+          options = [
+            "bind"
+            "nofail"
+            "x-systemd.requires-mounts-for=${cfg.resourcesDir}"
+          ];
         };
       })
     ];
@@ -151,12 +171,15 @@ in
     users.users.romm.extraGroups = [ "users" ];
 
     systemd.services.romm = {
-      after = [ "storage.mount" ];
-      requires = [ "storage.mount" ];
+      after = lib.optional (config.fileSystems ? "/storage") "storage.mount";
+      requires = lib.optional (config.fileSystems ? "/storage") "storage.mount";
+      unitConfig.RequiresMountsFor = bindMountTargets;
+      serviceConfig.TimeoutStartSec = lib.mkForce "5m";
     };
     systemd.services.romm-init = {
-      after = [ "storage.mount" ];
-      requires = [ "storage.mount" ];
+      after = lib.optional (config.fileSystems ? "/storage") "storage.mount";
+      requires = lib.optional (config.fileSystems ? "/storage") "storage.mount";
+      unitConfig.RequiresMountsFor = bindMountTargets;
     };
     # RomM 5.4 moved scans onto their own rq queue ("scans") and streaming
     # teardowns onto ("streaming"), but nixpkgs' romm-worker wrapper still launches
@@ -176,23 +199,56 @@ in
     # and romm's ExecStartPre ran against it cold. The worker/scheduler/watcher
     # only need redis and the database, not the API server (upstream runs them as
     # independent processes), so order them after romm.service without requiring
-    # it, and give romm itself room for a slow migrate.
-    systemd.services.romm.serviceConfig.TimeoutStartSec = lib.mkForce "5m";
+    # it, keep their database/redis Requires=, and give romm itself room for a
+    # slow migrate.
     systemd.services.romm-worker = {
-      after = [ "storage.mount" ];
-      requires = lib.mkForce [ "storage.mount" ];
+      after = [
+        "postgresql.target"
+        "redis-romm.service"
+      ]
+      ++ lib.optional (config.fileSystems ? "/storage") "storage.mount";
+      requires = lib.mkForce (
+        [
+          "postgresql.target"
+          "redis-romm.service"
+        ]
+        ++ lib.optional (config.fileSystems ? "/storage") "storage.mount"
+      );
       wants = [ "romm.service" ];
+      unitConfig.RequiresMountsFor = bindMountTargets;
       serviceConfig.ExecStart = lib.mkForce "${config.services.romm.package}/bin/romm-worker high default low scans streaming";
     };
     systemd.services.romm-scheduler = {
-      after = [ "storage.mount" ];
-      requires = lib.mkForce [ "storage.mount" ];
+      after = [
+        "postgresql.target"
+        "redis-romm.service"
+      ]
+      ++ lib.optional (config.fileSystems ? "/storage") "storage.mount";
+      requires = lib.mkForce (
+        [
+          "postgresql.target"
+          "redis-romm.service"
+        ]
+        ++ lib.optional (config.fileSystems ? "/storage") "storage.mount"
+      );
       wants = [ "romm.service" ];
+      unitConfig.RequiresMountsFor = bindMountTargets;
     };
     systemd.services.romm-watcher = {
-      after = [ "storage.mount" ];
-      requires = lib.mkForce [ "storage.mount" ];
+      after = [
+        "postgresql.target"
+        "redis-romm.service"
+      ]
+      ++ lib.optional (config.fileSystems ? "/storage") "storage.mount";
+      requires = lib.mkForce (
+        [
+          "postgresql.target"
+          "redis-romm.service"
+        ]
+        ++ lib.optional (config.fileSystems ? "/storage") "storage.mount"
+      );
       wants = [ "romm.service" ];
+      unitConfig.RequiresMountsFor = bindMountTargets;
     };
 
     # Deploy config.yml (TOSEC folder -> RomM slug mappings) on rebuild.

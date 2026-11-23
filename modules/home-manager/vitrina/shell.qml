@@ -12,6 +12,9 @@ import "."
 ShellRoot {
     id: shell
 
+    readonly property string runtimeDir: Quickshell.env("XDG_RUNTIME_DIR") || "/run/user/1000"
+    readonly property string niriSockInit: "NIRI_SOCKET=${NIRI_SOCKET:-$(ls \"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}\"/niri*.sock 2>/dev/null | head -1)}"
+
     readonly property var mainScreen: Quickshell.screens.find(s => s.name === Quickshell.env("FROGIX_MAIN_SCREEN")) ?? Quickshell.primaryScreen
     readonly property var sideScreens: Quickshell.screens.filter(s => s !== shell.mainScreen)
     readonly property var mainWs: wsByOutput[Quickshell.env("FROGIX_MAIN_SCREEN")] ?? null
@@ -20,7 +23,7 @@ ShellRoot {
 
     Process {
         id: wsSeed
-        command: ["sh", "-c", "NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg --json workspaces"]
+        command: ["sh", "-c", `${shell.niriSockInit} exec niri msg --json workspaces`]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -37,7 +40,7 @@ ShellRoot {
 
     Process {
         id: wsStream
-        command: ["sh", "-c", "NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg --json event-stream"]
+        command: ["sh", "-c", `${shell.niriSockInit} exec niri msg --json event-stream`]
         running: true
         stdout: SplitParser {
             onRead: (data) => {
@@ -179,7 +182,7 @@ ShellRoot {
     property bool caffeine: false
 
     FileView {
-        path: "/run/user/1000/vitrina-caffeine"
+        path: `${shell.runtimeDir}/vitrina-caffeine`
         watchChanges: true
         printErrors: false
         onFileChanged: {
@@ -197,7 +200,7 @@ ShellRoot {
 
     /* night light switch state, mirrored by the vitrina-nightlight script */
     FileView {
-        path: "/run/user/1000/vitrina-nightlight"
+        path: `${shell.runtimeDir}/vitrina-nightlight`
         watchChanges: true
         printErrors: false
         onFileChanged: {
@@ -254,10 +257,27 @@ ShellRoot {
         }
     }
 
+    FileView {
+        id: recordStateFlag
+        path: `${shell.runtimeDir}/vitrina-record`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: {
+            reload()
+            recordStatusProc.running = true
+        }
+        onLoaded: recordStatusProc.running = true
+        onLoadFailed: {
+            shell.recording = false
+            shell.recordSecs = 0
+            shell.recordFile = ""
+        }
+    }
+
     Timer {
         id: recordPoll
-        interval: shell.recording ? 1000 : 2500
-        running: true
+        interval: 1000
+        running: shell.recording
         repeat: true
         onTriggered: recordStatusProc.running = true
     }
@@ -630,6 +650,16 @@ ShellRoot {
             launcherIndex = Math.max(0, launcherItems.length - 1)
     }
 
+    property var appIconCache: ({})
+
+    function resolveAppIcon(iconName) {
+        if (!iconName || iconName.length === 0)
+            return ""
+        if (appIconCache[iconName] === undefined)
+            appIconCache[iconName] = Quickshell.iconPath(iconName, true)
+        return appIconCache[iconName]
+    }
+
     function appLauncherItems() {
         const terms = launcherTerms()
         const query = launcherNorm(launcherQuery).trim()
@@ -652,7 +682,7 @@ ShellRoot {
                     entryId: entry.id,
                     title: entry.name,
                     subtitle: entry.genericName.length > 0 ? entry.genericName : entry.comment,
-                    icon: entry.icon.length > 0 ? Quickshell.iconPath(entry.icon, true) : ""
+                    icon: resolveAppIcon(entry.icon)
                 }
             })
         }
@@ -1093,21 +1123,22 @@ ShellRoot {
         interval: 340
         onTriggered: {
             if (windowId > 0)
-                Quickshell.execDetached(["sh", "-c", `NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg action focus-window --id ${windowId}`])
+                Quickshell.execDetached(["sh", "-c", `${shell.niriSockInit} exec niri msg action focus-window --id ${windowId}`])
         }
     }
 
     Connections {
         target: DesktopEntries
         function onApplicationsChanged() {
-            if (shell.launcherOpen && shell.launcherMode === "apps")
+            shell.appIconCache = ({})
+            if (shell.launcherOpen && (shell.launcherMode === "apps" || shell.launcherMode === "all"))
                 shell.refreshLauncher()
         }
     }
 
     Process {
         id: launcherScreenProc
-        command: ["sh", "-c", "NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg --json focused-output"]
+        command: ["sh", "-c", `${shell.niriSockInit} exec niri msg --json focused-output`]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
@@ -1125,7 +1156,7 @@ ShellRoot {
 
     Process {
         id: windowProc
-        command: ["sh", "-c", "NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg --json windows"]
+        command: ["sh", "-c", `${shell.niriSockInit} exec niri msg --json windows`]
         running: false
         onRunningChanged: {
             if (shell.launcherOpen && shell.launcherMode === "windows")
@@ -1148,7 +1179,7 @@ ShellRoot {
 
     Process {
         id: notifWindowProc
-        command: ["sh", "-c", "NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg --json windows"]
+        command: ["sh", "-c", `${shell.niriSockInit} exec niri msg --json windows`]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
@@ -1169,7 +1200,7 @@ ShellRoot {
                     }
                 }
                 if (win)
-                    Quickshell.execDetached(["sh", "-c", `NIRI_SOCKET=$(ls /run/user/1000/niri*.sock 2>/dev/null | head -1) exec niri msg action focus-window --id ${win.id}`])
+                    Quickshell.execDetached(["sh", "-c", `${shell.niriSockInit} exec niri msg action focus-window --id ${win.id}`])
             }
         }
     }
@@ -1371,13 +1402,13 @@ ShellRoot {
     Timer {
         id: visTimer
         interval: 130
-        running: true
+        running: shell.isPlaying
         repeat: true
-        onTriggered: {
-            if (!shell.isPlaying) {
+        onRunningChanged: {
+            if (!running)
                 shell.visHeights = [0, 0, 0, 0, 0, 0]
-                return
-            }
+        }
+        onTriggered: {
             shell.visHeights = [
                 0.15 + Math.random() * 0.85,
                 0.15 + Math.random() * 0.85,
@@ -1394,9 +1425,13 @@ ShellRoot {
     Timer {
         id: lyricTick
         interval: 250
-        running: true
+        running: shell.isPlaying && shell.lyrics.length > 0
         repeat: true
         triggeredOnStart: true
+        onRunningChanged: {
+            if (!running)
+                shell.lyricIndex = -1
+        }
         onTriggered: {
             /* only a line from the track that is actually playing may show */
             if (!shell.isPlaying || shell.lyrics.length === 0 || (String(shell.artistName || "") + "\u0000" + String(shell.trackName || "")) !== shell.lyricsKey) {
@@ -1859,13 +1894,13 @@ ShellRoot {
        reload() is async: parse in onLoaded, not right after reload() */
     FileView {
         id: brightFlag
-        path: "/run/user/1000/vitrina-bright"
+        path: `${shell.runtimeDir}/vitrina-bright`
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
         onLoaded: {
             if (shell.brightSeen) {
-                const val = parseInt(String(brightFlag.data()).trim())
+                const val = parseInt(brightFlag.text().trim(), 10)
                 if (!isNaN(val)) {
                     shell.osdKind = "bright"
                     shell.osdValue = Math.max(0, Math.min(1, val / 100))
@@ -1881,7 +1916,7 @@ ShellRoot {
     /* niri bind toggles this file; inotify-driven, no polling */
     FileView {
         id: hotkeyFlag
-        path: "/run/user/1000/vitrina-hotkeys"
+        path: `${shell.runtimeDir}/vitrina-hotkeys`
         watchChanges: true
         printErrors: false
         onFileChanged: {
@@ -1894,7 +1929,7 @@ ShellRoot {
 
     Process {
         id: hideHotkeys
-        command: ["rm", "-f", "/run/user/1000/vitrina-hotkeys"]
+        command: ["rm", "-f", `${shell.runtimeDir}/vitrina-hotkeys`]
     }
 
     /* generated by vitrina.nix from the areas that are actually on, so the
@@ -2026,7 +2061,8 @@ ShellRoot {
                     const t = lines[i].trim()
                     if (t.length === 0 || t.startsWith("---") || t.indexOf("Network name") >= 0 || t.indexOf("Available networks") >= 0)
                         continue
-                    const cols = t.split(/\s{2,}/)
+                    const cleaned = t.replace(/^>\s*/, "")
+                    const cols = cleaned.split(/\s{2,}/)
                     if (cols.length < 2)
                         continue
                     const ssid = cols[0]
@@ -2036,7 +2072,7 @@ ShellRoot {
                         security: security,
                         secured: security.length > 0 && security !== "open",
                         signal: cols[2] ?? "",
-                        connected: connectedSsid.length > 0 && ssid === connectedSsid
+                        connected: t.startsWith(">") || (connectedSsid.length > 0 && ssid === connectedSsid)
                     })
                 }
                 shell.wifiNets = nets
@@ -2096,13 +2132,20 @@ ShellRoot {
         onExited: btDevicesProc.running = true
     }
 
+    Timer {
+        id: rfkillDebounce
+        interval: 250
+        onTriggered: wifiStatusProc.running = true
+    }
+
     Process {
         id: rfkillMonitor
         command: ["rfkill", "event"]
         running: true
         stdout: SplitParser {
             onRead: (line) => {
-                wifiStatusProc.running = true
+                if (line.indexOf("type 1") >= 0)
+                    rfkillDebounce.restart()
             }
         }
         onExited: rfkillRestart.restart()
@@ -2133,6 +2176,12 @@ ShellRoot {
         onTriggered: btMonitor.running = true
     }
 
+    Timer {
+        id: linkDebounce
+        interval: 250
+        onTriggered: connStatusProc.running = true
+    }
+
     Process {
         id: linkMonitor
         command: ["ip", "monitor", "link"]
@@ -2140,7 +2189,7 @@ ShellRoot {
         stdout: SplitParser {
             onRead: (line) => {
                 if (line.trim().length > 0)
-                    connStatusProc.running = true
+                    linkDebounce.restart()
             }
         }
         onExited: linkRestart.restart()
@@ -2154,6 +2203,7 @@ ShellRoot {
 
     Component.onCompleted: {
         shell.brightSeen = true
+        recordStatusProc.running = true
         wifiStatusProc.running = true
         btStatusProc.running = true
         connStatusProc.running = true

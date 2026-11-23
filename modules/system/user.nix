@@ -20,13 +20,13 @@ in
         "input"
         "uinput"
         "audio"
-        "gamemode"
         "bluetooth"
-      ];
+      ]
+      ++ lib.optional config.frogix.gaming.enable "gamemode";
+      defaultText = lib.literalExpression ''[ "wheel" "input" "uinput" "audio" "bluetooth" ] ++ lib.optional config.frogix.gaming.enable "gamemode"'';
       description = ''
-        groups the primary user is a member of. the groups must exist —
-        disabling a module that owns one (e.g. gaming and "gamemode") means
-        removing it here too
+        groups the primary user is a member of ("gamemode" is added
+        automatically when frogix.gaming is enabled)
       '';
     };
   };

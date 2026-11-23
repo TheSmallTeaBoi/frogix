@@ -20,21 +20,6 @@ let
     right_screen
   ];
 
-  get-muted = pkgs.writeShellApplication {
-    name = "get-muted";
-    runtimeInputs = with pkgs; [
-      wireplumber
-      gnugrep
-    ];
-    text = ''
-      if wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED; then
-          printf '{"text":"󰍭","class":"muted","tooltip":"Microphone muted"}'
-      else
-          printf '{"text":"󰍬","class":"live","tooltip":"Microphone live"}'
-      fi
-    '';
-  };
-
   set-muted = pkgs.writeShellApplication {
     name = "set-muted";
     runtimeInputs = with pkgs; [
@@ -124,7 +109,7 @@ in
       enable = true;
       settings = {
 
-        include = [ "~/.cache/wal/niri-colors.kdl" ];
+        include = lib.mkIf config.frogix.pywal.enable [ "~/.cache/wal/niri-colors.kdl" ];
 
         prefer-no-csd = { };
         cursor = {
@@ -132,8 +117,10 @@ in
           hide-after-inactive-ms = 1000;
         };
         environment = {
-          LIBVA_DRIVER_NAME = "nvidia";
           XDG_SESSION_TYPE = "wayland";
+        }
+        // lib.optionalAttrs (nixosConfig == null || nixosConfig.frogix.nvidia.enable) {
+          LIBVA_DRIVER_NAME = "nvidia";
           GBM_BACKEND = "nvidia-drm";
           __GLX_VENDOR_LIBRARY_NAME = "nvidia";
         };
@@ -277,12 +264,12 @@ in
         # wallpaper + palette belong to pywal (it owns awww and set-wal)
         ++ lib.optionals config.frogix.pywal.enable [
           { _args = [ "${pkgs.awww}/bin/awww-daemon" ]; }
-          # Run pywal after awww-daemon is already up
+          # Run pywal after awww-daemon (and emacs server, if enabled) is up
           {
             _args = [
               "${pkgs.bash}/bin/bash"
               "-c"
-              "until ${pkgs.awww}/bin/awww query >/dev/null 2>&1 && [ -S /run/user/$(id -u)/emacs/server ]; do sleep 0.2; done && set-wal \"$(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)\""
+              "until ${pkgs.awww}/bin/awww query >/dev/null 2>&1${lib.optionalString config.frogix.emacs.enable " && [ -S \"\${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/emacs/server\" ]"}; do sleep 0.2; done && set-wal \"$(find ${lib.escapeShellArg (toString config.frogix.wallpapersDir)} -type f | shuf -n 1)\""
             ];
           }
         ]
@@ -291,7 +278,7 @@ in
             _args = [
               "${pkgs.bash}/bin/bash"
               "-c"
-              "until [ -f ~/.cache/wal/colors.json ]; do sleep 0.2; done && ${pkgs.quickshell}/bin/quickshell -p ${config.xdg.configHome}/vitrina"
+              "${lib.optionalString config.frogix.pywal.enable "until [ -f ~/.cache/wal/colors.json ]; do sleep 0.2; done && "}exec ${pkgs.quickshell}/bin/quickshell -p ${config.xdg.configHome}/vitrina"
             ];
           }
         ]
@@ -311,7 +298,7 @@ in
             _args = [
               "${pkgs.bash}/bin/bash"
               "-c"
-              "QTWEBENGINE_REMOTE_DEBUGGING=9222 exec ${pkgs.qutebrowser}/bin/qutebrowser"
+              "QTWEBENGINE_REMOTE_DEBUGGING=127.0.0.1:9222 exec ${pkgs.qutebrowser}/bin/qutebrowser"
             ];
           }
         ];
@@ -334,12 +321,9 @@ in
             clip-to-geometry = true;
           }
           {
-            match._props.is-active = false;
-          }
-          {
             match._props = {
               app-id = "steam";
-              title = "r#\"^notificationtoasts_\d+_desktop$\"#";
+              title = "^notificationtoasts_\\d+_desktop$";
             };
             default-floating-position = {
               _props.x = 10;
@@ -613,7 +597,7 @@ in
             spawn._args = [
               "sh"
               "-c"
-              "set-wal $(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)"
+              "set-wal \"$(find ${lib.escapeShellArg (toString config.frogix.wallpapersDir)} -type f | shuf -n 1)\""
             ];
           };
           "Mod+Shift+L" = {
@@ -627,7 +611,7 @@ in
           # vitrina hotkey reminder (replaces niri's built-in overlay bind)
           "Mod+Shift+Slash" = {
             spawn-sh._args = [
-              "if [ -e /run/user/1000/vitrina-hotkeys ]; then rm -f /run/user/1000/vitrina-hotkeys; else touch /run/user/1000/vitrina-hotkeys; fi"
+              "f=\"\${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/vitrina-hotkeys\"; if [ -e \"$f\" ]; then rm -f \"$f\"; else touch \"$f\"; fi"
             ];
           };
           "Mod+C" = {
@@ -743,7 +727,7 @@ in
         # lock/before-sleep signals as a best-effort safety net; the island's
         # suspend action uses vitrina-lock-suspend, which is deterministic.
         general = {
-          lock_cmd = "pidof hyprlock || hyprlock --no-fade-in";
+          lock_cmd = "pgrep -u \"$(id -u)\" -x hyprlock >/dev/null 2>&1 || hyprlock --no-fade-in";
           before_sleep_cmd = if config.frogix.vitrina.enable then "vitrina-lock" else "hyprlock --grace 0";
           after_sleep_cmd = "niri msg action power-on-monitors";
           inhibit_sleep = 1;
@@ -751,7 +735,7 @@ in
         listener = [
           {
             timeout = 500;
-            on-timeout = "${pkgs.bash}/bin/bash -c 'hyprlock --grace 120${lib.optionalString config.frogix.pywal.enable "; set-wal $(find ${config.frogix.wallpapersDir} -type f | shuf -n 1)"}'";
+            on-timeout = "${pkgs.bash}/bin/bash -c 'pgrep -u \"$(id -u)\" -x hyprlock >/dev/null 2>&1 || hyprlock --grace 120${lib.optionalString config.frogix.pywal.enable "; set-wal \"$(find ${lib.escapeShellArg (toString config.frogix.wallpapersDir)} -type f | shuf -n 1)\""}'";
           }
         ]
         ++ lib.optional (powerOffOutputs != [ ]) {

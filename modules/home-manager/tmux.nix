@@ -53,7 +53,7 @@ in
 
           set -g status on
           set -g status-justify left
-          set -g status-interval 5
+          set -g status-interval 0
           set -g status-left-length 40
           set -g status-right-length 40
           set -g status-left ""
@@ -74,20 +74,21 @@ in
           # nothing at config-load time.
           run-shell -b 'if [ -r ~/.cache/wal/colors.sh ]; then
             . ~/.cache/wal/colors.sh
-            tmux set -g status-style "bg=$background,fg=$foreground"
-            tmux set -g status-left ""
-            tmux set -g status-right "#[fg=$color8,bg=$background,nobold,nounderscore]  alt + space  for menu "
-            tmux set -g window-status-format "#[fg=$color8,bg=$background,nounderscore] ##I  ##W "
-            tmux set -g window-status-current-format "#[fg=$color1,bg=$background,nobold,nounderscore]${pillLeft}#[fg=$background,bg=$color1,bold,nounderscore] ##I  ##W #[fg=$color1,bg=$background,nobold,nounderscore]${pillRight}"
-            tmux set -g window-status-activity-style "fg=$color2,bg=$background,nounderscore"
-            tmux set -g window-status-bell-style "fg=$background,bg=$color2,bold,nounderscore"
-            tmux set -g pane-border-style "fg=$color0"
-            tmux set -g pane-active-border-style "fg=$color1"
-            tmux set -g message-style "bg=$color0,fg=$foreground"
-            tmux set -g mode-style "bg=$color1,fg=$background"
-            tmux set -g clock-mode-colour "$color1"
-            tmux set -g display-panes-colour "$color8"
-            tmux set -g display-panes-active-colour "$color1"
+            tmux \
+              set -g status-style "bg=$background,fg=$foreground" \; \
+              set -g status-left "" \; \
+              set -g status-right "#[fg=$color8,bg=$background,nobold,nounderscore]  alt + space  for menu " \; \
+              set -g window-status-format "#[fg=$color8,bg=$background,nounderscore] ##I  ##W " \; \
+              set -g window-status-current-format "#[fg=$color1,bg=$background,nobold,nounderscore]${pillLeft}#[fg=$background,bg=$color1,bold,nounderscore] ##I  ##W #[fg=$color1,bg=$background,nobold,nounderscore]${pillRight}" \; \
+              set -g window-status-activity-style "fg=$color2,bg=$background,nounderscore" \; \
+              set -g window-status-bell-style "fg=$background,bg=$color2,bold,nounderscore" \; \
+              set -g pane-border-style "fg=$color0" \; \
+              set -g pane-active-border-style "fg=$color1" \; \
+              set -g message-style "bg=$color0,fg=$foreground" \; \
+              set -g mode-style "bg=$color1,fg=$background" \; \
+              set -g clock-mode-colour "$color1" \; \
+              set -g display-panes-colour "$color8" \; \
+              set -g display-panes-active-colour "$color1"
           fi'
 
           # Reorder windows when one gets deleted.
@@ -113,13 +114,13 @@ in
               "Choose Window"                      󰒅 choose-window \
               "Previous Window"                     previous-window \
               "Next Window"                         next-window \
-              "Swap Window Right"                   "swap-window -t -1" \
-              "Swap Window Left"                    "swap-window -t +1" \
+              "Swap Window Left"                    "swap-window -t -1" \
+              "Swap Window Right"                   "swap-window -t +1" \
               "Horizontal Split"                    "split-window -h" \
               "Vertical Split"                      "split-window -v"  \
               "" \
               "Layout Horizontal"                   "select-layout even-horizontal"  \
-              "Layout Vertical"                     "select-layout even-horizontal"  \
+              "Layout Vertical"                     "select-layout even-vertical"  \
               "" \
               "Swap Pane Up"                       < "swap-pane -U" \
               "Swap Pane Down"                     > "swap-pane -D" \
@@ -127,8 +128,8 @@ in
               "Join Pane"                          j "choose-window 'join-pane -h -s \"%%\"'" \
               "#{?window_zoomed_flag,Unzoom,Zoom}" z "resize-pane -Z" \
               ""\
-              "Lazygit"                             "new-window -n "Lazygit" -c '#{pane_current_path}' 'lazygit'" \
-              "Bottom"                              "new-window -n "Bottom" 'btm'"
+              "Lazygit"                             "new-window -n Lazygit -c '#{pane_current_path}' 'lazygit'" \
+              "Bottom"                              "new-window -n Bottom 'btm'"
 
 
 

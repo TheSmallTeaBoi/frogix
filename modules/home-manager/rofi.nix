@@ -33,7 +33,7 @@ in
       theme = if config.frogix.pywal.enable then "~/.config/rofi/vitrina.rasi" else null;
       settings = {
         modi = "drun";
-        icon-theme = "Oranchelo";
+        icon-theme = "Papirus-Dark";
         show-icons = true;
         drun-display-format = "{icon} {name}";
         location = 0;

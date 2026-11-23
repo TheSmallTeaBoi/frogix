@@ -57,7 +57,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    time.timeZone = cfg.timeZone;
+    time.timeZone = lib.mkDefault cfg.timeZone;
 
     # I love zram.
     zramSwap = {
@@ -100,10 +100,16 @@ in
             name = "hm-backup-sweep";
             runtimeInputs = with pkgs; [ findutils ];
             text = ''
+              [ -d "$HOME/.config" ] || exit 0
               find "$HOME/.config" -maxdepth 3 -name '*.back' -type f -delete
             '';
           }
         );
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectKernelTunables = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
       };
     };
   };

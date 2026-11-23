@@ -75,59 +75,70 @@ let
   # MusicBrainz doesn't know import with the derived tags instead of
   # vanishing. If any step exits non-zero the seen-list isn't updated, so the
   # batch retries next week.
-  syncScript = pkgs.writeShellScript "torbox-music-sync" ''
-    set -euo pipefail
-    inbox="${inboxDir}"
-    remote="torbox:${torboxPath}/"
-    seen="${stateDir}/seen.txt"
-    conf="${rcloneConf}"
+  syncScript = pkgs.writeShellApplication {
+    name = "torbox-music-sync";
+    runtimeInputs = with pkgs; [
+      beets
+      coreutils
+      findutils
+      gnugrep
+      rclone
+    ];
+    text = ''
+      inbox=${lib.escapeShellArg inboxDir}
+      remote=${lib.escapeShellArg "torbox:${torboxPath}/"}
+      seen=${lib.escapeShellArg "${stateDir}/seen.txt"}
+      conf=${lib.escapeShellArg rcloneConf}
 
-    tmp_remote=$(mktemp)
-    tmp_new=$(mktemp)
-    trap 'rm -f "$tmp_remote" "$tmp_new"' EXIT
+      tmp_all=$(mktemp)
+      tmp_remote=$(mktemp)
+      tmp_new=$(mktemp)
+      trap 'rm -f "$tmp_all" "$tmp_remote" "$tmp_new"' EXIT
 
-    mkdir -p "$inbox" "$(dirname "$seen")"
-    touch "$seen"
+      mkdir -p "$inbox" "$(dirname "$seen")"
+      touch "$seen"
 
-    echo "=== listing remote files ==="
-    ${pkgs.rclone}/bin/rclone lsf "$remote" \
-      --config "$conf" --recursive --files-only \
-      | grep -iE '\.(flac|mp3|m4a|opus|ogg|wav)$' > "$tmp_remote" || true
+      echo "=== listing remote files ==="
+      # run rclone separately so auth/permission/network errors fail the unit
+      # instead of being masked by grep's exit 1 on zero matches
+      rclone lsf "$remote" --config "$conf" --recursive --files-only > "$tmp_all"
+      grep -iE '\.(flac|mp3|m4a|opus|ogg|wav)$' "$tmp_all" > "$tmp_remote" || [ $? -eq 1 ]
 
-    echo "=== diffing against seen-list ==="
-    sort "$tmp_remote" -o "$tmp_remote"
-    sort "$seen" -o "$seen"
-    comm -23 "$tmp_remote" "$seen" > "$tmp_new"
+      echo "=== diffing against seen-list ==="
+      LC_ALL=C sort -u "$tmp_remote" -o "$tmp_remote"
+      LC_ALL=C sort -u "$seen" -o "$seen"
+      LC_ALL=C comm -23 "$tmp_remote" "$seen" > "$tmp_new"
 
-    count=$(wc -l < "$tmp_new")
-    if [ "$count" -eq 0 ]; then
-      echo "no new files since last sync"
-      exit 0
-    fi
+      count=$(wc -l < "$tmp_new")
+      if [ "$count" -eq 0 ]; then
+        echo "no new files since last sync"
+        exit 0
+      fi
 
-    echo "=== $count new file(s) to sync ==="
+      echo "=== $count new file(s) to sync ==="
 
-    ${pkgs.rclone}/bin/rclone copy "$remote" "$inbox/" \
-      --config "$conf" \
-      --files-from "$tmp_new" \
-      --transfers 4 \
-      --checkers 8 \
-      --contimeout 30s \
-      --timeout 300s \
-      --retries 3 \
-      --stats 30s
+      rclone copy "$remote" "$inbox/" \
+        --config "$conf" \
+        --files-from "$tmp_new" \
+        --transfers 4 \
+        --checkers 8 \
+        --contimeout 30s \
+        --timeout 300s \
+        --retries 3 \
+        --stats 30s
 
-    echo "=== tagging from folder/filename shape ==="
-    ${tagger} "$inbox"
+      echo "=== tagging from folder/filename shape ==="
+      ${tagger} "$inbox"
 
-    echo "=== beets import (user config, album mode, autotag, asis fallback) ==="
-    ${pkgs.beets}/bin/beet import -q --quiet-fallback asis "$inbox"
+      echo "=== beets import (user config, album mode, autotag, asis fallback) ==="
+      beet import -q --quiet-fallback asis "$inbox"
 
-    cat "$tmp_new" >> "$seen"
-    find "$inbox" -mindepth 1 -delete
+      cat "$tmp_new" >> "$seen"
+      find "$inbox" -mindepth 1 -delete
 
-    echo "=== sync complete: $count file(s) processed ==="
-  '';
+      echo "=== sync complete: $count file(s) processed ==="
+    '';
+  };
 in
 {
   options.frogix."torbox-music-sync" = {
@@ -149,6 +160,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = config.frogix.torbox.enable;
+        message = "frogix.\"torbox-music-sync\": depends on torbox-webdav.service and /run/rclone-torbox/rclone.conf, so frogix.torbox has to be on.";
+      }
+    ];
+
     systemd.services.torbox-music-sync = {
       description = "TorBox -> beets weekly music sync";
       after = [
@@ -163,13 +181,18 @@ in
         Type = "oneshot";
         User = config.frogix.user;
         Group = "users";
-        ExecStart = syncScript;
+        ExecStart = lib.getExe syncScript;
         StateDirectory = "torbox-music-sync";
         # autotagging + lastgenre + lyrics are network-bound and rate-limited,
         # so a big batch can outrun the default start timeout — give it room.
         TimeoutStartSec = "30min";
         Nice = 10;
         IOSchedulingClass = "idle";
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectKernelTunables = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
       };
     };
 

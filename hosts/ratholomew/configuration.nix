@@ -37,11 +37,9 @@
       caches."https://cache.nixos-cuda.org" =
         "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=";
       permittedInsecurePackages = [
-        "pnpm-10.29.2"
         "qutebrowser-3.7.0"
-        "quickjs-2025-09-13-2"
       ];
-      # was false (docs slow generations) — jerrito needs the man pages it links
+      # was false (docs slow generations) — jerrito needs man pages + `man -k` (mandb)
       documentation = true;
     };
 
@@ -97,8 +95,12 @@
   programs.droidcam.enable = true;
   programs.dconf.enable = true;
   programs.virt-manager.enable = true;
-  users.extraGroups.libvirtd.members = [ "theo" ];
-  virtualisation.libvirtd.enable = true;
+  users.groups.libvirtd.members = [ "theo" ];
+  virtualisation.libvirtd = {
+    enable = true;
+    # x86_64 VMs only — drops ~600 MiB of non-x86 QEMU target emulators
+    qemu.package = pkgs.qemu_kvm;
+  };
   virtualisation.spiceUSBRedirection.enable = true;
 
   programs.nano.enable = false;
@@ -192,7 +194,7 @@
       torbox = "https://torbox.app";
       archive = "https://archive.org";
       annas = "https://shadowlibraries.github.io/DirectDownloads/AnnasArchive";
-      fmhy = "fmhy.net";
+      fmhy = "https://fmhy.net";
       bunkr = "https://balbums.st";
 
       # Development

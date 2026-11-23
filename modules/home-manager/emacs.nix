@@ -37,40 +37,55 @@ in
       doomLocalDir = "${config.home.homeDirectory}/.config/emacs/";
       extraPackages = epkgs: [ epkgs.treesit-grammars.with-all-grammars ];
       extraBinPackages = with pkgs; [
-        black
-        nixfmt
-        prettier
-        html-tidy
-        shfmt
-        js-beautify
-        stylelint
-
+        # Doom / Org core tools only — language LSPs, formatters, linters and
+        # toolchains come from per-project devShells (direnv).
         fd
         gnumake
-        cmake
         graphviz
-        maim
-
-        python314Packages.pyflakes
-        python314Packages.pytest_8_3
-        isort
-        pipenv
-
         ispell
-        shellcheck
-        python3
-        pyright
-        typescript
-        typescript-language-server
-        haskell-language-server
-        yaml-language-server
-        zls
-        zig
-        nil
-        lua-language-server
-        rustywind
 
-        texliveFull
+        # Minimal TeX Live for Org LaTeX export (ox-latex defaults + previews)
+        # and booklet export (pdfbook2 --paper=a4paper in doom/config.el).
+        (texliveBasic.withPackages (
+          ps: with ps; [
+            # org-latex-default-packages-alist
+            amsmath
+            amsfonts
+            capt-of
+            cm-super
+            ec
+            graphics
+            grffile
+            hyperref
+            tools
+            ulem
+            wrapfig
+            # org latex preview & common formatting
+            babel
+            babel-english
+            babel-spanish
+            booktabs
+            dvipng
+            dvisvgm
+            etoolbox
+            fancyhdr
+            geometry
+            latexmk
+            listings
+            microtype
+            preview
+            soul
+            xcolor
+            # booklet export (pdfbook2 -> pdfcrop + pdfjam + pdfpages)
+            everyshi
+            eso-pic
+            pdfbook2
+            pdfcrop
+            pdfjam
+            pdflscape
+            pdfpages
+          ]
+        ))
       ];
     };
     xdg.configFile."emacs/snippets" = {

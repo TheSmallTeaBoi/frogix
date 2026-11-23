@@ -16,10 +16,10 @@ in
 
   config = lib.mkIf cfg.enable {
     boot = {
-      kernelPackages = pkgs.linuxPackages_latest;
+      kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
       kernelModules = [
         "ntsync"
-        "uinput"
+        "bfq"
       ];
       extraModulePackages = [
         config.boot.kernelPackages.v4l2loopback
@@ -28,19 +28,29 @@ in
         options v4l2loopback exclusive_caps=1
       '';
       kernel.sysctl = {
-        "vm.swappiness" = lib.mkDefault 1;
+        # zram swaps in RAM (compressed) rather than disk, so a high swappiness
+        # lets the kernel compress cold anonymous pages instead of evicting hot
+        # page cache; priority 90 beats musnix's default (10) while still
+        # letting a host mkForce override it.
+        "vm.swappiness" = lib.mkOverride 90 (if config.zramSwap.enable then 150 else 10);
         "vm.page-cluster" = 0;
+        "vm.watermark_boost_factor" = 0;
+        "vm.watermark_scale_factor" = 125;
+        "net.core.default_qdisc" = "fq";
+        "net.ipv4.tcp_congestion_control" = "bbr";
       };
       kernelParams = [
         "quiet"
         "threadirqs"
-        "mitigations=off"
       ];
-      loader.timeout = 0;
+      loader.timeout = lib.mkDefault 0;
 
       loader = {
-        systemd-boot.enable = true;
-        efi.canTouchEfiVariables = true;
+        systemd-boot = {
+          enable = lib.mkDefault true;
+          configurationLimit = lib.mkDefault 20;
+        };
+        efi.canTouchEfiVariables = lib.mkDefault true;
       };
 
       initrd.checkJournalingFS = false; # fsck seems to always fail, for whatever reason.
@@ -55,6 +65,22 @@ in
       }
     ];
 
-    powerManagement.cpuFreqGovernor = "performance";
+    powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
+
+    # BFQ keeps spinning HDDs responsive under concurrent background scans
+    # (plocate, beets, romm) without affecting SSDs/NVMe.
+    services.udev.extraRules = ''
+      ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
+    '';
+
+    # sched_ext latency-aware desktop/gaming scheduler (Linux 6.12+); falls
+    # back cleanly to EEVDF if ever unloaded.
+    services.scx-loader = {
+      enable = lib.mkDefault true;
+      config = {
+        default_sched = lib.mkDefault "scx_lavd";
+        default_mode = lib.mkDefault "Auto";
+      };
+    };
   };
 }

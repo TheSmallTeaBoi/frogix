@@ -25,13 +25,15 @@ in
         extest.enable = true;
       };
     };
+    # overlay rather than programs.steam.package so every consumer of pkgs.steam
+    # (including sunshine's launch-gamescope and steam-run) shares one FHS env
     nixpkgs = {
-      config = {
-        allowUnfree = true;
-        packageOverrides = pkgs: {
-          steam = pkgs.steam.override {
+      config.allowUnfree = true;
+      overlays = [
+        (_final: prev: {
+          steam = prev.steam.override {
             extraPkgs =
-              pkgs: with pkgs; [
+              p: with p; [
                 libXcursor
                 libXi
                 libXinerama
@@ -44,8 +46,8 @@ in
                 keyutils
               ];
           };
-        };
-      };
+        })
+      ];
     };
   };
 }

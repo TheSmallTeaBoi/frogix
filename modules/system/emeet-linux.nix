@@ -6,7 +6,7 @@
 }:
 
 let
-  cfg = config.services.emeet-linux;
+  cfg = config.frogix."emeet-linux";
 
   src = pkgs.fetchFromGitHub {
     owner = "breno5g";
@@ -85,6 +85,7 @@ let
   # The camera keeps its controls in volatile RAM, so every replug hands back the
   # firmware defaults. This replays the app's own saved preset onto the fresh device.
   applyPresetPy = pkgs.writeText "emeet-apply-preset.py" ''
+    import os
     import sys
 
     from emeet.presets import PresetStore
@@ -93,6 +94,9 @@ let
 
     def main():
         dev, preset_file, name = sys.argv[1:4]
+        if not os.path.exists(preset_file):
+            print(f"emeet-apply-preset: preset file {preset_file} does not exist", file=sys.stderr)
+            return 0
         store = PresetStore(preset_file)
         if name not in store.names():
             print(f"emeet-apply-preset: no preset named {name!r} in {preset_file}", file=sys.stderr)
@@ -125,13 +129,13 @@ let
   usbId = lib.splitString ":" cfg.applyPreset.usbId;
 in
 {
-  options.frogix."emeet-linux".enable = lib.mkOption {
-    type = lib.types.bool;
-    default = config.frogix.enable;
-    description = "emeet-linux webcam control panel with hotplug preset replay";
-  };
+  options.frogix."emeet-linux" = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = config.frogix.enable;
+      description = "emeet-linux webcam control panel with hotplug preset replay";
+    };
 
-  options.services.emeet-linux = {
     applyPreset = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -169,7 +173,7 @@ in
     };
   };
 
-  config = lib.mkIf config.frogix."emeet-linux".enable {
+  config = lib.mkIf cfg.enable {
     environment.systemPackages = [ emeet ];
 
     services.udev.extraRules = lib.mkIf cfg.applyPreset.enable ''
@@ -180,7 +184,15 @@ in
       description = "Apply the emeet-linux preset to /dev/%i";
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${applyPreset}/bin/emeet-apply-preset /dev/%i ${cfg.applyPreset.presetFile} ${cfg.applyPreset.preset}";
+        User = cfg.applyPreset.user;
+        SupplementaryGroups = [ "video" ];
+        ExecStart = "${lib.getExe applyPreset} /dev/%i ${lib.escapeShellArg cfg.applyPreset.presetFile} ${lib.escapeShellArg cfg.applyPreset.preset}";
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = "read-only";
+        RestrictNamespaces = true;
+        LockPersonality = true;
       };
     };
   };

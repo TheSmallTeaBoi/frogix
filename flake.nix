@@ -12,7 +12,6 @@
 
     infract = {
       url = "github:NaokoAF/InFract/a53fc2f4184f125d44a225cdf8f0bff0b499d27c?dir=nix";
-      # url = "path:/home/theo/git/InFract/?dir=nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -24,6 +23,7 @@
     nix-alien = {
       url = "github:thiagokokada/nix-alien";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-index-database.follows = "nix-index-database";
     };
 
     home-manager = {
@@ -54,6 +54,7 @@
     hermes-agent = {
       url = "github:NousResearch/hermes-agent";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
     };
 
     # pi coding agent (earendil-works/pi), packaged by lukasl-dev. nixpkgs
@@ -74,8 +75,6 @@
       home-manager,
       nix-index-database,
       sops-nix,
-      hermes-agent,
-      helper,
       ...
     }@inputs:
     let

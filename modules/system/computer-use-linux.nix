@@ -54,9 +54,13 @@ let
       for arg in "$@"; do
         if [ "$prev" = "-f" ] || [ "$prev" = "--file" ]; then
           file="$arg"
+          prev=""
+          continue
         fi
         case "$arg" in
           -f | --file) prev="$arg" ;;
+          -f=*) file="''${arg#-f=}" ;;
+          --file=*) file="''${arg#--file=}" ;;
           *) prev="" ;;
         esac
       done
@@ -64,7 +68,7 @@ let
         echo "gnome-screenshot shim: only '-f FILE' is supported (grim, all outputs)" >&2
         exit 2
       fi
-      grim "$file"
+      grim -- "$file"
     '';
   };
 in
@@ -72,7 +76,7 @@ in
   options.frogix."computer-use-linux" = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = config.frogix.enable;
+      default = config.frogix.pi.enable;
       description = ''
         accessibility plumbing (AT-SPI bus, GTK/Qt bridge env) that
         @agent-sh/computer-use-linux needs to read this desktop. the binary
