@@ -20,7 +20,7 @@ in
     # - herdr TUI wants a bare executable in default_shell
     # - herdr-core (which serves the desktop app's panes) ignores the TUI's
     #   config entirely and wants its own "shell" key as a command list
-    xdg.configFile."herdr/config.toml".source = ./shell/herdr-config.toml;
+    xdg.configFile."herdr/config.toml".source = ./shell.d/herdr-config.toml;
     xdg.configFile."herdr-core/config.toml".text = ''
       shell = ["/run/current-system/sw/bin/bash"]
     '';
