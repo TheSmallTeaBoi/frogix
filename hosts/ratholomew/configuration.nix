@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  inputs,
   ...
 }:
 {
@@ -205,6 +204,9 @@
   # host service choices — plain NixOS options, deliberately NOT frogix.*
   # toggles (services with no frogix-specific value are enabled directly;
   # see docs/architecture.md "module contract")
+  # host service choices — plain NixOS options, deliberately NOT frogix.*
+  # toggles (services with no frogix-specific value are enabled directly;
+  # see docs/architecture.md "module contract")
   programs.droidcam.enable = true;
   programs.dconf.enable = true;
   programs.virt-manager.enable = true;
@@ -220,11 +222,10 @@
 
   programs.jerrito.enable = true;
 
-  # herdr (via its flake, pinned stable) + antigravity (Google's agent IDE,
-  # unfree — allowed by the packages pack)
+  # herdr (agent workspace terminal) + the Antigravity CLI, both from nixpkgs
   environment.systemPackages = [
-    inputs.herdr.packages.x86_64-linux.herdr
-    pkgs.antigravity
+    pkgs.herdr
+    pkgs.antigravity-cli
   ];
 
   home-manager.users.theo = {
