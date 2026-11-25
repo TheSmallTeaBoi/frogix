@@ -15,6 +15,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # herdr's pane shell: herdr spawns $SHELL by default, and fish's frogix
+    # interactive init execs every pane into tmux, nesting it inside herdr.
+    # pin herdr panes to plain bash so they don't get dragged in.
+    xdg.configFile."herdr/config.toml".source = ./herdr/config.toml;
+
     programs.fish = {
       enable = true;
       functions = {

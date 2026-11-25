@@ -226,6 +226,7 @@
   # all from nixpkgs
   environment.systemPackages = [
     pkgs.herdr-desktop
+    pkgs.herdr
     pkgs.herdr-core
     pkgs.antigravity-cli
   ];

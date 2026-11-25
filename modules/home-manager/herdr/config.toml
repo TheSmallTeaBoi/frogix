@@ -1,0 +1,4 @@
+# herdr spawns $SHELL for panes by default; frogix's fish interactive init
+# execs into tmux, which nested tmux inside herdr and broke agent detection.
+# Pin panes to plain bash instead.
+default_shell = "/run/current-system/sw/bin/bash"
