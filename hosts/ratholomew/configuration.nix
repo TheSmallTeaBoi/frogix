@@ -1,4 +1,8 @@
-{ pkgs, ... }:
+{
+  lib,
+  pkgs,
+  ...
+}:
 {
   imports = [
     # Include the results of the hardware scan.
@@ -8,6 +12,36 @@
   nixpkgs.hostPlatform = "x86_64-linux";
   networking.hostName = "ratholomew"; # Define your hostname.
   system.stateVersion = "23.11"; # Did you read the comment?
+
+  # Impermanent tmpfs root on top of the existing ext4 SSD partition.
+  # /dev/disk/by-label/nixos already has /nix, /var/lib, /etc and /home/theo
+  # at its top level, so mounting it at /persist and bind-mounting /persist/nix
+  # to /nix needs no file migration and lets earlier systemd-boot generations
+  # roll back cleanly to the old non-impermanent ext4 root.
+  fileSystems."/" = lib.mkForce {
+    device = "none";
+    fsType = "tmpfs";
+    options = [
+      "defaults"
+      "size=8G"
+      "mode=755"
+    ];
+  };
+
+  fileSystems."/persist" = {
+    device = "/dev/disk/by-label/nixos";
+    fsType = "ext4";
+    neededForBoot = true;
+    options = [ "noatime" ];
+  };
+
+  fileSystems."/nix" = {
+    device = "/persist/nix";
+    fsType = "none";
+    neededForBoot = true;
+    depends = [ "/persist" ];
+    options = [ "bind" ];
+  };
 
   programs.firefox.enable = true;
 
@@ -87,6 +121,79 @@
     "torbox-music-sync".musicDir = "/storage/Music";
 
     display.autoLogin = true;
+
+    # Populate /etc/shadow declaratively from sops so tmpfs root reboots never
+    # lock out login/sudo (key: user_password_hash in modules/system/secrets/secrets.yaml).
+    users.hashedPasswordSecret = "user_password_hash";
+
+    impermanence = {
+      enable = true;
+      persistLogs = true;
+
+      user = {
+        directories = [
+          ".barony"
+          ".config"
+          ".gemini"
+          {
+            directory = ".gnupg";
+            mode = "0700";
+          }
+          ".local/share/7DaysToDie"
+          ".local/share/Beam Eye Tracker"
+          ".local/share/BeamNG"
+          ".local/share/Cemu"
+          ".local/share/LookPilot"
+          ".local/share/PrismLauncher"
+          ".local/share/Steam"
+          ".local/share/Valve Corporation"
+          ".local/share/aspyr-media"
+          ".local/share/automodpack"
+          ".local/share/azahar-emu"
+          ".local/share/binding of isaac rebirth"
+          ".local/share/com.nesbox.tic"
+          ".local/share/direnv"
+          ".local/share/dolphin-emu"
+          ".local/share/easyeffects"
+          ".local/share/eden"
+          ".local/share/fish"
+          {
+            directory = ".local/share/keyrings";
+            mode = "0700";
+          }
+          ".local/share/net.lutris.Lutris"
+          ".local/share/nicotine"
+          ".local/share/qutebrowser"
+          ".local/share/reshade"
+          ".local/share/rofi"
+          ".local/share/umu"
+          ".local/share/xodus-nexus"
+          ".local/share/yuzu"
+          ".local/share/zoxide"
+          ".local/state/Beyond All Reason"
+          ".local/state/beammp"
+          ".local/state/lazygit"
+          ".local/state/theotown"
+          ".local/state/wireplumber"
+          ".parsec"
+          ".parsec-persistent"
+          ".pi"
+          {
+            directory = ".ssh";
+            mode = "0700";
+          }
+          ".steam"
+          ".wine"
+          "Flashpoint"
+          "frogix"
+        ];
+
+        files = [
+          ".claude.json"
+          ".git-credentials"
+        ];
+      };
+    };
   };
 
   # host service choices — plain NixOS options, deliberately NOT frogix.*

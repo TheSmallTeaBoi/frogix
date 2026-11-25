@@ -722,6 +722,233 @@ false
 
 
 
+## frogix.impermanence.enable
+
+
+
+persist only declared system and user state under persistPath using
+nix-community/impermanence (NixOS bind mounts, not Home Manager
+symlinks). auto-persists state for enabled frogix/system services,
+redirects sops-nix’s age key and sshd host keys into persistPath, and
+caps journald/coredump usage. host disk mounts (/, /persist, /nix) stay
+in hosts/<name>/
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+false
+```
+
+
+
+
+## frogix.impermanence.coredumpMaxUse
+
+
+
+systemd-coredump storage cap under /var/lib/systemd/coredump
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"500M"
+```
+
+
+
+
+## frogix.impermanence.extraDirectories
+
+
+
+additional system directories to persist under persistPath (strings or impermanence directory attrsets)
+
+
+
+*Type:*
+list of (string or (attribute set))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+
+## frogix.impermanence.extraFiles
+
+
+
+additional system files to persist under persistPath (strings or impermanence file attrsets)
+
+
+
+*Type:*
+list of (string or (attribute set))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+
+## frogix.impermanence.hideMounts
+
+
+
+pass x-gvfs-hide to bind mounts so file managers do not list every persisted path as a separate volume
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+
+
+
+## frogix.impermanence.journalMaxUse
+
+
+
+systemd-journald storage cap (SystemMaxUse when persistLogs is on, RuntimeMaxUse when off)
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"500M"
+```
+
+
+
+
+## frogix.impermanence.persistLogs
+
+
+
+persist /var/log across reboots (journald is capped by journalMaxUse so logs cannot fill the persistent disk)
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+
+```nix
+true
+```
+
+
+
+
+## frogix.impermanence.persistPath
+
+
+
+mountpoint of the persistent filesystem (must have neededForBoot = true in the host’s fileSystems)
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"/persist"
+```
+
+
+
+
+## frogix.impermanence.user.directories
+
+
+
+directories relative to frogix.user’s home directory to persist via
+NixOS bind mounts (environment.persistence.<persistPath>.users.<user>)
+so apps doing atomic writes do not break
+
+
+
+*Type:*
+list of (string or (attribute set))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+
+## frogix.impermanence.user.files
+
+
+
+files relative to frogix.user’s home directory to persist via NixOS bind mounts
+
+
+
+*Type:*
+list of (string or (attribute set))
+
+
+
+*Default:*
+
+```nix
+[ ]
+```
+
+
+
+
 ## frogix.input.enable
 
 
@@ -1943,7 +2170,7 @@ null
 
 
 
-sops-nix with the frogix secret set (age key at ~/.config/sops/age/keys.txt, generated on demand)
+sops-nix with the frogix secret set (age key generated on demand)
 
 
 
@@ -1956,6 +2183,30 @@ boolean
 
 ```nix
 false
+```
+
+
+
+
+## frogix.sops.ageKeyFile
+
+
+
+path to the age private key used by sops-nix during early activation.
+frogix.impermanence redirects this automatically under persistPath so
+decryption runs before user bind mounts exist
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+
+```nix
+"/home/user/.config/sops/age/keys.txt"
 ```
 
 
@@ -2109,9 +2360,7 @@ string
 
 ## frogix.users.enable
 
-
-
-define the frogix.user account (password is set with passwd)
+define the frogix.user account (password is set with passwd unless hashedPasswordSecret / hashedPasswordFile is configured)
 
 
 
@@ -2147,6 +2396,57 @@ list of string
 
 ```nix
 [ "wheel" "input" "uinput" "audio" "bluetooth" ] ++ lib.optional config.frogix.gaming.enable "gamemode"
+```
+
+
+
+
+## frogix.users.hashedPasswordFile
+
+
+
+path to a file containing the salted password hash for frogix.user
+(alternative to hashedPasswordSecret for hosts not storing the hash in
+sops). exclusive with hashedPasswordSecret
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
+```
+
+
+
+
+## frogix.users.hashedPasswordSecret
+
+
+
+name of a sops-nix secret holding the salted password hash for
+frogix.user (generate with ` mkpasswd -m yescrypt `). declared with
+neededForUsers = true and wired into users.users.<user>.hashedPasswordFile
+so /etc/shadow is populated declaratively on every boot (required when
+running an ephemeral/tmpfs root). requires frogix.sops; exclusive with
+hashedPasswordFile
+
+
+
+*Type:*
+null or string
+
+
+
+*Default:*
+
+```nix
+null
 ```
 
 

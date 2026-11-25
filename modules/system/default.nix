@@ -8,6 +8,7 @@
     ./frogix.nix
     ./nvidia.nix
     ./display.nix
+    ./impermanence.nix
     ./input.nix
     ./boot.nix
     ./emeet-linux.nix

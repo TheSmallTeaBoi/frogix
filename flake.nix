@@ -68,6 +68,12 @@
       url = "github:TheSmallTeaBoi/helper";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    impermanence = {
+      url = "github:nix-community/impermanence";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
   };
   outputs =
     {
@@ -94,6 +100,7 @@
         inputs.niri-nix.nixosModules.default
         inputs.infract.nixosModules.default
         inputs.helper.nixosModules.default
+        inputs.impermanence.nixosModules.impermanence
       ];
       mkHost =
         name:
