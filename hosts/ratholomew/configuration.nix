@@ -222,9 +222,11 @@
 
   programs.jerrito.enable = true;
 
-  # herdr (agent workspace terminal) + the Antigravity CLI, both from nixpkgs
+  # herdr desktop GUI + its core daemon backend, and the Antigravity CLI —
+  # all from nixpkgs
   environment.systemPackages = [
-    pkgs.herdr
+    pkgs.herdr-desktop
+    pkgs.herdr-core
     pkgs.antigravity-cli
   ];
 
