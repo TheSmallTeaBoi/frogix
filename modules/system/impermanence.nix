@@ -174,6 +174,9 @@ in
       ++ lib.optional config.services.tailscale.enable "/var/lib/tailscale"
       ++ lib.optional config.services.displayManager.sddm.enable "/var/lib/sddm"
       ++ lib.optional config.services.infract.enable "/var/lib/infract"
+      # plocate's index lives in /var/cache, not /var/lib; without it vitrina's
+      # launcher file search is dead until the first updatedb run past midnight
+      ++ lib.optional config.services.locate.enable "/var/cache/locatedb"
       ++ lib.optional config.services.mysql.enable "/var/lib/mysql"
       ++ lib.optional config.services.postgresql.enable "/var/lib/postgresql"
       ++ lib.optional config.services.navidrome.enable "/var/lib/navidrome"

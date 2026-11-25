@@ -133,7 +133,6 @@
       user = {
         directories = [
           ".barony"
-          ".cache/qalculate" # exchange-rate cache so the launcher's qalc calls don't block on a network fetch after every reboot
           ".config"
           ".gemini"
           {
