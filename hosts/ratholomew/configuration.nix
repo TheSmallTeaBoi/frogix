@@ -190,7 +190,10 @@
 
         files = [
           ".claude.json"
-          ".git-credentials"
+          # .git-credentials deliberately NOT persisted: the credential helper's
+          # file locking fails with EBUSY through the /persist bind mount, so
+          # git cannot write through it anyway. If a push re-asks for a
+          # password after a reboot, re-enter it once for this boot.
         ];
       };
     };

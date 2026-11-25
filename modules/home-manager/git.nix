@@ -32,7 +32,13 @@ in
         user =
           lib.optionalAttrs (cfg.email != null) { email = cfg.email; }
           // lib.optionalAttrs (cfg.name != null) { name = cfg.name; };
-        credential.helper = "store"; # Save credentials. This shit is unsafe af.
+        # plain store helper, credentials live in ~/.git-credentials.
+        # deliberately NOT included in frogix.impermanence user.files: the
+        # store helper's maintain-lockfile atomic rename fails with EBUSY
+        # through the /persist bind mount, so git cannot update it anyway —
+        # and an unpersisted credential store dying with the tmpfs root is
+        # the safer failure mode (reattach: git push once, re-enter login).
+        credential.helper = "store";
       };
     };
   };
