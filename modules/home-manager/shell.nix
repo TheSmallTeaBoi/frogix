@@ -15,10 +15,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # herdr's pane shell: herdr spawns $SHELL by default, and fish's frogix
-    # interactive init execs every pane into tmux, nesting it inside herdr.
-    # pin herdr panes to plain bash so they don't get dragged in.
-    xdg.configFile."herdr/config.toml".source = ./herdr/config.toml;
+    # herdr spawns panes from $SHELL = fish, whose interactive init execs into
+    # tmux — nesting tmux inside herdr. pin plain bash for both surfaces:
+    # - herdr TUI wants a bare executable in default_shell
+    # - herdr-core (which serves the desktop app's panes) ignores the TUI's
+    #   config entirely and wants its own "shell" key as a command list
+    xdg.configFile."herdr/config.toml".source = ./shell/herdr-config.toml;
+    xdg.configFile."herdr-core/config.toml".text = ''
+      shell = ["/run/current-system/sw/bin/bash"]
+    '';
 
     programs.fish = {
       enable = true;
