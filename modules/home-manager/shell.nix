@@ -62,21 +62,25 @@ in
       # terminal cleans up its t-<pid> session without touching base.
       interactiveShellInit = lib.mkMerge [
         (lib.mkBefore (
-          lib.optionalString config.frogix.tmux.enable ''
-            if not set -q TMUX
-                and not set -q INSIDE_EMACS
-                and not set -q VIM
-                and not set -q NVIM
+          lib.optionalString config.frogix.tmux.enable
+            # HERDR_ENV is set in herdr's panes: herdr IS the multiplexer there,
+            # so exec'ing into tmux would nest it and hide agents behind tmux
+            ''
+              if not set -q TMUX
+                  and not set -q HERDR_ENV
+                  and not set -q INSIDE_EMACS
+                  and not set -q VIM
+                  and not set -q NVIM
 
-            # Every terminal shares the same windows through grouped sessions,
-            # but each gets its own current-window pointer.
-            if tmux has-session -t base 2>/dev/null
-                exec tmux new-session -s "t-$fish_pid" -t base \; set-option destroy-unattached on
-            else
-                exec tmux new-session -A -s base
-            end
-            end
-          ''
+              # Every terminal shares the same windows through grouped sessions,
+              # but each gets its own current-window pointer.
+              if tmux has-session -t base 2>/dev/null
+                  exec tmux new-session -s "t-$fish_pid" -t base \; set-option destroy-unattached on
+              else
+                  exec tmux new-session -A -s base
+              end
+              end
+            ''
         ))
         (lib.mkAfter ''
           function transient_prompt_func
