@@ -69,6 +69,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # herdr — terminal workspace manager for coding agents (herdrdev/herdr);
+    # pinned to the stable release, flake builds it from source
+    herdr = {
+      url = "github:herdrdev/herdr/v0.9.5";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     impermanence = {
       url = "github:nix-community/impermanence";
       inputs.nixpkgs.follows = "nixpkgs";

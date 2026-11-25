@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  inputs,
   ...
 }:
 {
@@ -172,6 +173,8 @@
           ".local/share/zoxide"
           ".local/state/Beyond All Reason"
           ".local/state/beammp"
+          ".local/state/herdr-core" # herdr daemon state (the app config is
+          # under the persisted .config/herdr-app)
           ".local/state/lazygit"
           ".local/state/theotown"
           ".local/state/wireplumber"
@@ -216,6 +219,13 @@
   programs.nano.enable = false;
 
   programs.jerrito.enable = true;
+
+  # herdr (via its flake, pinned stable) + antigravity (Google's agent IDE,
+  # unfree — allowed by the packages pack)
+  environment.systemPackages = [
+    inputs.herdr.packages.x86_64-linux.herdr
+    pkgs.antigravity
+  ];
 
   home-manager.users.theo = {
     frogix.home.stateVersion = "23.11";
